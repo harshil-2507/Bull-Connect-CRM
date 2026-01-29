@@ -1,0 +1,9 @@
+# Node / Backend
+node_modules
+.env
+
+# DB
+pgdata
+
+# OS
+.DS_Store
