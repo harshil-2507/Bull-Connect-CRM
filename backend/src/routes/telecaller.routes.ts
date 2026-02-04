@@ -1,8 +1,14 @@
 import { Router } from "express";
-import { markInterested } from "../controllers/telecaller.controller";
+import { roleGuard } from "../middlewares/roleGuard";
+import { logCall } from "../controllers/telecaller.controller";
 
 const router = Router();
 
-router.post("/interested", markInterested);
+/**
+ * TELECALLER only routes
+ */
+router.use(roleGuard(["TELECALLER"]));
+
+router.post("/call", logCall);
 
 export default router;

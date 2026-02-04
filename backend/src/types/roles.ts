@@ -1,8 +1,4 @@
-/**
- * Central role definition
- * Used across auth, guards, and controllers
- */
-export type UserRole =
+export type Role =
   | "MANAGER"
   | "TELECALLER"
   | "FIELD_MANAGER"

@@ -3,11 +3,23 @@ import { LeadStateService } from "../services/leadState.service";
 
 const service = new LeadStateService();
 
-export async function markInterested(req: Request, res: Response) {
-  const { leadId, notes } = req.body;
-  const telecallerId = req.user.id;
+/**
+ * TELECALLER logs a call outcome
+ */
+export async function logCall(
+  req: Request,
+  res: Response
+) {
+  const { leadId, disposition, notes } = req.body;
 
-  await service.markInterested(leadId, telecallerId, notes);
+  await service.call(
+    leadId,
+    req.user.id,
+    disposition,
+    notes ?? null
+  );
 
-  res.json({ success: true });
+  res.status(200).json({
+    message: "Call logged successfully",
+  });
 }

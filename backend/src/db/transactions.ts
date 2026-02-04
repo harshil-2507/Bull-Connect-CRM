@@ -1,9 +1,9 @@
 import { PoolClient } from "pg";
-import { pool } from "./index";
+import { pool } from "../config/db";
 
 /**
- * Executes a function inside a DB transaction
- * Guarantees atomic writes
+ * Runs a function inside a DB transaction.
+ * Automatically handles BEGIN / COMMIT / ROLLBACK.
  */
 export async function withTransaction<T>(
   fn: (tx: PoolClient) => Promise<T>

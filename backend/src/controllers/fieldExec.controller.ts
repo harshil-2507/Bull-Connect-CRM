@@ -1,40 +1,25 @@
 import { Request, Response } from "express";
-import { withTransaction } from "../db/transactions";
-import { PointsService } from "../services/points.service";
+import { LeadStateService } from "../services/leadState.service";
 
-const pointsService = new PointsService();
+const service = new LeadStateService();
 
-export async function verifyLead(req: Request, res: Response) {
-  const { leadId, finalStatus } = req.body;
-  const fieldExecId = req.user.id;
+/**
+ * FIELD EXEC verifies the lead on ground
+ */
+export async function verifyLead(
+  req: Request,
+  res: Response
+) {
+  const { leadId, finalStatus, photoRef } = req.body;
 
-  await withTransaction(async (tx) => {
-    await tx.query(
-      `
-      INSERT INTO field_verifications
-        (lead_id, field_exec_id, gps_checkin_ok, final_status)
-      VALUES ($1, $2, true, $3)
-      `,
-      [leadId, fieldExecId, finalStatus]
-    );
+  await service.verify(
+    leadId,
+    req.user.id,
+    finalStatus,
+    photoRef
+  );
 
-    await tx.query(
-      `
-      UPDATE leads SET state = $2 WHERE id = $1
-      `,
-      [leadId, finalStatus]
-    );
-
-    if (finalStatus === "CONVERTED") {
-      await pointsService.award(
-        tx,
-        fieldExecId,
-        leadId,
-        10,
-        "Lead converted"
-      );
-    }
+  res.status(200).json({
+    message: "Lead verification completed",
   });
-
-  res.json({ success: true });
 }
