@@ -1,0 +1,4 @@
+-how to handle multiple leads through single number
+-credentials
+-add some security and fix authentication
+-the admin role, to create users and all

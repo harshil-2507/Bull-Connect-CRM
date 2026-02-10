@@ -13,9 +13,26 @@ export async function assignToTelecaller(
 ) {
   const { leadId, telecallerId } = req.body;
 
-  await service.assignTelecaller(leadId, telecallerId);
+  await service.assignTelecaller(leadId, telecallerId, req.user.id);
 
   res.status(200).json({
     message: "Lead assigned to telecaller",
   });
+}
+
+/**
+ * MANAGER: Get all telecaller assignments
+ */
+export async function getAllTeleAssignments(req: Request, res: Response) {
+  const assignments = await service.getAllTeleAssignments();
+  res.status(200).json(assignments);
+}
+
+/**
+ * MANAGER: Get telecaller assignment by ID
+ */
+export async function getTeleAssignmentById(req: Request, res: Response) {
+  const { id } = req.params;
+  const assignment = await service.getTeleAssignmentById(id);
+  res.status(200).json(assignment);
 }

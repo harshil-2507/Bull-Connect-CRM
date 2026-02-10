@@ -1,23 +1,30 @@
-import express from "express";
-import { auth } from "./middlewares/auth";
+  import express from "express";
+  import { auth } from "./middlewares/auth";
+import { login } from "./controllers/auth.controller";
+  import managerRoutes from "./routes/manager.routes";
+  import telecallerRoutes from "./routes/telecaller.routes";
+  import fieldManagerRoutes from "./routes/fieldManager.routes";
+  import fieldExecRoutes from "./routes/fieldExec.routes";
+  import adminRoutes from "./routes/admin.routes";
+  import leadRoutes from "./routes/lead.routes";
 
-import managerRoutes from "./routes/manager.routes";
-import telecallerRoutes from "./routes/telecaller.routes";
-import fieldManagerRoutes from "./routes/fieldManager.routes";
-import fieldExecRoutes from "./routes/fieldExec.routes";
 
-const app = express();
+  const app = express();
 
-app.use(express.json());
-app.use(auth);
+  app.use(express.json());
 
-// TEMP health check
-app.post("/ping", (_req, res) => {
-  res.json({ ok: true });
-});
-app.use("/manager", managerRoutes);
-app.use("/telecaller", telecallerRoutes);
-app.use("/field-manager", fieldManagerRoutes);
-app.use("/field-exec", fieldExecRoutes);
+  app.post("/login", login);
+  app.use(auth);
 
-export default app;
+  // TEMP health check
+  app.post("/ping", (_req, res) => {
+    res.json({ ok: true });
+  });
+  app.use("/leads", leadRoutes);
+  app.use("/admin", adminRoutes);
+  app.use("/manager", managerRoutes);
+  app.use("/telecaller", telecallerRoutes);
+  app.use("/field-manager", fieldManagerRoutes);
+  app.use("/field-exec", fieldExecRoutes);
+
+  export default app;
