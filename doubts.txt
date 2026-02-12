@@ -1,4 +1,5 @@
 -how to handle multiple leads through single number
 -credentials
--add some security and fix authentication
--the admin role, to create users and all
+-telecaller will be able to get next lead, and post the details after call
+-field manager will see all the pending field visits and assign them to execs
+-exec will their visit and after visiting update

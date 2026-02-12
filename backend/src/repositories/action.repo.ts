@@ -1,20 +1,21 @@
 import { PoolClient } from "pg";
 
 export class ActionRepository {
-  async call(
-    tx: PoolClient,
-    leadId: string,
-    telecallerId: string,
-    disposition: string,
-    notes: string | null
-  ) {
-    await tx.query(
-      `INSERT INTO call_actions
-       (lead_id, telecaller_id, disposition, notes)
-       VALUES ($1,$2,$3,$4)`,
-      [leadId, telecallerId, disposition, notes]
-    );
-  }
+ async call(
+  tx: PoolClient,
+  leadId: string,
+  telecallerId: string,
+  disposition: string,
+  notes: string | null,
+  callDuration: number | null = null // optional, add if you want to track duration
+) {
+  await tx.query(
+    `INSERT INTO call_logs
+     (lead_id, user_id, outcome, notes, call_duration)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [leadId, telecallerId, disposition, notes, callDuration]
+  );
+}
 
   async requestFieldVisit(
     tx: PoolClient,
