@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { roleGuard } from "../middlewares/roleGuard";
-import { verifyLead } from "../controllers/fieldExec.controller";
+import { 
+  verifyLead,
+  getAllAssignments,
+  getAssignmentById
+} from "../controllers/fieldExec.controller";
 
 const router = Router();
 
@@ -9,6 +13,11 @@ const router = Router();
  */
 router.use(roleGuard(["FIELD_EXEC"]));
 
+// Field Exec Verifications
 router.post("/verify", verifyLead);
+
+// Field Exec Assignments
+router.get("/assignments", getAllAssignments);
+router.get("/assignments/:id", getAssignmentById);
 
 export default router;

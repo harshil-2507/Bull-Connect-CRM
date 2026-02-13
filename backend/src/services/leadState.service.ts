@@ -111,6 +111,7 @@ export class LeadStateService {
 
     if (disposition === "NOT_INTERESTED") {
       assertValidTransition(lead.lead_status, "DROPPED");
+      await this.actionRepo.drop(tx, leadId, telecallerId, notes ?? "No reason provided");
       await this.leadRepo.updateState(tx, leadId, "DROPPED");
     }
 
@@ -120,7 +121,67 @@ export class LeadStateService {
   });
 }
 
+   /**
+   * Get all Field Requests
+   */
+  async getAllFieldRequests() {
+    return withTransaction(async (tx) => {
+      const res = await tx.query(
+        `SELECT fr.id, fr.lead_id, fr.requested_by, fr.primary_crop, fr.requested_at
+         FROM field_requests fr
+         ORDER BY fr.requested_at DESC`
+      );
+      return res.rows;
+    });
+  }
 
+  /**
+   * Get Field Request by ID
+   */
+  async getFieldRequestById(id: string) {
+    return withTransaction(async (tx) => {
+      const res = await tx.query(
+        `SELECT fr.id, fr.lead_id, fr.requested_by, fr.primary_crop, fr.requested_at
+         FROM field_requests fr
+         WHERE fr.id = $1`,
+        [id]
+      );
+
+      if (!res.rowCount) throw new Error("Field request not found");
+      return res.rows[0];
+    });
+  }
+
+  /**
+   * Get all Field Verifications
+   */
+  async getAllFieldVerifications() {
+    return withTransaction(async (tx) => {
+      const res = await tx.query(
+        `SELECT fv.id, fv.lead_id, fv.field_exec_id, fv.gps_checkin_ok, fv.photo_ref, fv.final_status, fv.verified_at
+         FROM field_verifications fv
+         ORDER BY fv.verified_at DESC`
+      );
+      return res.rows;
+    });
+  }
+
+  /**
+   * Get Field Verification by ID
+   */
+  async getFieldVerificationById(id: string) {
+    return withTransaction(async (tx) => {
+      const res = await tx.query(
+        `SELECT fv.id, fv.lead_id, fv.field_exec_id, fv.gps_checkin_ok, fv.photo_ref, fv.final_status, fv.verified_at
+         FROM field_verifications fv
+         WHERE fv.id = $1`,
+        [id]
+      );
+
+      if (!res.rowCount) throw new Error("Field verification not found");
+      return res.rows[0];
+    });
+  }
 
   async assignFieldExec(
     fieldRequestId: string,
@@ -157,6 +218,43 @@ export class LeadStateService {
       );
 
       await this.leadRepo.updateState(tx, leadId, status);
+    });
+  }
+
+   /**
+   * Get all assignments for a Field Exec
+   */
+  async getAssignmentsForExec(fieldExecId: string) {
+    return withTransaction(async (tx) => {
+      const res = await tx.query(
+        `SELECT fa.id, fa.field_request_id, fa.field_exec_id, fa.assigned_by, fa.assigned_at,
+                fr.lead_id, fr.primary_crop
+         FROM field_assignments fa
+         JOIN field_requests fr ON fr.id = fa.field_request_id
+         WHERE fa.field_exec_id = $1
+         ORDER BY fa.assigned_at DESC`,
+        [fieldExecId]
+      );
+      return res.rows;
+    });
+  }
+
+  /**
+   * Get a specific assignment by ID for a Field Exec
+   */
+  async getAssignmentByIdForExec(id: string, fieldExecId: string) {
+    return withTransaction(async (tx) => {
+      const res = await tx.query(
+        `SELECT fa.id, fa.field_request_id, fa.field_exec_id, fa.assigned_by, fa.assigned_at,
+                fr.lead_id, fr.primary_crop
+         FROM field_assignments fa
+         JOIN field_requests fr ON fr.id = fa.field_request_id
+         WHERE fa.id = $1 AND fa.field_exec_id = $2`,
+        [id, fieldExecId]
+      );
+
+      if (!res.rowCount) throw new Error("Assignment not found or not assigned to you");
+      return res.rows[0];
     });
   }
 }

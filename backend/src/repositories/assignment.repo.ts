@@ -35,7 +35,7 @@ export class AssignmentRepository {
   ) {
     await tx.query(
       `
-      INSERT INTO field_assignments (field_request_id, user_id, assigned_by)
+      INSERT INTO field_assignments (field_request_id, field_exec_id, assigned_by)
       VALUES ($1, $2, $3)
       `,
       [fieldRequestId, fieldExecId, managerId]
