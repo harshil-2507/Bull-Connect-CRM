@@ -1,34 +1,42 @@
 import { Router } from "express";
+import multer from "multer";
 import { roleGuard } from "../middlewares/roleGuard";
 import {
   createCampaign,
   getAllCampaigns,
-  
   getCampaignById,
   toggleCampaign,
+  getCampaignLeads,
+  getAllCampaignStats,
+  getCampaignStatsById,
+  getCampaignPipeline,
+  uploadCampaignCsv,
 } from "../controllers/campaign.controller";
-import { getCampaignLeads } from "../controllers/campaign.controller";
-import { getAllCampaignStats, getCampaignStatsById } from "../controllers/campaign.controller";
-import { getCampaignPipeline } from "../controllers/campaign.controller";
 
 const router = Router();
 
-/**
- * ADMIN + MANAGER allowed
- */
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 1024 * 1024 * 1024, // 1GB
+  },
+});
+
 router.use(roleGuard(["ADMIN", "MANAGER"]));
 
 router.post("/", createCampaign);
-
 router.get("/", getAllCampaigns);
 
 router.get("/stats", getAllCampaignStats);
 
 router.get("/:id/pipeline", getCampaignPipeline);
-
 router.get("/:id/stats", getCampaignStatsById);
 
 router.get("/:id/leads", getCampaignLeads);
 router.get("/:id", getCampaignById);
+
 router.patch("/:id/toggle", toggleCampaign);
+
+router.post("/:id/upload", upload.single("file"), uploadCampaignCsv);
+
 export default router;

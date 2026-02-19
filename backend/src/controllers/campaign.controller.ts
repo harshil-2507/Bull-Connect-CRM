@@ -1,11 +1,9 @@
 import { Request, Response } from "express";
+import { performance } from "perf_hooks";
 import { CampaignService } from "../services/campaign.service";
 
 const service = new CampaignService();
 
-/**
- * Create Campaign
- */
 export const createCampaign = async (req: Request, res: Response) => {
   try {
     const { name, description, start_date, end_date } = req.body;
@@ -28,11 +26,6 @@ export const createCampaign = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Get All Campaigns (Pagination + Filtering)
- * Example:
- * GET /campaigns?page=1&limit=10&is_active=true
- */
 export const getAllCampaigns = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -56,9 +49,6 @@ export const getAllCampaigns = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Get Campaign By ID
- */
 export const getCampaignById = async (req: Request, res: Response) => {
   try {
     const campaign = await service.getCampaignById(req.params.id);
@@ -68,17 +58,12 @@ export const getCampaignById = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Toggle Campaign Active Status
- */
 export const toggleCampaign = async (req: Request, res: Response) => {
   try {
     const { is_active } = req.body;
 
     if (typeof is_active !== "boolean") {
-      return res
-        .status(400)
-        .json({ error: "is_active must be boolean" });
+      return res.status(400).json({ error: "is_active must be boolean" });
     }
 
     const campaign = await service.toggleCampaign(
@@ -92,10 +77,6 @@ export const toggleCampaign = async (req: Request, res: Response) => {
   }
 };
 
-/**
- * Get Leads Under Campaign
- * GET /campaigns/:id/leads
- */
 export const getCampaignLeads = async (req: Request, res: Response) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
@@ -130,12 +111,37 @@ export const getCampaignStatsById = async (req: Request, res: Response) => {
   }
 };
 
-
 export const getCampaignPipeline = async (req: Request, res: Response) => {
   try {
     const result = await service.getCampaignPipeline(req.params.id);
     res.status(200).json(result);
   } catch (err: any) {
     res.status(404).json({ error: err.message });
+  }
+};
+
+export const uploadCampaignCsv = async (req: Request, res: Response) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "CSV file is required" });
+    }
+
+    const campaignId = req.params.id;
+
+    const start = performance.now();
+
+    const result = await service.uploadCsvToCampaign(
+      campaignId,
+      req.file.buffer
+    );
+
+    const end = performance.now();
+
+    res.status(200).json({
+      ...result,
+      durationMs: Math.round(end - start),
+    });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
   }
 };
