@@ -1,8 +1,11 @@
 import { Request, Response } from "express";
 import { performance } from "perf_hooks";
 import { CampaignService } from "../services/campaign.service";
+import { AssignmentService } from "../services/Bulkassignment.service";
+
 
 const service = new CampaignService();
+const assignmentService = new AssignmentService();
 
 export const createCampaign = async (req: Request, res: Response) => {
   try {
@@ -141,6 +144,28 @@ export const uploadCampaignCsv = async (req: Request, res: Response) => {
       ...result,
       durationMs: Math.round(end - start),
     });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+export const bulkAssignCampaignLeads = async (req: Request, res: Response) => {
+  try {
+    const { telecallerId, leadIds, limit } = req.body;
+
+    if (!telecallerId) {
+      return res.status(400).json({
+        error: "telecallerId is required",
+      });
+    }
+
+    const result = await assignmentService.bulkAssignToTelecaller(
+      req.params.id,
+      Number(telecallerId),
+      { leadIds, limit }
+    );
+
+    res.status(200).json(result);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }

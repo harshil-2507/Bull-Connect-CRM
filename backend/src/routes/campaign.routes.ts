@@ -11,6 +11,7 @@ import {
   getCampaignStatsById,
   getCampaignPipeline,
   uploadCampaignCsv,
+  bulkAssignCampaignLeads  
 } from "../controllers/campaign.controller";
 
 const router = Router();
@@ -38,5 +39,7 @@ router.get("/:id", getCampaignById);
 router.patch("/:id/toggle", toggleCampaign);
 
 router.post("/:id/upload", upload.single("file"), uploadCampaignCsv);
+
+router.post("/:id/assign", bulkAssignCampaignLeads);
 
 export default router;
