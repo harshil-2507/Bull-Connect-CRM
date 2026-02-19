@@ -10,7 +10,7 @@ export const login = async (req: Request, res: Response) => {
   try {
     
     const result = await pool.query(
-      "SELECT * FROM users WHERE username = $1", 
+      "SELECT * FROM users WHERE username = $1", //username for login credentials
       [username]
     );
     
@@ -19,7 +19,9 @@ export const login = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(401).json({ error: "User not found" });
     }
-
+    if (!username || !password) {
+      return res.status(400).json({ error: "Username and password required" });
+    }
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {

@@ -3,7 +3,7 @@ import { Role } from "../types/roles";
 
 export function roleGuard(allowed: Role[]) {
   return (req: Request, res: Response, next: NextFunction) => {
-    // 🔒 Narrow req.user first
+    //  Narrow req.user first
     if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }

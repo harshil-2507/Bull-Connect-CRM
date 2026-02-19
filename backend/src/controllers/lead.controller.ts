@@ -5,8 +5,12 @@ const service = new LeadService();
 
 export const createLead = async (req: Request, res: Response) => {
   try {
-    const { name, phone, taluka, district, geo_state } = req.body;
-
+    const { name, phone, taluka, district, geo_state, campaign_id } = req.body;
+    if (!name || !phone || !campaign_id) {
+      return res.status(400).json({
+        error: "name, phone and campaign_id are required",
+      });
+}
     // ALWAYS enforce lead_status = "UNASSIGNED"
     const lead = await service.createLead({
       name,
@@ -14,6 +18,7 @@ export const createLead = async (req: Request, res: Response) => {
       taluka,
       district,
       geo_state,
+      campaign_id,// client can specify campaign_id, but lead_status is server-side enforced
       lead_status: "UNASSIGNED", // server-side enforced
     });
     res.status(201).json(lead);

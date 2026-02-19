@@ -13,6 +13,9 @@ function validateRole(role: string): asserts role is Role {
     throw new Error(`Invalid role: ${role}`);
   }
 }
+//CRUD operations as ADMIN
+
+
 
 /**
  * Create user of any role (except ADMIN)
