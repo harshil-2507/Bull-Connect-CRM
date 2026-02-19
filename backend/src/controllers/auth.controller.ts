@@ -46,7 +46,11 @@ export const login = async (req: Request, res: Response) => {
         name: user.name,
         role: user.role
       }
+
+      
     });
+
+    console.log("DB URL:", env.DATABASE_URL);
 
   } catch (error) {
     console.error("Login Error:", error);
