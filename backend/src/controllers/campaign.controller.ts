@@ -91,3 +91,51 @@ export const toggleCampaign = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+/**
+ * Get Leads Under Campaign
+ * GET /campaigns/:id/leads
+ */
+export const getCampaignLeads = async (req: Request, res: Response) => {
+  try {
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+
+    const result = await service.getLeadsByCampaign(req.params.id, {
+      page,
+      limit,
+    });
+
+    res.status(200).json(result);
+  } catch (err: any) {
+    res.status(404).json({ error: err.message });
+  }
+};
+
+export const getAllCampaignStats = async (_req: Request, res: Response) => {
+  try {
+    const stats = await service.getAllCampaignStats();
+    res.status(200).json(stats);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+export const getCampaignStatsById = async (req: Request, res: Response) => {
+  try {
+    const stats = await service.getCampaignStatsById(req.params.id);
+    res.status(200).json(stats);
+  } catch (err: any) {
+    res.status(404).json({ error: err.message });
+  }
+};
+
+
+export const getCampaignPipeline = async (req: Request, res: Response) => {
+  try {
+    const result = await service.getCampaignPipeline(req.params.id);
+    res.status(200).json(result);
+  } catch (err: any) {
+    res.status(404).json({ error: err.message });
+  }
+};
