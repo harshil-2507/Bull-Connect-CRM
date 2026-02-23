@@ -20,12 +20,12 @@ class AdminService {
             }
             const hashedPassword = await bcryptjs_1.default.hash(input.password, 10);
             await tx.query(`INSERT INTO users
-         (username, password, name, mobile_number, role)
+         (username, password_hash, name, phone, role)
          VALUES ($1,$2,$3,$4,$5)`, [
                 input.username,
                 hashedPassword,
                 input.name,
-                input.mobile_number,
+                input.phone,
                 input.role,
             ]);
         });
@@ -34,7 +34,7 @@ class AdminService {
    * Get all users (no role filtering)
    */
     async getAllUsersUnfiltered() {
-        const res = await db_1.pool.query(`SELECT id, username, name, mobile_number, role, is_active, created_at
+        const res = await db_1.pool.query(`SELECT id, username, name, phone, role, is_active, created_at
      FROM users`);
         return res.rows;
     }
@@ -42,7 +42,7 @@ class AdminService {
      * Get all users by role
      */
     async getAllUsers(role) {
-        const res = await db_1.pool.query(`SELECT id, username, name, mobile_number, is_active, created_at
+        const res = await db_1.pool.query(`SELECT id, username, name, phone, is_active, created_at
        FROM users
        WHERE role = $1`, [role]);
         return res.rows;
@@ -51,7 +51,7 @@ class AdminService {
      * Get single user by ID and role
      */
     async getUserById(id, role) {
-        const res = await db_1.pool.query(`SELECT id, username, name, mobile_number, is_active, created_at
+        const res = await db_1.pool.query(`SELECT id, username, name, phone, is_active, created_at
        FROM users
        WHERE id = $1 AND role = $2`, [id, role]);
         if (!res.rowCount)

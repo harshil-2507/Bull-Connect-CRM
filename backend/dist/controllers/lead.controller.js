@@ -5,21 +5,22 @@ const lead_service_1 = require("../services/lead.service");
 const service = new lead_service_1.LeadService();
 const createLead = async (req, res) => {
     try {
-        const { name, phone, taluka, district, geo_state, campaign_id } = req.body;
-        if (!name || !phone || !campaign_id) {
+        const { farmer_name, phone_number, village, taluka, district, state, campaign_id } = req.body;
+        if (!farmer_name || !phone_number || !campaign_id) {
             return res.status(400).json({
-                error: "name, phone and campaign_id are required",
+                error: "farmer_name, phone_number and campaign_id are required",
             });
         }
-        // ALWAYS enforce lead_status = "UNASSIGNED"
+        // ALWAYS enforce status = "NEW"
         const lead = await service.createLead({
-            name,
-            phone,
+            farmer_name,
+            phone_number,
+            village,
             taluka,
             district,
-            geo_state,
-            campaign_id, // client can specify campaign_id, but lead_status is server-side enforced
-            lead_status: "UNASSIGNED", // server-side enforced
+            state,
+            campaign_id,
+            status: "NEW", // server-side enforced
         });
         res.status(201).json(lead);
     }
