@@ -39,11 +39,11 @@ class LeadStateService {
         return (0, transactions_1.withTransaction)(async (tx) => {
             // Find the next lead assigned to this telecaller that is not yet called
             const res = await tx.query(`
-        SELECT l.id, l.name, l.phone, l.taluka, l.district, l.geo_state, l.lead_status
+        SELECT l.id, l.farmer_name, l.phone_number, l.village, l.taluka, l.district, l.state, l.status
         FROM leads l
         JOIN tele_assignments t ON t.lead_id = l.id
         WHERE t.user_id = $1
-          AND l.lead_status IN ('UNASSIGNED', 'TELE_PROSPECTING')
+          AND l.status IN ('NEW', 'CALLBACK_SCHEDULED')
         ORDER BY t.assigned_at ASC
         LIMIT 1
         FOR UPDATE SKIP LOCKED

@@ -14,15 +14,16 @@ class LeadService {
         }
         try {
             const res = await db_1.pool.query(`INSERT INTO leads
-       (name, phone, taluka, district, geo_state, lead_status, campaign_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)
+       (farmer_name, phone_number, village, taluka, district, state, status, campaign_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        RETURNING *`, [
-                input.name,
-                input.phone,
+                input.farmer_name,
+                input.phone_number,
+                input.village || null,
                 input.taluka || null,
                 input.district || null,
-                input.geo_state || null,
-                input.lead_status, // removed fallback
+                input.state || null,
+                input.status,
                 input.campaign_id,
             ]);
             return res.rows[0];
@@ -39,12 +40,13 @@ class LeadService {
         const res = await db_1.pool.query(`
     SELECT 
       l.id,
-      l.name,
-      l.phone,
+      l.farmer_name,
+      l.phone_number,
+      l.village,
       l.taluka,
       l.district,
-      l.geo_state,
-      l.lead_status,
+      l.state,
+      l.status,
       l.created_at,
       l.campaign_id,
       c.name AS campaign_name
@@ -58,12 +60,13 @@ class LeadService {
         const res = await db_1.pool.query(`
     SELECT 
       l.id,
-      l.name,
-      l.phone,
+      l.farmer_name,
+      l.phone_number,
+      l.village,
       l.taluka,
       l.district,
-      l.geo_state,
-      l.lead_status,
+      l.state,
+      l.status,
       l.created_at,
       l.campaign_id,
       c.name AS campaign_name
