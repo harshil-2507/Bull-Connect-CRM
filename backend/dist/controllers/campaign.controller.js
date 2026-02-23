@@ -17,7 +17,7 @@ const createCampaign = async (req, res) => {
             description,
             start_date,
             end_date,
-            created_by: Number(req.user.id),
+            created_by: req.user.id,
         });
         res.status(201).json(campaign);
     }

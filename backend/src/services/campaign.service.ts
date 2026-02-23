@@ -7,7 +7,7 @@ export type CampaignInput = {
   description?: string;
   start_date?: string;
   end_date?: string;
-  created_by: number;
+  created_by: string;
 };
 
 export class CampaignService {
