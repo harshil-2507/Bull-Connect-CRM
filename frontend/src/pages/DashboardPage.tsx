@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../context/useAuth";
-import type { Campaign, Lead, User } from "../types";
+import type { Lead, User } from "../types";
 
 interface CampaignStat {
   id: number;
@@ -13,7 +13,6 @@ export function DashboardPage() {
   const { token } = useAuth();
 
   const [users, setUsers] = useState<User[]>([]);
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [campaignStats, setCampaignStats] = useState<CampaignStat[]>([]);
   const [leads, setLeads] = useState<Lead[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -21,15 +20,13 @@ export function DashboardPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [usersResult, campaignsResult, statsResult, leadsResult] = await Promise.all([
+        const [usersResult, statsResult, leadsResult] = await Promise.all([
           api.get<User[]>("/admin/users", token),
-          api.get<{ data: Campaign[] }>("/campaigns?page=1&limit=5", token),
           api.get<CampaignStat[]>("/campaigns/stats", token),
           api.get<Lead[]>("/leads", token),
         ]);
 
         setUsers(usersResult);
-        setCampaigns(campaignsResult.data);
         setCampaignStats(statsResult);
         setLeads(leadsResult);
       } catch (err) {
@@ -43,7 +40,6 @@ export function DashboardPage() {
   const activeUsers = users.filter((user) => user.is_active).length;
   const retentionRate = users.length ? ((activeUsers / users.length) * 100).toFixed(1) : "0.0";
 
-  const campaignMap = new Map(campaigns.map((campaign) => [campaign.id, campaign.name]));
   const topLeads = leads.slice(0, 4);
 
   const totalLeadCount = campaignStats.reduce((sum, item) => sum + Number(item.total_leads || 0), 0);
