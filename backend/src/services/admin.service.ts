@@ -8,7 +8,7 @@ interface CreateUserInput {
   username: string;
   password: string;
   name: string;
-  mobile_number: string;
+  phone: string;
   adminId: string; // for audit
   role: Role;
 }
@@ -33,13 +33,13 @@ export class AdminService {
 
       await tx.query(
         `INSERT INTO users
-         (username, password, name, mobile_number, role)
+         (username, password_hash, name, phone, role)
          VALUES ($1,$2,$3,$4,$5)`,
         [
           input.username,
           hashedPassword,
           input.name,
-          input.mobile_number,
+          input.phone,
           input.role,
         ]
       );
@@ -51,7 +51,7 @@ export class AdminService {
  */
 async getAllUsersUnfiltered() {
   const res = await pool.query(
-    `SELECT id, username, name, mobile_number, role, is_active, created_at
+    `SELECT id, username, name, phone, role, is_active, created_at
      FROM users`
   );
   return res.rows;
@@ -62,7 +62,7 @@ async getAllUsersUnfiltered() {
    */
   async getAllUsers(role: Role) {
     const res = await pool.query(
-      `SELECT id, username, name, mobile_number, is_active, created_at
+      `SELECT id, username, name, phone, is_active, created_at
        FROM users
        WHERE role = $1`,
       [role]
@@ -75,7 +75,7 @@ async getAllUsersUnfiltered() {
    */
   async getUserById(id: string, role: Role) {
     const res = await pool.query(
-      `SELECT id, username, name, mobile_number, is_active, created_at
+      `SELECT id, username, name, phone, is_active, created_at
        FROM users
        WHERE id = $1 AND role = $2`,
       [id, role]
@@ -88,7 +88,7 @@ async getAllUsersUnfiltered() {
   /**
    * Update user by ID and role
    */
-  async updateUser(id: string, updates: Partial<{ name: string; mobile_number: string; is_active: boolean }>, role: Role) {
+  async updateUser(id: string, updates: Partial<{ name: string; phone: string; is_active: boolean }>, role: Role) {
     await withTransaction(async (tx) => {
       const exists = await tx.query(
         "SELECT id FROM users WHERE id = $1 AND role = $2",

@@ -9,19 +9,20 @@ export class TelecallerService {
       `
       SELECT 
         l.id,
-        l.name,
-        l.phone,
+        l.farmer_name,
+        l.phone_number,
+        l.village,
         l.taluka,
         l.district,
-        l.geo_state,
-        l.lead_status,
+        l.state,
+        l.status,
         l.created_at,
         t.assigned_at
       FROM tele_assignments t
       JOIN leads l ON l.id = t.lead_id
       WHERE 
         t.user_id = $1
-        AND l.lead_status = 'TELE_PROSPECTING'
+        AND l.status IN ('NEW', 'CALLBACK_SCHEDULED', 'INTERESTED')
       ORDER BY t.assigned_at ASC
       `,
       [telecallerId]
