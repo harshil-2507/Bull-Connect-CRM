@@ -9,7 +9,7 @@ TOKEN=$(curl -s -X POST "$API_URL/login" \
   -d '{"username":"admin@bull","password":"adminPWD@Bull26"}' | jq -r '.token')
 
 if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
-  echo "Login failed!"
+  echo "Login failed!"still 
   exit 1
 fi
 
