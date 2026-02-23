@@ -40,9 +40,9 @@ export function LeadsPage() {
           <tbody>
             {leads.map((lead) => (
               <tr key={lead.id}>
-                <td>{lead.name}</td>
-                <td>{lead.phone}</td>
-                <td>{lead.lead_status}</td>
+                <td>{lead.farmer_name}</td>
+                <td>{lead.phone_number}</td>
+                <td>{lead.status}</td>
                 <td>{lead.district || "-"}</td>
                 <td>{lead.taluka || "-"}</td>
               </tr>

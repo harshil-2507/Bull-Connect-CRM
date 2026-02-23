@@ -20,7 +20,7 @@ export interface User {
   id: number;
   username: string;
   name: string;
-  mobile_number: string;
+  phone: string;
   role: Exclude<Role, "ADMIN">;
   is_active: boolean;
   created_at: string;
@@ -52,12 +52,14 @@ export interface PaginatedResponse<T> {
 
 export interface Lead {
   id: number;
-  name: string;
-  phone: string;
+  farmer_name: string;
+  phone_number: string;
+  village: string | null;
   taluka: string | null;
   district: string | null;
-  geo_state: string | null;
+  state: string | null;
   campaign_id: number;
-  lead_status: string;
+  status: string;
   created_at: string;
+  campaign_name?: string;
 }

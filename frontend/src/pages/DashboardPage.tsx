@@ -111,13 +111,13 @@ export function DashboardPage() {
             <tbody>
               {topLeads.map((lead) => (
                 <tr key={lead.id}>
-                  <td className="lead-name-cell">{lead.name}</td>
+                  <td className="lead-name-cell">{lead.farmer_name}</td>
                   <td>
-                    <span className={`status-dot ${lead.lead_status === "UNASSIGNED" ? "pending" : "active"}`} />
-                    {lead.lead_status === "UNASSIGNED" ? "Pending" : "Active"}
+                    <span className={`status-dot ${lead.status === "NEW" ? "pending" : "active"}`} />
+                    {lead.status === "NEW" ? "Pending" : "Active"}
                   </td>
-                  <td>{campaignMap.get(lead.campaign_id) || "-"}</td>
-                  <td>{lead.geo_state || "Direct"}</td>
+                  <td>{lead.campaign_name || "-"}</td>
+                  <td>{lead.state || "Direct"}</td>
                   <td>{formatTimestamp(lead.created_at)}</td>
                 </tr>
               ))}
@@ -158,8 +158,8 @@ export function DashboardPage() {
               <div key={`activity-${lead.id}`} className="activity-item">
                 <div className="activity-dot" />
                 <div>
-                  <p className="activity-title">Lead updated: {lead.name}</p>
-                  <p className="activity-sub">{lead.lead_status} • {formatTimestamp(lead.created_at)}</p>
+                  <p className="activity-title">Lead updated: {lead.farmer_name}</p>
+                  <p className="activity-sub">{lead.status} • {formatTimestamp(lead.created_at)}</p>
                 </div>
               </div>
             ))}

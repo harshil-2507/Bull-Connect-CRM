@@ -15,7 +15,7 @@ export function UsersPage() {
     username: "",
     password: "",
     name: "",
-    mobile_number: "",
+    phone: "",
   });
 
   const loadUsers = async () => {
@@ -48,7 +48,7 @@ export function UsersPage() {
     event.preventDefault();
     try {
       await api.post<{ message: string }>("/admin/users", newUser, token);
-      setNewUser({ role: "MANAGER", username: "", password: "", name: "", mobile_number: "" });
+      setNewUser({ role: "MANAGER", username: "", password: "", name: "", phone: "" });
       await loadUsers();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to create user");
@@ -105,8 +105,8 @@ export function UsersPage() {
           <label>
             Mobile Number
             <input
-              value={newUser.mobile_number}
-              onChange={(e) => setNewUser((prev) => ({ ...prev, mobile_number: e.target.value }))}
+              value={newUser.phone}
+              onChange={(e) => setNewUser((prev) => ({ ...prev, phone: e.target.value }))}
               required
             />
           </label>
@@ -155,7 +155,7 @@ export function UsersPage() {
                   <td>{user.name}</td>
                   <td>{user.username}</td>
                   <td>{user.role}</td>
-                  <td>{user.mobile_number}</td>
+                  <td>{user.phone}</td>
                   <td>{user.is_active ? "Active" : "Inactive"}</td>
                 </tr>
               ))}
