@@ -8,10 +8,37 @@ import { login } from "./controllers/auth.controller";
   import adminRoutes from "./routes/admin.routes";
   import leadRoutes from "./routes/lead.routes";
   import campaignRoutes from "./routes/campaign.routes";
+  import { env } from "./config/env";
 
   const app = express();
 
+    app.use((req, res, next) => {
+      const origin = req.headers.origin;
+      const allowedOrigin = env.CORS_ORIGIN;
+
+      if (allowedOrigin === "*" && origin) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Vary", "Origin");
+      } else if (allowedOrigin && origin === allowedOrigin) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Vary", "Origin");
+      }
+
+      res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+      res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+      if (req.method === "OPTIONS") {
+        return res.sendStatus(204);
+      }
+
+      next();
+    });
+
   app.use(express.json());
+
+    app.get("/health", (_req, res) => {
+      res.json({ ok: true });
+    });
 
   app.post("/login", login);
   app.use(auth);

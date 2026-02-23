@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { performance } from "perf_hooks";
 import { CampaignService } from "../services/campaign.service";
-import { AssignmentService } from "../services/Bulkassignment.service";
+import { AssignmentService } from "../services/bulkAssignment.service";
 
 
 const service = new CampaignService();
