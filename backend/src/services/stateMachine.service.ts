@@ -8,23 +8,28 @@
  * NEW → ASSIGNED → CONTACTED → (FIELD_REQUESTED | DROPPED)
  */
 
-export type LeadStatus = 
-  | 'NEW'
-  | 'ASSIGNED'
-  | 'CONTACTED'
-  | 'FIELD_REQUESTED'
-  | 'DROPPED';
+import { LeadState } from "../models/lead.model";
 
 /**
  * Allowed state transitions map
  * Terminal states (FIELD_REQUESTED, DROPPED) have no outgoing transitions
  */
-export const ALLOWED_TRANSITIONS: Record<LeadStatus, LeadStatus[]> = {
+export const ALLOWED_TRANSITIONS: Record<LeadState, LeadState[]> = {
   NEW: ['ASSIGNED'],
+
   ASSIGNED: ['CONTACTED'],
-  CONTACTED: ['FIELD_REQUESTED', 'DROPPED'],
-  FIELD_REQUESTED: [], // Terminal state
-  DROPPED: [], // Terminal state
+
+  CONTACTED: ['VISIT_REQUESTED', 'DROPPED'],
+
+  VISIT_REQUESTED: ['VISIT_ASSIGNED'],
+
+  VISIT_ASSIGNED: ['VISIT_COMPLETED'],
+
+  VISIT_COMPLETED: ['SOLD', 'DROPPED'],
+
+  SOLD: [],
+
+  DROPPED: [],
 };
 
 /**
@@ -32,8 +37,8 @@ export const ALLOWED_TRANSITIONS: Record<LeadStatus, LeadStatus[]> = {
  * @throws Error if transition is invalid
  */
 export function validateLeadTransition(
-  currentStatus: LeadStatus,
-  nextStatus: LeadStatus
+  currentStatus: LeadState,
+  nextStatus: LeadState
 ): void {
   // Same status is always allowed (idempotent)
   if (currentStatus === nextStatus) {
@@ -53,14 +58,14 @@ export function validateLeadTransition(
 /**
  * Checks if a status is terminal (no further transitions allowed)
  */
-export function isTerminalStatus(status: LeadStatus): boolean {
+export function isTerminalStatus(status: LeadState): boolean {
   return ALLOWED_TRANSITIONS[status].length === 0;
 }
 
 /**
  * Gets all allowed next states for a given status
  */
-export function getAllowedNextStates(status: LeadStatus): LeadStatus[] {
+export function getAllowedNextStates(status: LeadState): LeadState[] {
   return ALLOWED_TRANSITIONS[status];
 }
 
@@ -69,7 +74,7 @@ export function getAllowedNextStates(status: LeadStatus): LeadStatus[] {
  * @throws Error if business rules are violated
  */
 export function validateStatusBusinessRules(
-  nextStatus: LeadStatus,
+  nextStatus: LeadState,
   data: {
     dropReason?: string;
     cropType?: string;
@@ -84,9 +89,9 @@ export function validateStatusBusinessRules(
       }
       break;
 
-    case 'FIELD_REQUESTED':
+    case 'VISIT_REQUESTED':
       if (!data.cropType || !data.acreage) {
-        throw new Error('crop_type and acreage are required for FIELD_REQUESTED status');
+        throw new Error('crop_type and acreage are required for VISIT_REQUESTED status');
       }
       if (data.acreage <= 0) {
         throw new Error('acreage must be greater than 0');
@@ -127,15 +132,15 @@ export type DropReason =
  * Maps call dispositions to potential status changes
  */
 export function getStatusChangeFromDisposition(
-  currentStatus: LeadStatus,
+  currentStatus: LeadState,
   disposition: CallDisposition,
   data?: { cropType?: string; acreage?: number }
-): LeadStatus | null {
+): LeadState | null {
   switch (disposition) {
     case 'INTERESTED':
       // If lead is contacted and has crop info, move to field requested
       if (currentStatus === 'CONTACTED' && data?.cropType && data?.acreage) {
-        return 'FIELD_REQUESTED';
+        return 'VISIT_REQUESTED';
       }
       // Otherwise, just mark as contacted
       return currentStatus === 'ASSIGNED' ? 'CONTACTED' : null;
@@ -160,15 +165,15 @@ export function getStatusChangeFromDisposition(
  * Status requirements for assignment
  */
 export const STATUS_REQUIREMENTS = {
-  TELECALLER_CAN_ACCESS: ['ASSIGNED', 'CONTACTED'] as LeadStatus[],
-  FIELD_EXEC_CAN_ACCESS: ['FIELD_REQUESTED'] as LeadStatus[],
-  FIELD_MANAGER_CAN_ACCESS: ['FIELD_REQUESTED', 'CONTACTED'] as LeadStatus[],
+  TELECALLER_CAN_ACCESS: ['ASSIGNED', 'CONTACTED'] as LeadState[],
+  FIELD_EXEC_CAN_ACCESS: ['VISIT_REQUESTED'] as LeadState[],
+  FIELD_MANAGER_CAN_ACCESS: ['VISIT_REQUESTED', 'CONTACTED'] as LeadState[],
 } as const;
 
 /**
  * Checks if a role can access leads in a given status
  */
-export function canRoleAccessStatus(role: string, status: LeadStatus): boolean {
+export function canRoleAccessStatus(role: string, status: LeadState): boolean {
   switch (role) {
     case 'TELECALLER':
       return STATUS_REQUIREMENTS.TELECALLER_CAN_ACCESS.includes(status);

@@ -21,6 +21,14 @@ export async function assignToTelecaller(
 }
 
 /**
+ * MANAGER: Get all telecallers
+ */
+export async function getAllTelecallers(req: Request, res: Response) {
+  const telecallers = await service.getAllTelecallers();
+  res.status(200).json(telecallers);
+}
+
+/**
  * MANAGER: Get all telecaller assignments
  */
 export async function getAllTeleAssignments(req: Request, res: Response) {

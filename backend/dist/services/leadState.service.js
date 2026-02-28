@@ -41,7 +41,7 @@ class LeadStateService {
             const res = await tx.query(`
         SELECT l.id, l.farmer_name, l.phone_number, l.village, l.taluka, l.district, l.state, l.status
         FROM leads l
-        JOIN tele_assignments t ON t.lead_id = l.id
+        JOIN assignments t ON t.lead_id = l.id
         WHERE t.user_id = $1
           AND l.status IN ('NEW', 'CALLBACK_SCHEDULED')
         ORDER BY t.assigned_at ASC
@@ -51,11 +51,11 @@ class LeadStateService {
             if (!res.rowCount)
                 return null;
             const lead = res.rows[0];
-            // Lock + update the lead state to TELE_PROSPECTING if it was UNASSIGNED
-            if (lead.lead_status === "UNASSIGNED") {
-                (0, leadStateMachine_1.assertValidTransition)("UNASSIGNED", "TELE_PROSPECTING");
-                await this.leadRepo.updateState(tx, lead.id, "TELE_PROSPECTING");
-                lead.lead_status = "TELE_PROSPECTING";
+            // Lock + update the lead state to TELE_PROSPECTING if it was NEW
+            if (lead.status === "NEW") {
+                (0, leadStateMachine_1.assertValidTransition)("NEW", "ASSIGNED");
+                await this.leadRepo.updateState(tx, lead.id, "ASSIGNED");
+                lead.status = "ASSIGNED";
             }
             return lead;
         });

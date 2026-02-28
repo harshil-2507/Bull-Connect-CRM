@@ -37,7 +37,15 @@ export default function Layout() {
           ),
         }}
       />
-
+    <Tabs.Screen
+  name="add-lead"
+  options={{
+    title: "Add Lead",
+    tabBarIcon: ({ color, size }) => (
+      <Feather name="plus-circle" size={size} color={color} />
+    ),
+  }}
+/>
       <Tabs.Screen
         name="profile"
         options={{

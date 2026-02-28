@@ -11,7 +11,7 @@ export class AssignmentRepository {
   ) {
     await tx.query(
       `
-      INSERT INTO tele_assignments (lead_id, user_id, assigned_by)
+      INSERT INTO assignments (lead_id, user_id, assigned_by)
       VALUES ($1, $2, $3)
       `,
       [leadId, telecallerId, managerId]
@@ -19,12 +19,12 @@ export class AssignmentRepository {
   }
 
    async getAllTeleAssignments() {
-    const res = await pool.query(`SELECT * FROM tele_assignments ORDER BY id DESC`);
+    const res = await pool.query(`SELECT * FROM assignments ORDER BY id DESC`);
     return res.rows;
   }
 
   async getTeleAssignmentById(id: string) {
-    const res = await pool.query(`SELECT * FROM tele_assignments WHERE id = $1`, [id]);
+    const res = await pool.query(`SELECT * FROM assignments WHERE id = $1`, [id]);
     return res.rows[0];
   }
   async assignFieldExec(

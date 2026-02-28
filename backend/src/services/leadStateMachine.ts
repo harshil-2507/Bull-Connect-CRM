@@ -13,8 +13,14 @@ export const ALLOWED_TRANSITIONS: Record<LeadState, LeadState[]> = {
   DROPPED: [],
 };
 
-export function assertValidTransition(from: LeadState, to: LeadState) {
-  if (!ALLOWED_TRANSITIONS[from].includes(to)) {
+export function ValidLeadTransition(from: LeadState, to: LeadState) {
+  const allowed = ALLOWED_TRANSITIONS[from];
+
+  if (!allowed) {
+    throw new Error(`Invalid current state: ${from}. No transitions defined.`);
+  }
+
+  if (!allowed.includes(to)) {
     throw new Error(`Invalid transition: ${from} → ${to}`);
   }
 }

@@ -19,7 +19,7 @@ class TelecallerService {
         l.status,
         l.created_at,
         t.assigned_at
-      FROM tele_assignments t
+      FROM assignments t
       JOIN leads l ON l.id = t.lead_id
       WHERE 
         t.user_id = $1
