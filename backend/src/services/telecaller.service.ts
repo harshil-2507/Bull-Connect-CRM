@@ -4,7 +4,7 @@ export class TelecallerService {
   /**
    * Get Telecaller Work Queue (Phase 1 - FIFO)
    */
-  async getWorkQueue(telecallerId: number) {
+  async getWorkQueue(telecallerId: String) {
     const res = await pool.query(
       `
       SELECT 
@@ -18,11 +18,10 @@ export class TelecallerService {
         l.status,
         l.created_at,
         t.assigned_at
-      FROM tele_assignments t
+      FROM assignments t
       JOIN leads l ON l.id = t.lead_id
       WHERE 
         t.user_id = $1
-        AND l.status IN ('NEW', 'CALLBACK_SCHEDULED', 'INTERESTED')
       ORDER BY t.assigned_at ASC
       `,
       [telecallerId]

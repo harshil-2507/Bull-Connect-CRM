@@ -40,14 +40,14 @@ export class AssignmentService {
           SELECT id FROM leads
           WHERE id = ANY($1)
           AND campaign_id = $2
-          AND lead_status = 'UNASSIGNED'
+          AND status = 'NEW'
         `;
         values = [options.leadIds, campaignId];
       } else if (options.limit) {
         leadsQuery = `
           SELECT id FROM leads
           WHERE campaign_id = $1
-          AND lead_status = 'UNASSIGNED'
+          AND status = 'NEW'
           ORDER BY created_at ASC
           LIMIT $2
           FOR UPDATE SKIP LOCKED
@@ -76,7 +76,7 @@ export class AssignmentService {
 
       await client.query(
         `
-        INSERT INTO tele_assignments
+        INSERT INTO assignments
         (lead_id, user_id, assigned_by)
         VALUES ${placeholders}
         `,
@@ -86,7 +86,7 @@ export class AssignmentService {
       await client.query(
         `
         UPDATE leads
-        SET lead_status = 'TELE_PROSPECTING'
+        SET status = 'ASSIGNED'
         WHERE id = ANY($1)
         `,
         [leadIdsToAssign]

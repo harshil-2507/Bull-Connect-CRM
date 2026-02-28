@@ -17,7 +17,7 @@ CREATE TABLE lead_campaigns (
 );
 
 -- Telecaller ownership during TELE_PROSPECTING
-CREATE TABLE tele_assignments (
+CREATE TABLE assignments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
     lead_id UUID NOT NULL REFERENCES leads(id)

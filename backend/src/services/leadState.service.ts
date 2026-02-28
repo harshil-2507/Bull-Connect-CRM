@@ -2,10 +2,8 @@ import { withTransaction } from "../db/transactions";
 import { LeadRepository } from "../repositories/lead.repo";
 import { AssignmentRepository } from "../repositories/assignment.repo";
 import { ActionRepository } from "../repositories/action.repo";
-import {
-  LeadState,
-  assertValidTransition,
-} from "./leadStateMachine";
+import { ValidLeadTransition } from "./leadStateMachine";
+import { LeadState } from "../models/lead.model";
 
 export class LeadStateService {
   private leadRepo = new LeadRepository();
@@ -15,14 +13,14 @@ export class LeadStateService {
   async assignTelecaller(leadId: string, telecallerId: string, managerId: string) {
     await withTransaction(async (tx) => {
       const lead = await this.leadRepo.lock(tx, leadId);
-      assertValidTransition(lead.lead_status, "TELE_PROSPECTING");
+      ValidLeadTransition(lead.status, "ASSIGNED");
 
       const res = await tx.query(`SELECT id, role FROM users WHERE id = $1`, [telecallerId]);
       if (!res.rowCount) throw new Error("Telecaller not found");
       if (res.rows[0].role !== "TELECALLER") throw new Error("User is not a telecaller");
 
       await this.assignRepo.assignTelecaller(tx, leadId, telecallerId, managerId);
-      await this.leadRepo.updateState(tx, leadId, "TELE_PROSPECTING");
+      await this.leadRepo.updateState(tx, leadId, "ASSIGNED", telecallerId);
     });
   }
 
@@ -44,7 +42,7 @@ export class LeadStateService {
         `
         SELECT l.id, l.farmer_name, l.phone_number, l.village, l.taluka, l.district, l.state, l.status
         FROM leads l
-        JOIN tele_assignments t ON t.lead_id = l.id
+        JOIN assignments t ON t.lead_id = l.id
         WHERE t.user_id = $1
           AND l.status IN ('NEW', 'CALLBACK_SCHEDULED')
         ORDER BY t.assigned_at ASC
@@ -63,14 +61,14 @@ export class LeadStateService {
         taluka: string | null;
         district: string | null;
         geo_state: string | null;
-        lead_status: LeadState;
+        status: LeadState;
       };
 
       // Lock + update the lead state to TELE_PROSPECTING if it was UNASSIGNED
-      if (lead.lead_status === "UNASSIGNED") {
-        assertValidTransition("UNASSIGNED", "TELE_PROSPECTING");
-        await this.leadRepo.updateState(tx, lead.id, "TELE_PROSPECTING");
-        lead.lead_status = "TELE_PROSPECTING";
+      if (lead.status === "NEW") {
+        ValidLeadTransition("NEW", "ASSIGNED");
+        await this.leadRepo.updateState(tx, lead.id, "ASSIGNED");
+        lead.status = "ASSIGNED";
       }
 
       return lead;
@@ -96,7 +94,7 @@ export class LeadStateService {
 
     // 2️⃣ Handle transitions
     if (disposition === "INTERESTED") {
-      assertValidTransition(lead.lead_status, "FIELD_VISIT_PENDING");
+      ValidLeadTransition(lead.status, "VISIT_REQUESTED");
 
       // 🔥 Create field request entry
       await this.actionRepo.requestFieldVisit(
@@ -106,17 +104,18 @@ export class LeadStateService {
         "UNKNOWN" // we can improve this later
       );
 
-      await this.leadRepo.updateState(tx, leadId, "FIELD_VISIT_PENDING");
+      await this.leadRepo.updateState(tx, leadId, "VISIT_REQUESTED");
     }
 
     if (disposition === "NOT_INTERESTED") {
-      assertValidTransition(lead.lead_status, "DROPPED");
+      ValidLeadTransition(lead.status, "DROPPED");
       await this.actionRepo.drop(tx, leadId, telecallerId, notes ?? "No reason provided");
       await this.leadRepo.updateState(tx, leadId, "DROPPED");
     }
 
     if (disposition === "FOLLOW_UP") {
-      assertValidTransition(lead.lead_status, "TELE_PROSPECTING");
+      ValidLeadTransition(lead.status, "CONTACTED");
+      await this.leadRepo.updateState(tx, leadId, "CONTACTED");
     }
   });
 }
@@ -206,7 +205,7 @@ export class LeadStateService {
   ) {
     await withTransaction(async (tx) => {
       const lead = await this.leadRepo.lock(tx, leadId);
-      assertValidTransition(lead.lead_status, status);
+      ValidLeadTransition(lead.status, status === "CONVERTED" ? "VISIT_COMPLETED" : "DROPPED");
 
       await this.actionRepo.verify(
         tx,
@@ -217,7 +216,7 @@ export class LeadStateService {
         status
       );
 
-      await this.leadRepo.updateState(tx, leadId, status);
+      await this.leadRepo.updateState(tx, leadId, status === "CONVERTED" ? "VISIT_COMPLETED" : "DROPPED");
     });
   }
 
@@ -235,6 +234,21 @@ export class LeadStateService {
          ORDER BY fa.assigned_at DESC`,
         [fieldExecId]
       );
+      return res.rows;
+    });
+  }
+
+  // get all telecallers
+
+  async getAllTelecallers() {
+    return withTransaction(async (tx) => {
+      const res = await tx.query(
+        `SELECT id, username, name, role, phone, email, created_at
+         FROM users
+         WHERE role = 'TELECALLER'
+         ORDER BY name ASC`
+      );
+
       return res.rows;
     });
   }

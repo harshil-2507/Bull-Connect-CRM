@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { roleGuard } from "../middlewares/roleGuard";
-import { assignToTelecaller, getAllTeleAssignments, getTeleAssignmentById } from "../controllers/manager.controller";
+import { assignToTelecaller, getAllTeleAssignments, getTeleAssignmentById, getAllTelecallers } from "../controllers/manager.controller";
 
 const router = Router();
 
@@ -10,6 +10,7 @@ const router = Router();
 router.use(roleGuard(["MANAGER"]));
 
 // test
+router.get("/telecallers", getAllTelecallers);
 
 router.post("/assign-telecaller", assignToTelecaller);
 

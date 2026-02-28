@@ -27,7 +27,7 @@ class AssignmentService {
           SELECT id FROM leads
           WHERE id = ANY($1)
           AND campaign_id = $2
-          AND lead_status = 'UNASSIGNED'
+          AND status = 'UNASSIGNED'
         `;
                 values = [options.leadIds, campaignId];
             }
@@ -35,7 +35,7 @@ class AssignmentService {
                 leadsQuery = `
           SELECT id FROM leads
           WHERE campaign_id = $1
-          AND lead_status = 'UNASSIGNED'
+          AND status = 'UNASSIGNED'
           ORDER BY created_at ASC
           LIMIT $2
           FOR UPDATE SKIP LOCKED
@@ -60,13 +60,13 @@ class AssignmentService {
             })
                 .join(",");
             await client.query(`
-        INSERT INTO tele_assignments
+        INSERT INTO assignments
         (lead_id, user_id, assigned_by)
         VALUES ${placeholders}
         `, insertValues);
             await client.query(`
         UPDATE leads
-        SET lead_status = 'TELE_PROSPECTING'
+        SET status = 'TELE_PROSPECTING'
         WHERE id = ANY($1)
         `, [leadIdsToAssign]);
             await client.query("COMMIT");

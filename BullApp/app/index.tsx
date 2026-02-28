@@ -9,21 +9,61 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 export default function Index() {
   const [secure, setSecure] = useState(true);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const router = useRouter();
 
-  const handleLogin = () => {
-    if (username === "telecaller" && password === "pass123") {
-      router.push("/telecaller");
-    } else {
-      Alert.alert("Login Failed", "Invalid username or password");
+  const handleLogin = async () => {
+    if (!username.trim() || !password.trim()) {
+      Alert.alert("Error", "Please enter username and password");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        "https://bull-connect-crm.onrender.com/login",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            // ⚠️ If backend expects "name" instead of "username",
+            // change this to: name: username.trim()
+            username: username.trim(),
+            password: password.trim(),
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid credentials");
+      }
+
+      // ✅ Store token securely
+      await SecureStore.setItemAsync("authToken", data.token);
+      await SecureStore.setItemAsync("user", JSON.stringify(data.user));
+
+      // Navigate and prevent going back to login
+      router.replace("/telecaller");
+    } catch (error: any) {
+      Alert.alert("Login Failed", error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,6 +110,7 @@ export default function Index() {
               placeholder="Username"
               value={username}
               onChangeText={setUsername}
+              autoCapitalize="none"
               placeholderTextColor="#9ca3af"
               className="bg-white h-12 rounded-lg border border-gray-200 pl-11 pr-4 shadow-sm"
             />
@@ -112,13 +153,22 @@ export default function Index() {
           {/* Sign In Button */}
           <TouchableOpacity
             onPress={handleLogin}
-            className="bg-[#13ec49] mt-10 py-4 rounded-lg shadow-lg active:scale-95"
+            disabled={loading}
+            className={`mt-10 py-4 rounded-lg shadow-lg ${
+              loading ? "bg-green-300" : "bg-[#13ec49]"
+            }`}
           >
             <View className="flex-row items-center justify-center">
-              <Text className="font-bold text-lg text-black mr-2">
-                Sign In
-              </Text>
-              <Feather name="arrow-right" size={18} color="black" />
+              {loading ? (
+                <ActivityIndicator color="black" />
+              ) : (
+                <>
+                  <Text className="font-bold text-lg text-black mr-2">
+                    Sign In
+                  </Text>
+                  <Feather name="arrow-right" size={18} color="black" />
+                </>
+              )}
             </View>
           </TouchableOpacity>
         </View>

@@ -265,8 +265,8 @@ export class CampaignService {
     };
 
     for (const lead of leadsRes.rows) {
-      if (pipeline[lead.lead_status]) {
-        pipeline[lead.lead_status].push(lead);
+      if (pipeline[lead.status]) {
+        pipeline[lead.status].push(lead);
       }
     }
 
