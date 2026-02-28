@@ -13,11 +13,13 @@ import { withTransaction } from '../db/transactions';
 import {
   CallDisposition,
   DropReason,
-  LeadStatus,
   validateLeadTransition,
   validateStatusBusinessRules,
   getStatusChangeFromDisposition,
 } from './stateMachine.service';
+import { LeadState } from '../models/lead.model';
+
+type LeadStatus = LeadState;
 
 export interface CallLogInput {
   leadId: string;
@@ -47,9 +49,9 @@ export interface CallLogResult {
  * Records a call attempt and updates lead accordingly
  * Uses database transaction to ensure atomicity
  */
-export async function recordCallLog(input: CallLogInput): Promise<CallLogResult> {
-  return withTransaction(async (tx: PoolClient) => {
-    // 1. Get current lead state (with row lock)
+ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult> {
+   return withTransaction(async (tx: PoolClient) => {
+     // 1. Get current lead state (with row lock)
     const leadResult = await tx.query(
       `SELECT id, status, attempt_count, assigned_to FROM leads WHERE id = $1 FOR UPDATE`,
       [input.leadId]
@@ -73,9 +75,9 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
     }
 
     // 4. Determine new status based on disposition
-    let newStatus = currentStatus;
+    let newStatus = currentStatus as LeadStatus;
     const statusChange = getStatusChangeFromDisposition(
-      currentStatus,
+      currentStatus as LeadState,
       input.disposition,
       { cropType: input.cropType, acreage: input.acreage }
     );
@@ -83,16 +85,16 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
     if (statusChange) {
       // First call on ASSIGNED lead moves to CONTACTED
       if (currentStatus === 'ASSIGNED') {
-        newStatus = 'CONTACTED';
+        newStatus = 'CONTACTED' as LeadStatus;
       } else {
-        newStatus = statusChange;
+        newStatus = statusChange as LeadStatus;
       }
 
       // Validate transition
-      validateLeadTransition(currentStatus, newStatus);
+      validateLeadTransition(currentStatus as LeadState, newStatus as LeadState);
 
       // Validate business rules
-      validateStatusBusinessRules(newStatus, {
+      validateStatusBusinessRules(newStatus as LeadState, {
         cropType: input.cropType,
         acreage: input.acreage,
         dropReason: input.dropReason,
@@ -133,7 +135,10 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
 
     // Update status if changed
     if (newStatus !== currentStatus) {
+      // update legacy status column AND canonical lead_status_v2 (additive)
       updateFields.push(`status = $${paramIndex++}`);
+      updateValues.push(newStatus);
+      updateFields.push(`lead_status_v2 = $${paramIndex++}`);
       updateValues.push(newStatus);
     }
 
@@ -143,8 +148,8 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
       updateValues.push(input.nextCallbackAt);
     }
 
-    // Update crop info for FIELD_REQUESTED
-    if (newStatus === 'FIELD_REQUESTED') {
+    // Update crop info for VISIT_REQUESTED (was FIELD_REQUESTED)
+    if (newStatus === 'VISIT_REQUESTED') {
       updateFields.push(`crop_type = $${paramIndex++}`);
       updateValues.push(input.cropType);
       updateFields.push(`acreage = $${paramIndex++}`);
@@ -175,6 +180,26 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
 
     // 7. Create audit log entry for status change
     if (newStatus !== currentStatus) {
+      // Insert into canonical lead_status_history for transition audit
+      await tx.query(
+        `INSERT INTO lead_status_history (
+          lead_id,
+          changed_by,
+          from_status,
+          to_status,
+          metadata,
+          created_at
+        ) VALUES ($1, $2, $3, $4, $5, NOW())`,
+        [
+          input.leadId,
+          input.userId,
+          currentStatus,
+          newStatus,
+          JSON.stringify({ disposition: input.disposition, call_log_id: callLogId }),
+        ]
+      );
+
+      // Also keep existing audit_logs insert for compatibility
       await tx.query(
         `INSERT INTO audit_logs (
           user_id,
@@ -189,12 +214,7 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
           'LEAD',
           input.leadId,
           'STATUS_CHANGE',
-          JSON.stringify({
-            from: currentStatus,
-            to: newStatus,
-            disposition: input.disposition,
-            call_log_id: callLogId,
-          }),
+          JSON.stringify({ from: currentStatus, to: newStatus, disposition: input.disposition, call_log_id: callLogId }),
         ]
       );
     }

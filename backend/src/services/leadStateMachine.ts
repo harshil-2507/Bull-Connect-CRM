@@ -24,3 +24,8 @@ export function ValidLeadTransition(from: LeadState, to: LeadState) {
     throw new Error(`Invalid transition: ${from} → ${to}`);
   }
 }
+
+// backward-compatible alias
+export function assertValidTransition(from: LeadState, to: LeadState) {
+  return ValidLeadTransition(from, to);
+}

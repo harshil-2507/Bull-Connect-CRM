@@ -36,7 +36,10 @@ const login = async (req, res) => {
             user: {
                 id: user.id,
                 name: user.name,
-                role: user.role
+                role: user.role,
+                phone: user.phone,
+                email: user.email,
+                created_at: user.created_at
             }
         });
         console.log("DB URL:", env_1.env.DATABASE_URL);

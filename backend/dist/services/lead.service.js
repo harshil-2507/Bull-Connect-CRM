@@ -14,16 +14,16 @@ class LeadService {
         }
         try {
             const res = await db_1.pool.query(`INSERT INTO leads
-       (farmer_name, phone_number, village, taluka, district, state, status, campaign_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-       RETURNING *`, [
+         (farmer_name, phone_number, village, taluka, district, state, status, campaign_id)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+         RETURNING *`, [
                 input.farmer_name,
                 input.phone_number,
                 input.village || null,
                 input.taluka || null,
                 input.district || null,
                 input.state || null,
-                input.status,
+                "NEW",
                 input.campaign_id,
             ]);
             return res.rows[0];
@@ -38,42 +38,42 @@ class LeadService {
     }
     async getAllLeads() {
         const res = await db_1.pool.query(`
-    SELECT 
-      l.id,
-      l.farmer_name,
-      l.phone_number,
-      l.village,
-      l.taluka,
-      l.district,
-      l.state,
-      l.status,
-      l.created_at,
-      l.campaign_id,
-      c.name AS campaign_name
-    FROM leads l
-    LEFT JOIN campaigns c ON l.campaign_id = c.id
-    ORDER BY l.created_at DESC
-  `);
+      SELECT 
+        l.id,
+        l.farmer_name,
+        l.phone_number,
+        l.village,
+        l.taluka,
+        l.district,
+        l.state,
+        l.status,
+        l.created_at,
+        l.campaign_id,
+        c.name AS campaign_name
+      FROM leads l
+      LEFT JOIN campaigns c ON l.campaign_id = c.id
+      ORDER BY l.created_at DESC
+    `);
         return res.rows;
     }
     async getLeadById(id) {
         const res = await db_1.pool.query(`
-    SELECT 
-      l.id,
-      l.farmer_name,
-      l.phone_number,
-      l.village,
-      l.taluka,
-      l.district,
-      l.state,
-      l.status,
-      l.created_at,
-      l.campaign_id,
-      c.name AS campaign_name
-    FROM leads l
-    LEFT JOIN campaigns c ON l.campaign_id = c.id
-    WHERE l.id = $1
-    `, [id]);
+      SELECT 
+        l.id,
+        l.farmer_name,
+        l.phone_number,
+        l.village,
+        l.taluka,
+        l.district,
+        l.state,
+        l.status,
+        l.created_at,
+        l.campaign_id,
+        c.name AS campaign_name
+      FROM leads l
+      LEFT JOIN campaigns c ON l.campaign_id = c.id
+      WHERE l.id = $1
+      `, [id]);
         if (!res.rowCount)
             throw new Error("Lead not found");
         return res.rows[0];
