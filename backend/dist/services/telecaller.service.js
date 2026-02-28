@@ -23,7 +23,6 @@ class TelecallerService {
       JOIN leads l ON l.id = t.lead_id
       WHERE 
         t.user_id = $1
-        AND l.status IN ('NEW', 'CALLBACK_SCHEDULED', 'INTERESTED')
       ORDER BY t.assigned_at ASC
       `, [telecallerId]);
         return res.rows;

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.assignToTelecaller = assignToTelecaller;
+exports.getAllTelecallers = getAllTelecallers;
 exports.getAllTeleAssignments = getAllTeleAssignments;
 exports.getTeleAssignmentById = getTeleAssignmentById;
 const leadState_service_1 = require("../services/leadState.service");
@@ -15,6 +16,13 @@ async function assignToTelecaller(req, res) {
     res.status(200).json({
         message: "Lead assigned to telecaller",
     });
+}
+/**
+ * MANAGER: Get all telecallers
+ */
+async function getAllTelecallers(req, res) {
+    const telecallers = await service.getAllTelecallers();
+    res.status(200).json(telecallers);
 }
 /**
  * MANAGER: Get all telecaller assignments

@@ -15,14 +15,14 @@ class LeadStateService {
     async assignTelecaller(leadId, telecallerId, managerId) {
         await (0, transactions_1.withTransaction)(async (tx) => {
             const lead = await this.leadRepo.lock(tx, leadId);
-            (0, leadStateMachine_1.assertValidTransition)(lead.lead_status, "TELE_PROSPECTING");
+            (0, leadStateMachine_1.ValidLeadTransition)(lead.status, "ASSIGNED");
             const res = await tx.query(`SELECT id, role FROM users WHERE id = $1`, [telecallerId]);
             if (!res.rowCount)
                 throw new Error("Telecaller not found");
             if (res.rows[0].role !== "TELECALLER")
                 throw new Error("User is not a telecaller");
             await this.assignRepo.assignTelecaller(tx, leadId, telecallerId, managerId);
-            await this.leadRepo.updateState(tx, leadId, "TELE_PROSPECTING");
+            await this.leadRepo.updateState(tx, leadId, "ASSIGNED", telecallerId);
         });
     }
     async getAllTeleAssignments() {
@@ -51,9 +51,9 @@ class LeadStateService {
             if (!res.rowCount)
                 return null;
             const lead = res.rows[0];
-            // Lock + update the lead state to TELE_PROSPECTING if it was NEW
+            // Lock + update the lead state to TELE_PROSPECTING if it was UNASSIGNED
             if (lead.status === "NEW") {
-                (0, leadStateMachine_1.assertValidTransition)("NEW", "ASSIGNED");
+                (0, leadStateMachine_1.ValidLeadTransition)("NEW", "ASSIGNED");
                 await this.leadRepo.updateState(tx, lead.id, "ASSIGNED");
                 lead.status = "ASSIGNED";
             }
@@ -71,19 +71,20 @@ class LeadStateService {
             await this.actionRepo.call(tx, leadId, telecallerId, disposition, notes);
             // 2️⃣ Handle transitions
             if (disposition === "INTERESTED") {
-                (0, leadStateMachine_1.assertValidTransition)(lead.lead_status, "FIELD_VISIT_PENDING");
+                (0, leadStateMachine_1.ValidLeadTransition)(lead.status, "VISIT_REQUESTED");
                 // 🔥 Create field request entry
                 await this.actionRepo.requestFieldVisit(tx, leadId, telecallerId, "UNKNOWN" // we can improve this later
                 );
-                await this.leadRepo.updateState(tx, leadId, "FIELD_VISIT_PENDING");
+                await this.leadRepo.updateState(tx, leadId, "VISIT_REQUESTED");
             }
             if (disposition === "NOT_INTERESTED") {
-                (0, leadStateMachine_1.assertValidTransition)(lead.lead_status, "DROPPED");
+                (0, leadStateMachine_1.ValidLeadTransition)(lead.status, "DROPPED");
                 await this.actionRepo.drop(tx, leadId, telecallerId, notes ?? "No reason provided");
                 await this.leadRepo.updateState(tx, leadId, "DROPPED");
             }
             if (disposition === "FOLLOW_UP") {
-                (0, leadStateMachine_1.assertValidTransition)(lead.lead_status, "TELE_PROSPECTING");
+                (0, leadStateMachine_1.ValidLeadTransition)(lead.status, "CONTACTED");
+                await this.leadRepo.updateState(tx, leadId, "CONTACTED");
             }
         });
     }
@@ -143,9 +144,9 @@ class LeadStateService {
     async verify(leadId, fieldExecId, status, photo) {
         await (0, transactions_1.withTransaction)(async (tx) => {
             const lead = await this.leadRepo.lock(tx, leadId);
-            (0, leadStateMachine_1.assertValidTransition)(lead.lead_status, status);
+            (0, leadStateMachine_1.ValidLeadTransition)(lead.status, status === "CONVERTED" ? "VISIT_COMPLETED" : "DROPPED");
             await this.actionRepo.verify(tx, leadId, fieldExecId, true, photo, status);
-            await this.leadRepo.updateState(tx, leadId, status);
+            await this.leadRepo.updateState(tx, leadId, status === "CONVERTED" ? "VISIT_COMPLETED" : "DROPPED");
         });
     }
     /**
@@ -159,6 +160,16 @@ class LeadStateService {
          JOIN field_requests fr ON fr.id = fa.field_request_id
          WHERE fa.field_exec_id = $1
          ORDER BY fa.assigned_at DESC`, [fieldExecId]);
+            return res.rows;
+        });
+    }
+    // get all telecallers
+    async getAllTelecallers() {
+        return (0, transactions_1.withTransaction)(async (tx) => {
+            const res = await tx.query(`SELECT id, username, name, role, phone, email, created_at
+         FROM users
+         WHERE role = 'TELECALLER'
+         ORDER BY name ASC`);
             return res.rows;
         });
     }

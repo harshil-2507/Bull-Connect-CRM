@@ -39,7 +39,8 @@ async function getNextLead(req, res) {
 //phase 1 -> strict queue(no ai or priority sorting) - leads are returned in order of assignment, but telecaller can choose any lead from the queue
 async function getWorkQueue(req, res) {
     try {
-        const queue = await telecallerService.getWorkQueue(Number(req.user.id));
+        const telecallerId = req.user.id;
+        const queue = await telecallerService.getWorkQueue(telecallerId);
         res.status(200).json({
             total: queue.length,
             data: queue,
