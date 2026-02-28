@@ -8,12 +8,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as SecureStore from "expo-secure-store";
-import Lead from "../components/Lead";
 import * as Linking from "expo-linking";
+import Lead from "../components/Lead";
+import { useRouter } from "expo-router";
 
 export default function Leads() {
   const [leads, setLeads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     fetchLeads();
@@ -25,8 +27,13 @@ export default function Leads() {
 
       const token = await SecureStore.getItemAsync("authToken");
 
+      if (!token) {
+        router.replace("/");
+        return;
+      }
+
       const response = await fetch(
-        "https://bull-connect-crm.onrender.com/leads",
+        "http://10.233.21.128:3000/telecaller/queue",
         {
           method: "GET",
           headers: {
@@ -36,13 +43,14 @@ export default function Leads() {
         }
       );
 
-      const data = await response.json();
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to fetch leads");
+        throw new Error(result.message || "Failed to fetch queue");
       }
 
-      setLeads(data);
+      // 🔥 IMPORTANT: queue returns { total, data }
+      setLeads(result.data || []);
     } catch (error: any) {
       Alert.alert("Error", error.message);
     } finally {
@@ -50,49 +58,17 @@ export default function Leads() {
     }
   };
 
-  const renderLead = ({ item }: any) => (
-    <View className="bg-white p-5 rounded-xl shadow border border-gray-100 mb-4">
-      <Text className="text-lg font-bold text-[#1a4d2e]">
-        {item.farmer_name}
-      </Text>
-
-      <Text className="text-gray-600 mt-1">
-        📞 {item.phone_number}
-      </Text>
-
-      <Text className="text-gray-600">
-        📍 {item.village}, {item.taluka}
-      </Text>
-
-      <Text className="text-gray-600">
-        {item.district}, {item.state}
-      </Text>
-
-      <Text className="mt-2 text-sm font-semibold text-blue-600">
-        Campaign: {item.campaign_name}
-      </Text>
-
-      <Text className="mt-1 text-sm">
-        Status: {item.status}
-      </Text>
-
-      <Text className="mt-1 text-xs text-gray-400">
-        Created: {new Date(item.created_at).toLocaleString()}
-      </Text>
-    </View>
-  );
-
   return (
     <SafeAreaView className="flex-1 bg-[#fafbf9] px-6 pt-10">
       <Text className="text-3xl font-bold text-[#1a4d2e] mb-6">
-        Leads
+        My Assigned Leads
       </Text>
 
       {loading ? (
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#1a4d2e" />
           <Text className="mt-4 text-gray-500">
-            Loading leads...
+            Loading your queue...
           </Text>
         </View>
       ) : leads.length === 0 ? (
@@ -103,17 +79,19 @@ export default function Leads() {
         </View>
       ) : (
         <FlatList
-  data={leads}
-  keyExtractor={(item) => item.id.toString()}
-  renderItem={({ item }) => (
-    <Lead
-      item={item}
-      onCall={(phone) => Linking.openURL(`tel:${phone}`)}
-    />
-  )}
-  showsVerticalScrollIndicator={false}
-  contentContainerStyle={{ paddingBottom: 120 }}
-/>
+          data={leads}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <Lead
+              item={item}
+              onCall={(phone: string) =>
+                Linking.openURL(`tel:${phone}`)
+              }
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 120 }}
+        />
       )}
     </SafeAreaView>
   );

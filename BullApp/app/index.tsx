@@ -33,7 +33,7 @@ export default function Index() {
       setLoading(true);
 
       const response = await fetch(
-        "https://bull-connect-crm.onrender.com/login",
+        "http://10.233.21.128:3000/login",
         {
           method: "POST",
           headers: {
@@ -59,7 +59,15 @@ export default function Index() {
       await SecureStore.setItemAsync("user", JSON.stringify(data.user));
 
       // Navigate and prevent going back to login
-      router.replace("/telecaller");
+      const role = data.user.role;
+
+if (role === "TELECALLER") {
+  router.replace("/telecaller");
+} else if (role === "MANAGER") {
+  router.replace("/manager")
+} else {
+  Alert.alert("Access Denied", "Unauthorized role");
+}
     } catch (error: any) {
       Alert.alert("Login Failed", error.message);
     } finally {
