@@ -1,4 +1,5 @@
 import { pool } from "../config/db";
+import { INITIAL_LEAD_STATUS } from "../constants/leadStates";
 
 export type LeadInput = {
   farmer_name: string;
@@ -30,8 +31,8 @@ export class LeadService {
   try {
     const res = await pool.query(
       `INSERT INTO leads
-       (farmer_name, phone_number, village, taluka, district, state, status, campaign_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       (farmer_name, phone_number, village, taluka, district, state, status, campaign_id, lead_status_v2)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
        RETURNING *`,
       [
         input.farmer_name,
@@ -42,6 +43,7 @@ export class LeadService {
         input.state || null,
         input.status,
         input.campaign_id,
+        INITIAL_LEAD_STATUS,
       ]
     );
 
@@ -66,6 +68,7 @@ export class LeadService {
       l.district,
       l.state,
       l.status,
+      l.lead_status_v2,
       l.created_at,
       l.campaign_id,
       c.name AS campaign_name
@@ -89,6 +92,7 @@ export class LeadService {
       l.district,
       l.state,
       l.status,
+      l.lead_status_v2,
       l.created_at,
       l.campaign_id,
       c.name AS campaign_name
