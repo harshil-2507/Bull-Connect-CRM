@@ -5,8 +5,8 @@ class ActionRepository {
     async call(tx, leadId, telecallerId, disposition, notes, callDuration = null // optional, add if you want to track duration
     ) {
         await tx.query(`INSERT INTO call_logs
-      (lead_id, user_id, outcome, notes, call_duration)
-      VALUES ($1, $2, $3, $4, $5)`, [leadId, telecallerId, disposition, notes, callDuration]);
+      (lead_id, user_id, disposition, notes, next_callback_at, call_duration)
+      VALUES ($1, $2, $3, $4, $5)`, [leadId, telecallerId, disposition, notes, null,null]);
     }
     async requestFieldVisit(tx, leadId, requestedBy, crop) {
         await tx.query(`INSERT INTO field_requests

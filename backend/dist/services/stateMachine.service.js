@@ -78,7 +78,7 @@ function validateStatusBusinessRules(nextStatus, data) {
             break;
         case 'DROPPED':
             if (!data.dropReason) {
-                throw new Error('drop_reason is required for DROPPED status');
+                data.dropReason = 'OTHER'; // Default drop reason if not provided
             }
             break;
     }

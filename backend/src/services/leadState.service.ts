@@ -2,7 +2,7 @@ import { withTransaction } from "../db/transactions";
 import { LeadRepository } from "../repositories/lead.repo";
 import { AssignmentRepository } from "../repositories/assignment.repo";
 import { ActionRepository } from "../repositories/action.repo";
-import { ValidLeadTransition } from "./leadStateMachine";
+import { validateLeadTransition } from "./stateMachine.service";
 import { LeadState } from "../models/lead.model";
 
 export class LeadStateService {
@@ -13,7 +13,7 @@ export class LeadStateService {
   async assignTelecaller(leadId: string, telecallerId: string, managerId: string) {
     await withTransaction(async (tx) => {
       const lead = await this.leadRepo.lock(tx, leadId);
-      ValidLeadTransition(lead.status, "ASSIGNED");
+      validateLeadTransition(lead.status, "ASSIGNED");
 
       const res = await tx.query(`SELECT id, role FROM users WHERE id = $1`, [telecallerId]);
       if (!res.rowCount) throw new Error("Telecaller not found");
@@ -66,7 +66,7 @@ export class LeadStateService {
 
       // Lock + update the lead state to TELE_PROSPECTING if it was UNASSIGNED
       if (lead.status === "NEW") {
-        ValidLeadTransition("NEW", "ASSIGNED");
+        validateLeadTransition("NEW", "ASSIGNED");
         await this.leadRepo.updateState(tx, lead.id, "ASSIGNED");
         lead.status = "ASSIGNED";
       }
@@ -91,13 +91,12 @@ export class LeadStateService {
 
     // Always log call
     await this.actionRepo.call(tx, leadId, telecallerId, disposition, notes);
-
     if (disposition === "INTERESTED") {
 
-      ValidLeadTransition(lead.status, "CONTACTED");
+      validateLeadTransition(lead.status, "CONTACTED");
       await this.leadRepo.updateState(tx, leadId, "CONTACTED");
 
-      ValidLeadTransition("CONTACTED", "VISIT_REQUESTED");
+      validateLeadTransition("CONTACTED", "VISIT_REQUESTED");
 
       await this.actionRepo.requestFieldVisit(
         tx,
@@ -110,13 +109,22 @@ export class LeadStateService {
     }
 
     if (disposition === "NOT_INTERESTED") {
-      ValidLeadTransition(lead.status, "DROPPED");
+      // If the lead is still ASSIGNED, promote it to CONTACTED first
+      // (some state-machine implementations require DROP only from CONTACTED)
+      if (lead.status === "ASSIGNED") {
+        validateLeadTransition("ASSIGNED", "CONTACTED");
+        await this.leadRepo.updateState(tx, leadId, "CONTACTED");
+        lead.status = "CONTACTED" as LeadState;
+      }
+
+      validateLeadTransition(lead.status, "DROPPED");
+
       await this.actionRepo.drop(tx, leadId, telecallerId, notes ?? "No reason provided");
       await this.leadRepo.updateState(tx, leadId, "DROPPED");
     }
 
     if (disposition === "FOLLOW_UP") {
-      ValidLeadTransition(lead.status, "CONTACTED");
+      validateLeadTransition(lead.status, "CONTACTED");
       await this.leadRepo.updateState(tx, leadId, "CONTACTED");
     }
   });
@@ -207,7 +215,7 @@ export class LeadStateService {
   ) {
     await withTransaction(async (tx) => {
       const lead = await this.leadRepo.lock(tx, leadId);
-      ValidLeadTransition(lead.status, status === "CONVERTED" ? "VISIT_COMPLETED" : "DROPPED");
+      validateLeadTransition(lead.status, status === "CONVERTED" ? "VISIT_COMPLETED" : "DROPPED");
 
       await this.actionRepo.verify(
         tx,
