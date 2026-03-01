@@ -20,8 +20,8 @@ import {
 } from '../middlewares/rbac.middleware';
 import {
   recordCallLog,
-  getCallHistory,
-  getTodayCallStats,
+  // getCallHistory,
+  // getTodayCallStats,
   CallLogInput,
 } from '../services/callLog.service';
 import { auditFromRequest } from '../services/audit.service';
@@ -159,11 +159,11 @@ router.get(
       const lead = result.rows[0];
 
       // Get call history
-      const callHistory = await getCallHistory(leadId, 10);
+      // const callHistory = await getCallHistory(leadId, 10);
 
       res.json({
         lead,
-        callHistory,
+        // callHistory,
       });
     } catch (error) {
       console.error('Error fetching lead details:', error);
@@ -243,7 +243,7 @@ router.post(
         cropType,
         acreage,
         dropReason,
-        dropNotes,
+        // dropNotes,
       };
 
       const result = await recordCallLog(callLogInput);
@@ -295,11 +295,11 @@ router.get(
       const { leadId } = req.params;
       const { limit = 50 } = req.query;
 
-      const callHistory = await getCallHistory(leadId, Number(limit));
+      // const callHistory = await getCallHistory(leadId, Number(limit));
 
       res.json({
         leadId,
-        callHistory,
+        // callHistory,
       });
     } catch (error) {
       console.error('Error fetching call history:', error);
@@ -322,7 +322,7 @@ router.get(
     try {
       const userId = req.user!.id;
 
-      const stats = await getTodayCallStats(userId);
+      // const stats = await getTodayCallStats(userId);
 
       // Get assigned leads count
       const leadsResult = await pool.query(
@@ -340,7 +340,7 @@ router.get(
       const leadsStats = leadsResult.rows[0];
 
       res.json({
-        calls: stats,
+        // calls: stats,
         leads: {
           pending: parseInt(leadsStats.pending),
           contacted: parseInt(leadsStats.contacted),

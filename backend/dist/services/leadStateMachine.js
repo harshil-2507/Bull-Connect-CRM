@@ -7,7 +7,7 @@ exports.assertValidTransition = assertValidTransition;
 exports.ALLOWED_TRANSITIONS = {
     NEW: ["ASSIGNED"],
     ASSIGNED: ["CONTACTED", "DROPPED"],
-    CONTACTED: ["VISIT_REQUESTED", "DROPPED"],
+    CONTACTED: ["VISIT_REQUESTED", "DROPPED", "CONTACTED"],
     VISIT_REQUESTED: ["VISIT_ASSIGNED", "DROPPED"],
     VISIT_ASSIGNED: ["VISIT_COMPLETED"],
     VISIT_COMPLETED: ["SOLD", "DROPPED"],
@@ -20,7 +20,6 @@ function ValidLeadTransition(from, to) {
         throw new Error(`Invalid current state: ${from}. No transitions defined.`);
     }
     if (!allowed.includes(to)) {
-       
         throw new Error(`Invalid transition: ${from} → ${to}`);
     }
 }

@@ -22,8 +22,8 @@ exports.canRoleAccessStatus = canRoleAccessStatus;
  */
 exports.ALLOWED_TRANSITIONS = {
     NEW: ['ASSIGNED'],
-    ASSIGNED: ['CONTACTED'],
-    CONTACTED: ['VISIT_REQUESTED', 'DROPPED'],
+    ASSIGNED: ['CONTACTED', 'DROPPED'],
+    CONTACTED: ['VISIT_REQUESTED', 'DROPPED', 'CONTACTED'],
     VISIT_REQUESTED: ['VISIT_ASSIGNED'],
     VISIT_ASSIGNED: ['VISIT_COMPLETED'],
     VISIT_COMPLETED: ['SOLD', 'DROPPED'],
@@ -97,9 +97,11 @@ function getStatusChangeFromDisposition(currentStatus, disposition, data) {
             return currentStatus === 'ASSIGNED' ? 'CONTACTED' : null;
         case 'NOT_INTERESTED':
         case 'INVALID_NUMBER':
-            // These should drop the lead if in contacted state
+            // These should drop the lead if in contacted state. Dropping an
+            // ASSIGNED lead is handled by the caller (promoting through CONTACTED)
+            // because the database trigger forbids a direct ASSIGNED→DROPPED update.
             return currentStatus === 'CONTACTED' ? 'DROPPED' : null;
-        case 'CALLBACK':
+        case 'CONTACTED':
         case 'BUSY':
         case 'NO_ANSWER':
             // These don't change status, just log the call

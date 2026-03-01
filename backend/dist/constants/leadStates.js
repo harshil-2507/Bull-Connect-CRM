@@ -27,7 +27,7 @@ exports.LEAD_STATUS_VALUES = [
 exports.INITIAL_LEAD_STATUS = "NEW";
 exports.ALLOWED_TRANSITIONS = {
     NEW: ["ASSIGNED", "DORMANT"],
-    ASSIGNED: ["CONTACTED", "DORMANT", "DROPPED"],
+    ASSIGNED: ["CONTACTED", "DORMANT"],
     CONTACTED: ["TAGGED", "VISIT_REQUESTED", "REJECTED", "INVALID", "DORMANT"],
     TAGGED: ["VISIT_REQUESTED", "DORMANT"],
     VISIT_REQUESTED: ["VISIT_ASSIGNED", "DORMANT"],
@@ -47,7 +47,6 @@ function assertValidTransition(from, to) {
         return;
     const allowed = exports.ALLOWED_TRANSITIONS[from] || [];
     if (!allowed.includes(to)) {
-
         throw new Error(`Invalid transition: ${from} -> ${to}`);
     }
 }
