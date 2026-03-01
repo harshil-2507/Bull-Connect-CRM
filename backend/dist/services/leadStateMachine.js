@@ -20,6 +20,7 @@ function ValidLeadTransition(from, to) {
         throw new Error(`Invalid current state: ${from}. No transitions defined.`);
     }
     if (!allowed.includes(to)) {
+       
         throw new Error(`Invalid transition: ${from} → ${to}`);
     }
 }

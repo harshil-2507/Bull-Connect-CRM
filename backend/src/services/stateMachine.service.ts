@@ -17,9 +17,9 @@ import { LeadState } from "../models/lead.model";
 export const ALLOWED_TRANSITIONS: Record<LeadState, LeadState[]> = {
   NEW: ['ASSIGNED'],
 
-  ASSIGNED: ['CONTACTED'],
+  ASSIGNED: ['CONTACTED', 'DROPPED'],
 
-  CONTACTED: ['VISIT_REQUESTED', 'DROPPED'],
+  CONTACTED: ['VISIT_REQUESTED', 'DROPPED', 'CONTACTED'],
 
   VISIT_REQUESTED: ['VISIT_ASSIGNED'],
 
@@ -100,7 +100,8 @@ export function validateStatusBusinessRules(
 
     case 'DROPPED':
       if (!data.dropReason) {
-        throw new Error('drop_reason is required for DROPPED status');
+        data.dropReason = 'OTHER'; // Default drop reason if not provided
+
       }
       break;
   }
@@ -147,7 +148,9 @@ export function getStatusChangeFromDisposition(
 
     case 'NOT_INTERESTED':
     case 'INVALID_NUMBER':
-      // These should drop the lead if in contacted state
+      // These should drop the lead if in contacted state. Dropping an
+      // ASSIGNED lead is handled by the caller (promoting through CONTACTED)
+      // because the database trigger forbids a direct ASSIGNED→DROPPED update.
       return currentStatus === 'CONTACTED' ? 'DROPPED' : null;
 
     case 'CALLBACK':

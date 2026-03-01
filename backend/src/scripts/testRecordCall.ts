@@ -24,7 +24,7 @@ async function main() {
     console.log('recordCallLog result:', res);
 
     const leadRow = await pool.query(
-      'SELECT id, status, lead_status_v2, attempt_count FROM leads WHERE id = $1',
+      'SELECT id, status, attempt_count FROM leads WHERE id = $1',
       [leadId]
     );
     console.log('Lead row:', leadRow.rows[0]);

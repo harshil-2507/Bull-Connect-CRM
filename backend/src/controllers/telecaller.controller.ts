@@ -1,30 +1,66 @@
 // src/controllers/telecaller.controller.ts
 import { Request, Response } from "express";
-import { LeadStateService } from "../services/leadState.service";
 import { TelecallerService } from "../services/telecaller.service";
+import { recordCallLog, CallLogInput } from "../services/callLog.service";
+import { LeadStateService } from "../services/leadState.service";
 
-const service = new LeadStateService();
 const telecallerService = new TelecallerService();
+const service = new LeadStateService();
 
 
 /**
  * TELECALLER logs a call outcome
  */
 export async function logCall(req: Request, res: Response) {
-  const { leadId, disposition, notes } = req.body;
+  const {
+    leadId,
+    disposition,
+    notes,
+    nextCallbackAt,
+    durationSeconds,
+    cropType,
+    acreage,
+    dropReason,
+    dropNotes,
+  } = req.body;
 
   try {
+    // No early required-dropReason check here; service will fill a sensible default.
 
-    await service.call(
+    const callInput: CallLogInput = {
       leadId,
-      req.user.id,
+      userId: req.user.id,
       disposition,
-      notes ?? null,
-    );
+      notes,
+      nextCallbackAt: nextCallbackAt ? new Date(nextCallbackAt) : undefined,
+      durationSeconds,
+      cropType,
+      acreage,
+      dropReason
+    };
 
-    res.status(200).json({ message: "Call logged successfully" });
+    const result = await recordCallLog(callInput);
+
+    res.status(200).json({
+      message: "Call logged successfully",
+      callLogId: result.callLogId,
+      newStatus: result.newStatus,
+      attemptCount: result.attemptCount,
+    });
   } catch (err: any) {
-    res.status(400).json({ error: err.message });
+    console.error('Error in telecaller.logCall:', err);
+    const msg = err.message || '';
+    // treat expected validation or ownership errors as 400
+    if (
+      msg.includes('Invalid') ||
+      msg.includes('required') ||
+      msg.includes('Lead is not assigned') ||
+      msg.includes('Lead cannot be called')
+    ) {
+      return res.status(400).json({ error: msg });
+    }
+    // otherwise it's unexpected
+    return res.status(500).json({ error: 'Internal Server Error' });
   }
 }
 
