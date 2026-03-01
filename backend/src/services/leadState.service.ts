@@ -89,19 +89,21 @@ export class LeadStateService {
       throw new Error(`Invalid disposition: ${disposition}`);
     }
 
-    // 1️⃣ Always log call
+    // Always log call
     await this.actionRepo.call(tx, leadId, telecallerId, disposition, notes);
 
-    // 2️⃣ Handle transitions
     if (disposition === "INTERESTED") {
-      ValidLeadTransition(lead.status, "VISIT_REQUESTED");
 
-      // 🔥 Create field request entry
+      ValidLeadTransition(lead.status, "CONTACTED");
+      await this.leadRepo.updateState(tx, leadId, "CONTACTED");
+
+      ValidLeadTransition("CONTACTED", "VISIT_REQUESTED");
+
       await this.actionRepo.requestFieldVisit(
         tx,
         leadId,
         telecallerId,
-        "UNKNOWN" // we can improve this later
+        "UNKNOWN"
       );
 
       await this.leadRepo.updateState(tx, leadId, "VISIT_REQUESTED");
