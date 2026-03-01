@@ -21,13 +21,14 @@
   tx: PoolClient,
   leadId: string,
   requestedBy: string,
+  primaryCrop: string, // <-- required now
   notes: string | null = null
 ) {
   await tx.query(
-    `INSERT INTO visit_requests
-     (lead_id, requested_by, notes)
-     VALUES ($1, $2, $3)`,
-    [leadId, requestedBy, notes]
+    `INSERT INTO field_requests
+     (lead_id, requested_by, primary_crop, requested_at)
+     VALUES ($1, $2, $3, NOW())`,
+    [leadId, requestedBy, primaryCrop]
   );
 }
 

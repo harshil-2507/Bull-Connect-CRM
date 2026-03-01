@@ -89,15 +89,28 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
       );
       newStatus = "VISIT_REQUESTED";
 
-      await repo.requestFieldVisit(tx, input.leadId, input.userId, input.notes || null);
+      if (!input.cropType) throw new Error("INTERESTED calls require cropType");
+      await repo.requestFieldVisit(tx, input.leadId, input.userId, input.cropType);
 
     } else if (input.disposition === "CONTACTED") {
       // Just update attempt count and last_contacted_at
-      await tx.query(
-        `UPDATE leads SET attempt_count = attempt_count + 1, last_contacted_at = NOW(), updated_at = NOW() WHERE id = $1`,
-        [input.leadId]
-      );
-      newStatus = lead.status;
+      if (lead.status !== "CONTACTED") {
+        await tx.query(
+          `UPDATE leads 
+           SET status = 'CONTACTED', attempt_count = attempt_count + 1, last_contacted_at = NOW(), updated_at = NOW()
+           WHERE id = $1`,
+          [input.leadId]
+        );
+      } else {
+        // Already CONTACTED, just increment attempt_count
+        await tx.query(
+          `UPDATE leads 
+           SET attempt_count = attempt_count + 1, last_contacted_at = NOW(), updated_at = NOW()
+           WHERE id = $1`,
+          [input.leadId]
+        );
+      }
+      newStatus = "CONTACTED";
     }
 
     // Get updated attempt count

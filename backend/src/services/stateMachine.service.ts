@@ -112,7 +112,7 @@ export function validateStatusBusinessRules(
  */
 export type CallDisposition =
   | 'INTERESTED'
-  | 'CALLBACK'
+  | 'CONTACTED'
   | 'BUSY'
   | 'NOT_INTERESTED'
   | 'NO_ANSWER'
@@ -153,7 +153,7 @@ export function getStatusChangeFromDisposition(
       // because the database trigger forbids a direct ASSIGNED→DROPPED update.
       return currentStatus === 'CONTACTED' ? 'DROPPED' : null;
 
-    case 'CALLBACK':
+    case 'CONTACTED':
     case 'BUSY':
     case 'NO_ANSWER':
       // These don't change status, just log the call
