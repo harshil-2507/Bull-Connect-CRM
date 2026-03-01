@@ -117,10 +117,10 @@ router.get('/leads/:leadId', (0, rbac_middleware_1.requireRole)(['TELECALLER', '
         }
         const lead = result.rows[0];
         // Get call history
-        const callHistory = await (0, callLog_service_1.getCallHistory)(leadId, 10);
+        // const callHistory = await getCallHistory(leadId, 10);
         res.json({
             lead,
-            callHistory,
+            // callHistory,
         });
     }
     catch (error) {
@@ -181,7 +181,7 @@ async (req, res) => {
             cropType,
             acreage,
             dropReason,
-            dropNotes,
+            // dropNotes,
         };
         const result = await (0, callLog_service_1.recordCallLog)(callLogInput);
         // Create audit log
@@ -222,10 +222,10 @@ router.get('/leads/:leadId/history', (0, rbac_middleware_1.requireRole)(['TELECA
     try {
         const { leadId } = req.params;
         const { limit = 50 } = req.query;
-        const callHistory = await (0, callLog_service_1.getCallHistory)(leadId, Number(limit));
+        // const callHistory = await getCallHistory(leadId, Number(limit));
         res.json({
             leadId,
-            callHistory,
+            // callHistory,
         });
     }
     catch (error) {
@@ -243,7 +243,7 @@ router.get('/leads/:leadId/history', (0, rbac_middleware_1.requireRole)(['TELECA
 router.get('/stats', (0, rbac_middleware_1.requireRole)(['TELECALLER', 'MANAGER', 'ADMIN']), async (req, res) => {
     try {
         const userId = req.user.id;
-        const stats = await (0, callLog_service_1.getTodayCallStats)(userId);
+        // const stats = await getTodayCallStats(userId);
         // Get assigned leads count
         const leadsResult = await db_1.pool.query(`SELECT 
           COUNT(*) FILTER (WHERE status = 'ASSIGNED') as pending,
@@ -255,7 +255,7 @@ router.get('/stats', (0, rbac_middleware_1.requireRole)(['TELECALLER', 'MANAGER'
           AND status IN ('ASSIGNED', 'CONTACTED', 'FIELD_REQUESTED')`, [userId]);
         const leadsStats = leadsResult.rows[0];
         res.json({
-            calls: stats,
+            // calls: stats,
             leads: {
                 pending: parseInt(leadsStats.pending),
                 contacted: parseInt(leadsStats.contacted),

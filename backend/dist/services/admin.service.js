@@ -66,12 +66,15 @@ class AdminService {
             const exists = await tx.query("SELECT id FROM users WHERE id = $1 AND role = $2", [id, role]);
             if (!exists.rowCount)
                 throw new Error(`${role} not found`);
+            const allowedFields = ["name", "phone", "is_active"];
             const fields = [];
             const values = [];
             let i = 1;
-            for (const key in updates) {
-                fields.push(`${key} = $${i++}`);
-                values.push(updates[key]);
+            for (const key of allowedFields) {
+                if (updates[key] !== undefined) {
+                    fields.push(`${key} = $${i++}`);
+                    values.push(updates[key]);
+                }
             }
             if (!fields.length)
                 return;
