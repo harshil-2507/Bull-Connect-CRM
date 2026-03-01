@@ -49,13 +49,13 @@ export class AdminService {
   /**
  * Get all users (no role filtering)
  */
-async getAllUsersUnfiltered() {
-  const res = await pool.query(
-    `SELECT id, username, name, phone, role, is_active, created_at
+  async getAllUsersUnfiltered() {
+    const res = await pool.query(
+      `SELECT id, username, name, phone, role, is_active, created_at
      FROM users`
-  );
-  return res.rows;
-}
+    );
+    return res.rows;
+  }
 
   /**
    * Get all users by role
@@ -88,7 +88,11 @@ async getAllUsersUnfiltered() {
   /**
    * Update user by ID and role
    */
-  async updateUser(id: string, updates: Partial<{ name: string; phone: string; is_active: boolean }>, role: Role) {
+  async updateUser(
+    id: string,
+    updates: Partial<{ name: string; phone: string; is_active: boolean }>,
+    role: Role
+  ) {
     await withTransaction(async (tx) => {
       const exists = await tx.query(
         "SELECT id FROM users WHERE id = $1 AND role = $2",
@@ -97,13 +101,17 @@ async getAllUsersUnfiltered() {
 
       if (!exists.rowCount) throw new Error(`${role} not found`);
 
+      const allowedFields = ["name", "phone", "is_active"];
+
       const fields: string[] = [];
       const values: any[] = [];
       let i = 1;
 
-      for (const key in updates) {
-        fields.push(`${key} = $${i++}`);
-        values.push((updates as any)[key]);
+      for (const key of allowedFields) {
+        if (updates[key as keyof typeof updates] !== undefined) {
+          fields.push(`${key} = $${i++}`);
+          values.push(updates[key as keyof typeof updates]);
+        }
       }
 
       if (!fields.length) return;

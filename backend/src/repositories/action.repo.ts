@@ -2,34 +2,34 @@
 
   export class ActionRepository {
   async call(
-    tx: PoolClient,
-    leadId: string,
-    telecallerId: string,
-    disposition: string,
-    notes: string | null,
-    callDuration: number | null = null // optional, add if you want to track duration
-  ) {
-    await tx.query(
-      `INSERT INTO call_logs
-      (lead_id, user_id, outcome, notes, call_duration)
-      VALUES ($1, $2, $3, $4, $5)`,
-      [leadId, telecallerId, disposition, notes, callDuration]
-    );
-  }
+  tx: PoolClient,
+  leadId: string,
+  telecallerId: string,
+  disposition: string,
+  notes: string | null,
+  callDuration: number | null = null
+) {
+  await tx.query(
+    `INSERT INTO call_logs
+     (lead_id, user_id, disposition, notes, duration_seconds)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [leadId, telecallerId, disposition, notes, callDuration]
+  );
+}
 
     async requestFieldVisit(
-      tx: PoolClient,
-      leadId: string,
-      requestedBy: string,
-      crop: string
-    ) {
-      await tx.query(
-        `INSERT INTO field_requests
-        (lead_id, requested_by, primary_crop)
-        VALUES ($1,$2,$3)`,
-        [leadId, requestedBy, crop]
-      );
-    }
+  tx: PoolClient,
+  leadId: string,
+  requestedBy: string,
+  notes: string | null = null
+) {
+  await tx.query(
+    `INSERT INTO visit_requests
+     (lead_id, requested_by, notes)
+     VALUES ($1, $2, $3)`,
+    [leadId, requestedBy, notes]
+  );
+}
 
     async verify(
       tx: PoolClient,
