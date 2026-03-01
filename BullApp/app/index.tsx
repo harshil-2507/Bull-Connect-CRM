@@ -33,7 +33,7 @@ export default function Index() {
       setLoading(true);
 
       const response = await fetch(
-        "http://10.233.21.128:3000/login",
+        "https://bull-connect-crm.onrender.com/login",
         {
           method: "POST",
           headers: {
