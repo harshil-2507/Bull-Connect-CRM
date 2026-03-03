@@ -2,23 +2,41 @@
 
 import { DealState } from "../models/deal.model";
 
-const transitions: Record<DealState, DealState[]> = {
-  NEW: ["CONTACTED", "LOST"],
-  CONTACTED: ["VISIT_REQUESTED", "LOST"],
-  VISIT_REQUESTED: ["VISIT_ASSIGNED", "LOST"],
-  VISIT_ASSIGNED: ["VISIT_COMPLETED", "LOST"],
-  VISIT_COMPLETED: ["NEGOTIATION", "SOLD", "LOST"],
+const allowedTransitions: Record<DealState, DealState[]> = {
+  NEW: ["CONTACTED"],
+
+  CONTACTED: [
+    "VISIT_REQUESTED",
+    "SOLD",       // allow direct sale after visit verification
+    "LOST"
+  ],
+
+  VISIT_REQUESTED: ["VISIT_ASSIGNED"],
+
+  VISIT_ASSIGNED: [
+    "VISIT_COMPLETED",
+    "SOLD",
+    "LOST"
+  ],
+
+  VISIT_COMPLETED: [
+    "NEGOTIATION",
+    "SOLD",
+    "LOST"
+  ],
+
   NEGOTIATION: ["SOLD", "LOST"],
+
   SOLD: [],
   LOST: [],
-  DORMANT: ["CONTACTED"],
+  DORMANT: []
 };
 
 export function validateDealTransition(
   current: DealState,
   next: DealState
 ) {
-  if (!transitions[current].includes(next)) {
+  if (!allowedTransitions[current].includes(next)) {
     throw new Error(
       `Invalid deal state transition: ${current} → ${next}`
     );

@@ -14,7 +14,7 @@ class ActionRepository {
     }
     async verify(tx, leadId, fieldExecId, gpsOk, photo, status) {
         await tx.query(`INSERT INTO visits
-     (lead_id, field_exec_id, gps_checkin_ok, photo_ref, final_status, verified_at)
+     (lead_id, field_exec_id, final_status, verified_at)
      VALUES ($1, $2, $3, $4, $5, NOW())`, [leadId, fieldExecId, gpsOk, photo, status]);
     }
     async drop(tx, leadId, markedBy, reason) {
