@@ -82,7 +82,10 @@ export class LeadStateService {
     leadId: string,
     telecallerId: string,
     disposition: string,
-    notes: string | null
+    notes: string | null,
+    cropType?: string,
+    acreage?: number,
+    expectedValue?: number
   ) {
     await withTransaction(async (tx) => {
       const lead = await this.leadRepo.lock(tx, leadId);
@@ -95,10 +98,15 @@ export class LeadStateService {
       // Always log call
       await this.actionRepo.call(tx, leadId, telecallerId, disposition, notes);
       if (disposition === "INTERESTED") {
-
+        if (!cropType || !acreage) {
+          throw new Error("INTERESTED calls require cropType and acreage");
+        }
         //   Create Deal inside SAME transaction
         const deal = await this.dealRepo.create(tx, {
           leadId: leadId,
+          cropType: cropType,
+          estimatedQuantity: acreage,
+          expectedValue: undefined,
           createdBy: telecallerId,
         });
 
@@ -279,7 +287,14 @@ ORDER BY v.completed_at DESC`
         fieldExecId,
         managerId
       );
-
+      await tx.query(
+        `
+  INSERT INTO visits
+  (visit_request_id, lead_id, field_exec_id, assigned_by, status)
+  VALUES ($1, $2, $3, $4, 'SCHEDULED')
+  `,
+        [fieldRequestId, leadId, fieldExecId, managerId]
+      );
       //  Update Lead state
       await this.leadRepo.updateState(
         tx,
@@ -297,6 +312,7 @@ ORDER BY v.completed_at DESC`
     finalStatus: "SOLD" | "DROPPED",
     photoRef: string
   ) {
+
     await withTransaction(async (tx) => {
 
       // 1 Lock Lead
@@ -330,7 +346,7 @@ ORDER BY v.completed_at DESC`
       if (finalStatus === "SOLD") {
 
         // 1 Lead transition
-       validateLeadTransition(lead.status, "VISIT_COMPLETED");
+        validateLeadTransition(lead.status, "VISIT_COMPLETED");
         await this.leadRepo.updateState(tx, leadId, "VISIT_COMPLETED");
 
         // 2 Deal transition

@@ -60,12 +60,15 @@ export class ActionRepository {
     markedBy: string,
     reason: string
   ) {
-    await tx.query(
+    const result = await tx.query(
       `UPDATE leads
      SET drop_reason = $1,
          drop_notes = $2
      WHERE id = $3`,
       ["OTHER", reason, leadId]
     );
+    if (result.rowCount === 0) {
+      throw new Error("No scheduled visit found for this lead and executive");
+    }
   }
 }
