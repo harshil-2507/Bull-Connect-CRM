@@ -21,43 +21,44 @@
   tx: PoolClient,
   leadId: string,
   requestedBy: string,
-  primaryCrop: string, // <-- required now
   notes: string | null = null
 ) {
   await tx.query(
-    `INSERT INTO field_requests
-     (lead_id, requested_by, primary_crop, requested_at)
-     VALUES ($1, $2, $3, NOW())`,
-    [leadId, requestedBy, primaryCrop]
+    `INSERT INTO visit_requests
+     (lead_id, requested_by, notes)
+     VALUES ($1, $2, $3)`,
+    [leadId, requestedBy, notes]
   );
 }
 
     async verify(
-      tx: PoolClient,
-      leadId: string,
-      fieldExecId: string,
-      gpsOk: boolean,
-      photo: string,
-      status: "CONVERTED" | "DROPPED"
-    ) {
-      await tx.query(
-        `INSERT INTO field_verifications
-        (lead_id, field_exec_id, gps_checkin_ok, photo_ref, final_status)
-        VALUES ($1,$2,$3,$4,$5)`,
-        [leadId, fieldExecId, gpsOk, photo, status]
-      );
-    }
+  tx: PoolClient,
+  leadId: string,
+  fieldExecId: string,
+  gpsOk: boolean,
+  photo: string,
+  status: "CONVERTED" | "DROPPED"
+) {
+  await tx.query(
+    `INSERT INTO visits
+     (lead_id, field_exec_id, gps_checkin_ok, photo_ref, final_status, verified_at)
+     VALUES ($1, $2, $3, $4, $5, NOW())`,
+    [leadId, fieldExecId, gpsOk, photo, status]
+  );
+}
 
     async drop(
-      tx: PoolClient,
-      leadId: string,
-      markedBy: string,
-      reason: string
-    ) {
-      await tx.query(
-        `INSERT INTO drop_reasons (lead_id, marked_by, reason)
-        VALUES ($1,$2,$3)`,
-        [leadId, markedBy, reason]
-      );
-    }
+  tx: PoolClient,
+  leadId: string,
+  markedBy: string,
+  reason: string
+) {
+  await tx.query(
+    `UPDATE leads
+     SET drop_reason = $1,
+         drop_notes = $2
+     WHERE id = $3`,
+    ["OTHER", reason, leadId]
+  );
+}
   }

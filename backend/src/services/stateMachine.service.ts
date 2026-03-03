@@ -15,10 +15,8 @@ import { LeadState } from "../models/lead.model";
  * Terminal states (FIELD_REQUESTED, DROPPED) have no outgoing transitions
  */
 export const ALLOWED_TRANSITIONS: Record<LeadState, LeadState[]> = {
-  NEW: ['ASSIGNED'],
-
+  NEW: ['ASSIGNED', 'CONTACTED', 'DROPPED'],
   ASSIGNED: ['CONTACTED', 'DROPPED'],
-
   CONTACTED: ['VISIT_REQUESTED', 'DROPPED', 'CONTACTED'],
 
   VISIT_REQUESTED: ['VISIT_ASSIGNED'],

@@ -29,7 +29,7 @@ export class LeadStateService {
     return res;
   }
 
-   async getTeleAssignmentById(id: string) {
+  async getTeleAssignmentById(id: string) {
     const res = await this.assignRepo.getTeleAssignmentById(id);
     if (!res) throw new Error("Assignment not found");
     return res;
@@ -76,69 +76,69 @@ export class LeadStateService {
   }
 
   async call(
-  leadId: string,
-  telecallerId: string,
-  disposition: string,
-  notes: string | null
-) {
-  await withTransaction(async (tx) => {
-    const lead = await this.leadRepo.lock(tx, leadId);
+    leadId: string,
+    telecallerId: string,
+    disposition: string,
+    notes: string | null
+  ) {
+    await withTransaction(async (tx) => {
+      const lead = await this.leadRepo.lock(tx, leadId);
 
-    const validDispositions = ["INTERESTED", "NOT_INTERESTED", "FOLLOW_UP"];
-    if (!validDispositions.includes(disposition)) {
-      throw new Error(`Invalid disposition: ${disposition}`);
-    }
-
-    // Always log call
-    await this.actionRepo.call(tx, leadId, telecallerId, disposition, notes);
-    if (disposition === "INTERESTED") {
-
-      validateLeadTransition(lead.status, "CONTACTED");
-      await this.leadRepo.updateState(tx, leadId, "CONTACTED");
-
-      validateLeadTransition("CONTACTED", "VISIT_REQUESTED");
-
-      await this.actionRepo.requestFieldVisit(
-        tx,
-        leadId,
-        telecallerId,
-        "UNKNOWN"
-      );
-
-      await this.leadRepo.updateState(tx, leadId, "VISIT_REQUESTED");
-    }
-
-    if (disposition === "NOT_INTERESTED") {
-      // If the lead is still ASSIGNED, promote it to CONTACTED first
-      // (some state-machine implementations require DROP only from CONTACTED)
-      if (lead.status === "ASSIGNED") {
-        validateLeadTransition("ASSIGNED", "CONTACTED");
-        await this.leadRepo.updateState(tx, leadId, "CONTACTED");
-        lead.status = "CONTACTED" as LeadState;
+      const validDispositions = ["INTERESTED", "NOT_INTERESTED", "FOLLOW_UP"];
+      if (!validDispositions.includes(disposition)) {
+        throw new Error(`Invalid disposition: ${disposition}`);
       }
 
-      validateLeadTransition(lead.status, "DROPPED");
+      // Always log call
+      await this.actionRepo.call(tx, leadId, telecallerId, disposition, notes);
+      if (disposition === "INTERESTED") {
 
-      await this.actionRepo.drop(tx, leadId, telecallerId, notes ?? "No reason provided");
-      await this.leadRepo.updateState(tx, leadId, "DROPPED");
-    }
+        validateLeadTransition(lead.status, "CONTACTED");
+        await this.leadRepo.updateState(tx, leadId, "CONTACTED");
 
-    if (disposition === "FOLLOW_UP") {
-      validateLeadTransition(lead.status, "CONTACTED");
-      await this.leadRepo.updateState(tx, leadId, "CONTACTED");
-    }
-  });
-}
+        validateLeadTransition("CONTACTED", "VISIT_REQUESTED");
 
-   /**
-   * Get all Field Requests
-   */
+        await this.actionRepo.requestFieldVisit(
+          tx,
+          leadId,
+          telecallerId,
+          notes
+        );
+
+        await this.leadRepo.updateState(tx, leadId, "VISIT_REQUESTED");
+      }
+
+      if (disposition === "NOT_INTERESTED") {
+        // If the lead is still ASSIGNED, promote it to CONTACTED first
+        // (some state-machine implementations require DROP only from CONTACTED)
+        if (lead.status === "ASSIGNED") {
+          validateLeadTransition("ASSIGNED", "CONTACTED");
+          await this.leadRepo.updateState(tx, leadId, "CONTACTED");
+          lead.status = "CONTACTED" as LeadState;
+        }
+
+        validateLeadTransition(lead.status, "DROPPED");
+
+        await this.actionRepo.drop(tx, leadId, telecallerId, notes ?? "No reason provided");
+        await this.leadRepo.updateState(tx, leadId, "DROPPED");
+      }
+
+      if (disposition === "FOLLOW_UP") {
+        validateLeadTransition(lead.status, "CONTACTED");
+        await this.leadRepo.updateState(tx, leadId, "CONTACTED");
+      }
+    });
+  }
+
+  /**
+  * Get all Field Requests
+  */
   async getAllFieldRequests() {
     return withTransaction(async (tx) => {
       const res = await tx.query(
-        `SELECT fr.id, fr.lead_id, fr.requested_by, fr.primary_crop, fr.requested_at
-         FROM field_requests fr
-         ORDER BY fr.requested_at DESC`
+        `SELECT vr.id, vr.lead_id, vr.requested_by, vr.primary_crop, vr.requested_at
+       FROM visit_requests vr
+       ORDER BY vr.requested_at DESC`
       );
       return res.rows;
     });
@@ -150,13 +150,13 @@ export class LeadStateService {
   async getFieldRequestById(id: string) {
     return withTransaction(async (tx) => {
       const res = await tx.query(
-        `SELECT fr.id, fr.lead_id, fr.requested_by, fr.primary_crop, fr.requested_at
-         FROM field_requests fr
-         WHERE fr.id = $1`,
+        `SELECT vr.id, vr.lead_id, vr.requested_by, vr.primary_crop, vr.requested_at
+       FROM visit_requests vr
+       WHERE vr.id = $1`,
         [id]
       );
 
-      if (!res.rowCount) throw new Error("Field request not found");
+      if (!res.rowCount) throw new Error("Visit request not found");
       return res.rows[0];
     });
   }
@@ -167,9 +167,9 @@ export class LeadStateService {
   async getAllFieldVerifications() {
     return withTransaction(async (tx) => {
       const res = await tx.query(
-        `SELECT fv.id, fv.lead_id, fv.field_exec_id, fv.gps_checkin_ok, fv.photo_ref, fv.final_status, fv.verified_at
-         FROM field_verifications fv
-         ORDER BY fv.verified_at DESC`
+        `SELECT v.id, v.lead_id, v.field_exec_id, v.gps_checkin_ok, v.photo_ref, v.final_status, v.verified_at
+       FROM visits v
+       ORDER BY v.verified_at DESC`
       );
       return res.rows;
     });
@@ -181,13 +181,13 @@ export class LeadStateService {
   async getFieldVerificationById(id: string) {
     return withTransaction(async (tx) => {
       const res = await tx.query(
-        `SELECT fv.id, fv.lead_id, fv.field_exec_id, fv.gps_checkin_ok, fv.photo_ref, fv.final_status, fv.verified_at
-         FROM field_verifications fv
-         WHERE fv.id = $1`,
+        `SELECT v.id, v.lead_id, v.field_exec_id, v.gps_checkin_ok, v.photo_ref, v.final_status, v.verified_at
+       FROM visits v
+       WHERE v.id = $1`,
         [id]
       );
 
-      if (!res.rowCount) throw new Error("Field verification not found");
+      if (!res.rowCount) throw new Error("Visit not found");
       return res.rows[0];
     });
   }
@@ -230,20 +230,19 @@ export class LeadStateService {
     });
   }
 
-   /**
-   * Get all assignments for a Field Exec
-   */
+  /**
+  * Get all assignments for a Field Exec
+  */
   async getAssignmentsForExec(fieldExecId: string) {
     return withTransaction(async (tx) => {
       const res = await tx.query(
-        `SELECT fa.id, fa.field_request_id, fa.field_exec_id, fa.assigned_by, fa.assigned_at,
-                fr.lead_id, fr.primary_crop
-         FROM field_assignments fa
-         JOIN field_requests fr ON fr.id = fa.field_request_id
-         WHERE fa.field_exec_id = $1
-         ORDER BY fa.assigned_at DESC`,
+        `SELECT a.id, a.lead_id, a.user_id, a.assigned_by, a.assigned_at
+       FROM assignments a
+       WHERE a.user_id = $1
+       ORDER BY a.assigned_at DESC`,
         [fieldExecId]
       );
+
       return res.rows;
     });
   }
@@ -269,15 +268,21 @@ export class LeadStateService {
   async getAssignmentByIdForExec(id: string, fieldExecId: string) {
     return withTransaction(async (tx) => {
       const res = await tx.query(
-        `SELECT fa.id, fa.field_request_id, fa.field_exec_id, fa.assigned_by, fa.assigned_at,
-                fr.lead_id, fr.primary_crop
-         FROM field_assignments fa
-         JOIN field_requests fr ON fr.id = fa.field_request_id
-         WHERE fa.id = $1 AND fa.field_exec_id = $2`,
+        `SELECT a.id,
+              a.lead_id,
+              a.user_id,
+              a.assigned_by,
+              a.assigned_at
+       FROM assignments a
+       WHERE a.id = $1
+         AND a.user_id = $2`,
         [id, fieldExecId]
       );
 
-      if (!res.rowCount) throw new Error("Assignment not found or not assigned to you");
+      if (!res.rowCount) {
+        throw new Error("Assignment not found or not assigned to you");
+      }
+
       return res.rows[0];
     });
   }
