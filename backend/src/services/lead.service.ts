@@ -72,7 +72,38 @@ export class LeadService {
       throw err;
     }
   }
+  async updateLead(id: string, input: Partial<LeadInput>) {
+    const fields = [];
+    const values = [];
+    let index = 1;
 
+    for (const key in input) {
+      fields.push(`${key} = $${index}`);
+      values.push((input as any)[key]);
+      index++;
+    }
+
+    if (!fields.length) {
+      throw new Error("No fields provided for update");
+    }
+
+    const query = `
+    UPDATE leads
+    SET ${fields.join(", ")}, updated_at = CURRENT_TIMESTAMP
+    WHERE id = $${index}
+    RETURNING *
+  `;
+
+    values.push(id);
+
+    const res = await pool.query(query, values);
+
+    if (!res.rowCount) {
+      throw new Error("Lead not found");
+    }
+
+    return res.rows[0];
+  }
   async getAllLeads() {
     const res = await pool.query(`
       SELECT 
@@ -129,4 +160,7 @@ export class LeadService {
 
     return res.rows[0];
   }
+
+
+
 }

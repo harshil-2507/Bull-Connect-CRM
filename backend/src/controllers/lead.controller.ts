@@ -49,6 +49,14 @@ export const createLead = async (req: Request, res: Response) => {
   }
 };
 
+export const updateLead = async (req: Request, res: Response) => {
+  try {
+    const lead = await service.updateLead(req.params.id, req.body);
+    res.status(200).json(lead);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+};
 export const getAllLeads = async (_req: Request, res: Response) => {
   try {
     const leads = await service.getAllLeads();
