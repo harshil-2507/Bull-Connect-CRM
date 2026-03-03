@@ -193,9 +193,15 @@ export class LeadStateService {
   async getAllFieldVerifications() {
     return withTransaction(async (tx) => {
       const res = await tx.query(
-        `SELECT v.id, v.lead_id, v.field_exec_id, v.gps_checkin_ok, v.photo_ref, v.final_status, v.verified_at
-       FROM visits v
-       ORDER BY v.verified_at DESC`
+        `SELECT v.id,
+       v.lead_id,
+       v.field_exec_id,
+       v.status,
+       v.outcome,
+       v.outcome_notes,
+       v.completed_at
+FROM visits v
+ORDER BY v.completed_at DESC`
       );
       return res.rows;
     });
@@ -207,9 +213,15 @@ export class LeadStateService {
   async getFieldVerificationById(id: string) {
     return withTransaction(async (tx) => {
       const res = await tx.query(
-        `SELECT v.id, v.lead_id, v.field_exec_id, v.gps_checkin_ok, v.photo_ref, v.final_status, v.verified_at
-       FROM visits v
-       WHERE v.id = $1`,
+        `SELECT v.id,
+        v.lead_id,
+        v.field_exec_id,
+        v.status,
+        v.outcome,
+        v.outcome_notes,
+        v.completed_at
+ FROM visits v
+ WHERE v.id = $1`,
         [id]
       );
 
@@ -280,64 +292,62 @@ export class LeadStateService {
   }
 
   async verify(
-  leadId: string,
-  fieldExecId: string,
-  finalStatus: "CONVERTED" | "DROPPED",
-  photoRef: string
-) {
-  await withTransaction(async (tx) => {
+    leadId: string,
+    fieldExecId: string,
+    finalStatus: "SOLD" | "DROPPED",
+    photoRef: string
+  ) {
+    await withTransaction(async (tx) => {
 
-    // 1 Lock Lead
-    const lead = await this.leadRepo.lock(tx, leadId);
+      // 1 Lock Lead
+      const lead = await this.leadRepo.lock(tx, leadId);
 
-    if (lead.status !== "VISIT_ASSIGNED") {
-      throw new Error("Lead is not in VISIT_ASSIGNED state");
-    }
+      if (lead.status !== "VISIT_ASSIGNED") {
+        throw new Error("Lead is not in VISIT_ASSIGNED state");
+      }
 
-    // 2 Find Deal linked to lead
-    const dealRes = await tx.query(
-      `SELECT id, status FROM deals WHERE lead_id = $1 FOR UPDATE`,
-      [leadId]
-    );
+      // 2 Find Deal linked to lead
+      const dealRes = await tx.query(
+        `SELECT id, status FROM deals WHERE lead_id = $1 FOR UPDATE`,
+        [leadId]
+      );
 
-    if (!dealRes.rowCount) {
-      throw new Error("Deal not found for this lead");
-    }
+      if (!dealRes.rowCount) {
+        throw new Error("Deal not found for this lead");
+      }
 
-    const deal = dealRes.rows[0];
+      const deal = dealRes.rows[0];
+      await this.actionRepo.verify(
+        tx,
+        leadId,
+        fieldExecId,
+        finalStatus,
+        photoRef
+      );
 
-    // 3 Record Visit Verification
-    await this.actionRepo.verify(
-      tx,
-      leadId,
-      fieldExecId,
-      true,
-      photoRef,
-      finalStatus
-    );
+      // After visit verification
 
-    if (finalStatus === "CONVERTED") {
+      if (finalStatus === "SOLD") {
 
-      // 4 Lead: VISIT_ASSIGNED → VISIT_COMPLETED
-      validateLeadTransition("VISIT_ASSIGNED", "VISIT_COMPLETED");
-      await this.leadRepo.updateState(tx, leadId, "VISIT_COMPLETED");
+        // 1 Lead transition
+       validateLeadTransition(lead.status, "VISIT_COMPLETED");
+        await this.leadRepo.updateState(tx, leadId, "VISIT_COMPLETED");
 
-      // 5 Deal: CONTACTED → SOLD
-      validateDealTransition(deal.status, "SOLD");
-      await this.dealRepo.updateState(tx, deal.id, "SOLD");
+        // 2 Deal transition
+        validateDealTransition(deal.status, "SOLD");
+        await this.dealRepo.updateState(tx, deal.id, "SOLD");
 
-    } else {
+      } else {
 
-      // 4 Lead: VISIT_ASSIGNED → DROPPED
-      validateLeadTransition("VISIT_ASSIGNED", "DROPPED");
-      await this.leadRepo.updateState(tx, leadId, "DROPPED");
+        validateLeadTransition(lead.status, "VISIT_COMPLETED");
+        await this.leadRepo.updateState(tx, leadId, "VISIT_COMPLETED");
 
-      // 5 Deal: CONTACTED → LOST
-      validateDealTransition(deal.status, "LOST");
-      await this.dealRepo.updateState(tx, deal.id, "LOST");
-    }
-  });
-}
+        validateDealTransition(deal.status, "LOST");
+        await this.dealRepo.updateState(tx, deal.id, "LOST");
+
+      }
+    });
+  }
 
   /**
   * Get all assignments for a Field Exec
