@@ -81,17 +81,35 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
         throw new Error("INTERESTED calls require cropType and acreage");
       }
 
+      // Step 1: ASSIGNED → CONTACTED (if needed)
+      if (lead.status === "ASSIGNED") {
+        await tx.query(
+          `UPDATE leads 
+       SET status = 'CONTACTED',
+           attempt_count = attempt_count + 1,
+           last_contacted_at = NOW(),
+           updated_at = NOW()
+       WHERE id = $1`,
+          [input.leadId]
+        );
+      }
+
+      // Step 2: CONTACTED → VISIT_REQUESTED
       await tx.query(
         `UPDATE leads 
-         SET status = 'VISIT_REQUESTED', crop_type = $1, acreage = $2, attempt_count = attempt_count + 1, last_contacted_at = NOW(), updated_at = NOW()
-         WHERE id = $3`,
+     SET status = 'VISIT_REQUESTED',
+         crop_type = $1,
+         acreage = $2,
+         attempt_count = attempt_count + 1,
+         last_contacted_at = NOW(),
+         updated_at = NOW()
+     WHERE id = $3`,
         [cropType, acreage, input.leadId]
       );
+
       newStatus = "VISIT_REQUESTED";
 
-      if (!input.cropType) throw new Error("INTERESTED calls require cropType");
-      await repo.requestFieldVisit(tx, input.leadId, input.userId, input.cropType);
-
+      await repo.requestFieldVisit(tx, input.leadId, input.userId, cropType);
     } else if (input.disposition === "CONTACTED") {
       // Just update attempt count and last_contacted_at
       if (lead.status !== "CONTACTED") {
