@@ -2,6 +2,7 @@
 import { PoolClient } from "pg";
 import { withTransaction } from "../db/transactions";
 import { ActionRepository } from "../repositories/action.repo";
+import { DealRepository } from "../repositories/deal.repo";
 
 export interface CallLogInput {
   leadId: string;
@@ -23,6 +24,7 @@ export interface CallLogResult {
 }
 
 const repo = new ActionRepository();
+const dealRepo = new DealRepository();
 
 export async function recordCallLog(input: CallLogInput): Promise<CallLogResult> {
   return withTransaction(async (tx: PoolClient) => {
@@ -72,8 +74,8 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
 
       // Record drop entry
       await repo.drop(tx, input.leadId, input.userId, dropReason);
-
     } else if (input.disposition === "INTERESTED") {
+
       const cropType = input.cropType || null;
       const acreage = input.acreage || null;
 
@@ -94,6 +96,18 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
         );
       }
 
+      //  imp STEP: CREATE DEAL
+      const deal = await dealRepo.create(tx, {
+        leadId: input.leadId,
+        cropType: cropType,
+        estimatedQuantity: acreage,
+        expectedValue: undefined,
+        createdBy: input.userId,
+      });
+
+      //  Move Deal NEW → CONTACTED
+      await dealRepo.updateState(tx, deal.id, "CONTACTED");
+
       // Step 2: CONTACTED → VISIT_REQUESTED
       await tx.query(
         `UPDATE leads 
@@ -110,7 +124,9 @@ export async function recordCallLog(input: CallLogInput): Promise<CallLogResult>
       newStatus = "VISIT_REQUESTED";
 
       await repo.requestFieldVisit(tx, input.leadId, input.userId, cropType);
-    } else if (input.disposition === "CONTACTED") {
+    }
+
+    else if (input.disposition === "CONTACTED") {
       // Just update attempt count and last_contacted_at
       if (lead.status !== "CONTACTED") {
         await tx.query(
