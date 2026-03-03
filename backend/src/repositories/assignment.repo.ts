@@ -18,7 +18,7 @@ export class AssignmentRepository {
     );
   }
 
-   async getAllTeleAssignments() {
+  async getAllTeleAssignments() {
     const res = await pool.query(`SELECT * FROM assignments ORDER BY id DESC`);
     return res.rows;
   }
@@ -35,10 +35,12 @@ export class AssignmentRepository {
   ) {
     await tx.query(
       `
-      INSERT INTO field_assignments (field_request_id, field_exec_id, assigned_by)
-      VALUES ($1, $2, $3)
-      `,
-      [fieldRequestId, fieldExecId, managerId]
+    INSERT INTO assignments (lead_id, user_id, assigned_by)
+    SELECT vr.lead_id, $1, $2
+    FROM visit_requests vr
+    WHERE vr.id = $3
+    `,
+      [fieldExecId, managerId, fieldRequestId]
     );
   }
 }

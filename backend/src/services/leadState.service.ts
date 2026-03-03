@@ -151,21 +151,32 @@ export class LeadStateService {
   async getAllFieldRequests() {
     return withTransaction(async (tx) => {
       const res = await tx.query(
-        `SELECT vr.id, vr.lead_id, vr.requested_by, vr.primary_crop, vr.requested_at
+        `SELECT vr.id,
+              vr.lead_id,
+              vr.requested_by,
+              vr.priority,
+              vr.notes,
+              vr.status,
+              vr.created_at
        FROM visit_requests vr
-       ORDER BY vr.requested_at DESC`
+       ORDER BY vr.created_at DESC`
       );
       return res.rows;
     });
   }
-
   /**
    * Get Field Request by ID
    */
   async getFieldRequestById(id: string) {
     return withTransaction(async (tx) => {
       const res = await tx.query(
-        `SELECT vr.id, vr.lead_id, vr.requested_by, vr.primary_crop, vr.requested_at
+        `SELECT vr.id,
+              vr.lead_id,
+              vr.requested_by,
+              vr.priority,
+              vr.notes,
+              vr.status,
+              vr.created_at
        FROM visit_requests vr
        WHERE vr.id = $1`,
         [id]
@@ -213,37 +224,120 @@ export class LeadStateService {
     managerId: string
   ) {
     await withTransaction(async (tx) => {
+
+      //  Get visit request and lock it
+      const visitRes = await tx.query(
+        `SELECT lead_id 
+       FROM visit_requests 
+       WHERE id = $1 
+       FOR UPDATE`,
+        [fieldRequestId]
+      );
+
+      if (!visitRes.rowCount) {
+        throw new Error("Visit request not found");
+      }
+
+      const leadId = visitRes.rows[0].lead_id;
+
+      //  Lock lead row
+      const lead = await this.leadRepo.lock(tx, leadId);
+
+      //  Validate state transition
+      validateLeadTransition(lead.status, "VISIT_ASSIGNED");
+
+      //  Validate Field Exec exists and role
+      const userRes = await tx.query(
+        `SELECT id, role FROM users WHERE id = $1`,
+        [fieldExecId]
+      );
+
+      if (!userRes.rowCount) {
+        throw new Error("Field Executive not found");
+      }
+
+      if (userRes.rows[0].role !== "FIELD_EXEC") {
+        throw new Error("User is not a Field Executive");
+      }
+
+      //  Create assignment record
       await this.assignRepo.assignFieldExec(
         tx,
         fieldRequestId,
         fieldExecId,
         managerId
       );
+
+      //  Update Lead state
+      await this.leadRepo.updateState(
+        tx,
+        leadId,
+        "VISIT_ASSIGNED",
+        fieldExecId
+      );
+
     });
   }
 
   async verify(
-    leadId: string,
-    fieldExecId: string,
-    status: "CONVERTED" | "DROPPED",
-    photo: string
-  ) {
-    await withTransaction(async (tx) => {
-      const lead = await this.leadRepo.lock(tx, leadId);
-      validateLeadTransition(lead.status, status === "CONVERTED" ? "VISIT_COMPLETED" : "DROPPED");
+  leadId: string,
+  fieldExecId: string,
+  finalStatus: "CONVERTED" | "DROPPED",
+  photoRef: string
+) {
+  await withTransaction(async (tx) => {
 
-      await this.actionRepo.verify(
-        tx,
-        leadId,
-        fieldExecId,
-        true,
-        photo,
-        status
-      );
+    // 1 Lock Lead
+    const lead = await this.leadRepo.lock(tx, leadId);
 
-      await this.leadRepo.updateState(tx, leadId, status === "CONVERTED" ? "VISIT_COMPLETED" : "DROPPED");
-    });
-  }
+    if (lead.status !== "VISIT_ASSIGNED") {
+      throw new Error("Lead is not in VISIT_ASSIGNED state");
+    }
+
+    // 2 Find Deal linked to lead
+    const dealRes = await tx.query(
+      `SELECT id, status FROM deals WHERE lead_id = $1 FOR UPDATE`,
+      [leadId]
+    );
+
+    if (!dealRes.rowCount) {
+      throw new Error("Deal not found for this lead");
+    }
+
+    const deal = dealRes.rows[0];
+
+    // 3 Record Visit Verification
+    await this.actionRepo.verify(
+      tx,
+      leadId,
+      fieldExecId,
+      true,
+      photoRef,
+      finalStatus
+    );
+
+    if (finalStatus === "CONVERTED") {
+
+      // 4 Lead: VISIT_ASSIGNED → VISIT_COMPLETED
+      validateLeadTransition("VISIT_ASSIGNED", "VISIT_COMPLETED");
+      await this.leadRepo.updateState(tx, leadId, "VISIT_COMPLETED");
+
+      // 5 Deal: CONTACTED → SOLD
+      validateDealTransition(deal.status, "SOLD");
+      await this.dealRepo.updateState(tx, deal.id, "SOLD");
+
+    } else {
+
+      // 4 Lead: VISIT_ASSIGNED → DROPPED
+      validateLeadTransition("VISIT_ASSIGNED", "DROPPED");
+      await this.leadRepo.updateState(tx, leadId, "DROPPED");
+
+      // 5 Deal: CONTACTED → LOST
+      validateDealTransition(deal.status, "LOST");
+      await this.dealRepo.updateState(tx, deal.id, "LOST");
+    }
+  });
+}
 
   /**
   * Get all assignments for a Field Exec
