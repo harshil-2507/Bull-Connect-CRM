@@ -8,32 +8,44 @@ export type LeadInput = {
   taluka?: string;
   district?: string;
   state?: string;
-  campaign_id: number;
-  status?: LeadState; 
+
+  farmer_type?: string;
+  bull_centre?: string;
+
+  crop_type?: string;
+  acreage?: number;
+
+  total_land_bigha?: number;
+  interested_in_warehouse?: boolean;
+  previous_experience?: string;
 };
 
 export class LeadService {
   async createLead(input: LeadInput) {
-    // Validate campaign exists and is active
-    const campaignCheck = await pool.query(
-      `SELECT id, is_active FROM campaigns WHERE id = $1`,
-      [input.campaign_id]
-    );
-
-    if (!campaignCheck.rowCount) {
-      throw new Error("Campaign not found");
-    }
-
-    if (!campaignCheck.rows[0].is_active) {
-      throw new Error("Campaign is not active");
-    }
-
     try {
       const res = await pool.query(
-        `INSERT INTO leads
-         (farmer_name, phone_number, village, taluka, district, state, status, campaign_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-         RETURNING *`,
+        `
+        INSERT INTO leads (
+          farmer_name,
+          phone_number,
+          village,
+          taluka,
+          district,
+          state,
+          farmer_type,
+          bull_centre,
+          crop_type,
+          acreage,
+          total_land_bigha,
+          interested_in_warehouse,
+          previous_experience,
+          status
+        )
+        VALUES (
+          $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14
+        )
+        RETURNING *
+        `,
         [
           input.farmer_name,
           input.phone_number,
@@ -41,14 +53,19 @@ export class LeadService {
           input.taluka || null,
           input.district || null,
           input.state || null,
+          input.farmer_type || null,
+          input.bull_centre || null,
+          input.crop_type || null,
+          input.acreage || null,
+          input.total_land_bigha || null,
+          input.interested_in_warehouse ?? null,
+          input.previous_experience || null,
           "NEW" as LeadState,
-          input.campaign_id,
         ]
       );
 
       return res.rows[0];
     } catch (err: any) {
-      // PostgreSQL unique violation error code
       if (err.code === "23505") {
         throw new Error("Lead with this phone already exists");
       }
@@ -66,12 +83,16 @@ export class LeadService {
         l.taluka,
         l.district,
         l.state,
+        l.farmer_type,
+        l.bull_centre,
+        l.crop_type,
+        l.acreage,
+        l.total_land_bigha,
+        l.interested_in_warehouse,
+        l.previous_experience,
         l.status,
-        l.created_at,
-        l.campaign_id,
-        c.name AS campaign_name
+        l.created_at
       FROM leads l
-      LEFT JOIN campaigns c ON l.campaign_id = c.id
       ORDER BY l.created_at DESC
     `);
 
@@ -89,12 +110,16 @@ export class LeadService {
         l.taluka,
         l.district,
         l.state,
+        l.farmer_type,
+        l.bull_centre,
+        l.crop_type,
+        l.acreage,
+        l.total_land_bigha,
+        l.interested_in_warehouse,
+        l.previous_experience,
         l.status,
-        l.created_at,
-        l.campaign_id,
-        c.name AS campaign_name
+        l.created_at
       FROM leads l
-      LEFT JOIN campaigns c ON l.campaign_id = c.id
       WHERE l.id = $1
       `,
       [id]

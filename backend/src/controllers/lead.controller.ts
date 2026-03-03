@@ -5,13 +5,28 @@ const service = new LeadService();
 
 export const createLead = async (req: Request, res: Response) => {
   try {
-    const { farmer_name, phone_number, village, taluka, district, state, campaign_id } = req.body;
-    if (!farmer_name || !phone_number || !campaign_id) {
+    const {
+      farmer_name,
+      phone_number,
+      village,
+      taluka,
+      district,
+      state,
+      farmer_type,
+      bull_centre,
+      crop_type,
+      acreage,
+      total_land_bigha,
+      interested_in_warehouse,
+      previous_experience
+    } = req.body;
+
+    if (!farmer_name || !phone_number) {
       return res.status(400).json({
-        error: "farmer_name, phone_number and campaign_id are required",
+        error: "farmer_name and phone_number are required",
       });
     }
-    // ALWAYS enforce status = "NEW"
+
     const lead = await service.createLead({
       farmer_name,
       phone_number,
@@ -19,9 +34,15 @@ export const createLead = async (req: Request, res: Response) => {
       taluka,
       district,
       state,
-      campaign_id,
-      status: "NEW", // server-side enforced
+      farmer_type,
+      bull_centre,
+      crop_type,
+      acreage,
+      total_land_bigha,
+      interested_in_warehouse,
+      previous_experience
     });
+
     res.status(201).json(lead);
   } catch (err: any) {
     res.status(400).json({ error: err.message });

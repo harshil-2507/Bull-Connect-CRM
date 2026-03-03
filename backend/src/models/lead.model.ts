@@ -35,16 +35,21 @@ export interface Lead {
   // Farmer Info
   farmerName: string;
   phoneNumber: string;
+  farmerType?: string | null;         //  NEW
 
   // Location Info
   village: string | null;
   taluka: string | null;
   district: string | null;
   state: string | null;
+  bullCentre?: string | null;         // NEW
 
   // Business Info
-  cropType?: string | null;
-  estimatedQuantity?: number | null;
+  cropType?: string | null;           // keep existing
+  estimatedQuantity?: number | null;  // keep existing
+  totalLandBigha?: number | null;     //  NEW
+  interestedInWarehouse?: boolean | null;  // NEW
+  previousExperience?: string | null;      //  NEW
 
   // Lifecycle
   status: LeadState;
@@ -66,12 +71,21 @@ export interface Lead {
 export interface CreateLeadDTO {
   farmerName: string;
   phoneNumber: string;
+  farmerType?: string;              //  NEW
+
   village?: string;
   taluka?: string;
   district?: string;
   state?: string;
+  bullCentre?: string;              //  NEW
+
   cropType?: string;
   estimatedQuantity?: number;
+
+  totalLandBigha?: number;          //  NEW
+  interestedInWarehouse?: boolean;  //  NEW
+  previousExperience?: string;      //  NEW
+
   source: LeadSource;
 }
 
@@ -81,11 +95,20 @@ export interface CreateLeadDTO {
 export interface UpdateLeadDTO {
   farmerName?: string;
   phoneNumber?: string;
+  farmerType?: string;              //  NEW
+
   village?: string;
   taluka?: string;
   district?: string;
   state?: string;
+  bullCentre?: string;              //  NEW
+
   cropType?: string;
   estimatedQuantity?: number;
+
+  totalLandBigha?: number;          //  NEW
+  interestedInWarehouse?: boolean;  // NEW
+  previousExperience?: string;      // NEW
+
   isActive?: boolean;
 }
