@@ -4,11 +4,14 @@ import { AssignmentRepository } from "../repositories/assignment.repo";
 import { ActionRepository } from "../repositories/action.repo";
 import { validateLeadTransition } from "./stateMachine.service";
 import { LeadState } from "../models/lead.model";
+import { DealRepository } from "../repositories/deal.repo";
+import { validateDealTransition } from "./dealStateMachine.service";
 
 export class LeadStateService {
   private leadRepo = new LeadRepository();
   private assignRepo = new AssignmentRepository();
   private actionRepo = new ActionRepository();
+  private dealRepo = new DealRepository();
 
   async assignTelecaller(leadId: string, telecallerId: string, managerId: string) {
     await withTransaction(async (tx) => {
@@ -92,6 +95,18 @@ export class LeadStateService {
       // Always log call
       await this.actionRepo.call(tx, leadId, telecallerId, disposition, notes);
       if (disposition === "INTERESTED") {
+
+        //   Create Deal inside SAME transaction
+        const deal = await this.dealRepo.create(tx, {
+          leadId: leadId,
+          createdBy: telecallerId,
+        });
+
+        //   Move Deal from NEW → CONTACTED
+        validateDealTransition("NEW", "CONTACTED");
+        await this.dealRepo.updateState(tx, deal.id, "CONTACTED");
+
+        //  % Continue existing Lead lifecycle (unchanged)
 
         validateLeadTransition(lead.status, "CONTACTED");
         await this.leadRepo.updateState(tx, leadId, "CONTACTED");
