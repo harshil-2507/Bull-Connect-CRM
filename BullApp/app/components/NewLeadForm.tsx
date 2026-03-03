@@ -7,76 +7,76 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  Modal,
+  Pressable,
 } from "react-native";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
-import { Modal, Pressable } from "react-native";
 
 interface Props {
   onSuccess?: () => void;
 }
 
+const farmerTypes = ["VIP", "High", "Medium", "Low", "Trader", "Not in Area"];
+const cropOptions = ["Wheat", "Cotton", "Soybean", "Onion", "Sugarcane"];
+
 export default function NewLeadForm({ onSuccess }: Props) {
-  const [farmerName, setFarmerName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [village, setVillage] = useState("");
-  const [taluka, setTaluka] = useState("");
-  const [district, setDistrict] = useState("");
-  const [stateName, setStateName] = useState("");
-  const [campaignId, setCampaignId] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [farmerName, setFarmerName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [farmerType, setFarmerType] = useState("");
+  const [bullCenter, setBullCenter] = useState("");
+  const [district, setDistrict] = useState("");
+  const [taluka, setTaluka] = useState("");
+  const [village, setVillage] = useState("");
+  const [bigha, setBigha] = useState("");
+  const [selectedCrops, setSelectedCrops] = useState<string[]>([]);
+  const [warehouseInterest, setWarehouseInterest] = useState<"Yes" | "No" | "">("");
+  const [previousExperience, setPreviousExperience] = useState<"Yes" | "No" | "">("");
+
+  const toggleCrop = (crop: string) => {
+    if (selectedCrops.includes(crop)) {
+      setSelectedCrops(selectedCrops.filter((c) => c !== crop));
+    } else {
+      setSelectedCrops([...selectedCrops, crop]);
+    }
+  };
+
   const handleCreateLead = async () => {
-    if (!farmerName || !phoneNumber || !campaignId) {
-      Alert.alert("Error", "Farmer name, phone number and campaign are required");
+    if (!farmerName || !phoneNumber) {
+      Alert.alert("Error", "Farmer name and phone number required");
       return;
     }
 
     try {
       setLoading(true);
-
       const token = await SecureStore.getItemAsync("authToken");
 
-      if (!token) {
-        throw new Error("Authentication token not found. Please login again.");
-      }
+      const response = await fetch("YOUR_API_URL", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          farmer_name: farmerName,
+          phone_number: phoneNumber,
+          farmer_type: farmerType,
+          bull_center: bullCenter,
+          district,
+          taluka,
+          village,
+          crops: selectedCrops,
+          bigha,
+          warehouse_interest: warehouseInterest === "Yes",
+          previous_experience: previousExperience === "Yes",
+        }),
+      });
 
-      const response = await fetch(
-        "https://bull-connect-crm.onrender.com/leads",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            farmer_name: farmerName,
-            phone_number: phoneNumber,
-            village,
-            taluka,
-            district,
-            state: stateName,
-            campaign_id: campaignId,
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || data.message || "Failed to create lead");
-      }
+      if (!response.ok) throw new Error("Failed to create lead");
 
       Alert.alert("Success", "Lead created successfully");
-
-      // Clear form
-      setFarmerName("");
-      setPhoneNumber("");
-      setVillage("");
-      setTaluka("");
-      setDistrict("");
-      setStateName("");
-      setCampaignId("");
 
       if (onSuccess) onSuccess();
     } catch (error: any) {
@@ -86,163 +86,186 @@ export default function NewLeadForm({ onSuccess }: Props) {
     }
   };
 
-  const [campaignModalVisible, setCampaignModalVisible] = useState(false);
-
-const campaigns = [
-  {
-    id: "a57a9798-68c8-4466-bf2d-6a5f6721d0f9",
-    name: "Main Agriculture Campaign",
-  },
-];
-
   return (
     <ScrollView
       showsVerticalScrollIndicator={false}
-      className="flex-1 bg-[#f3f5f4]"
-      contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+      className="flex-1 bg-[#f4f6f5]"
+      contentContainerStyle={{ padding: 16, paddingBottom: 60 }}
     >
-      <View className="bg-white rounded-2xl border border-gray-200 px-5 py-6 shadow-sm">
+      <View className="bg-white rounded-3xl p-6 shadow-md border border-gray-100">
         
-        {/* FARMER DETAILS */}
-        <View className="mb-6">
-          <View className="flex-row items-center mb-4">
-            <Feather name="user" size={18} color="#16a34a" />
-            <Text className="ml-2 text-xs font-bold tracking-widest text-green-600">
-              FARMER DETAILS
-            </Text>
-          </View>
+        {/* HEADER */}
+        <Text className="text-2xl font-bold mb-6 text-gray-800">
+          Add New Farmer Lead
+        </Text>
 
-          <Text className="text-base font-medium mb-2">Farmer Name</Text>
-          <TextInput
-            value={farmerName}
-            onChangeText={setFarmerName}
-            placeholder="e.g., Vishwanath Kale"
-            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 mb-4"
-          />
+        {/* BASIC INFO */}
+        <Text className="text-sm font-semibold text-green-600 mb-3">
+          BASIC INFORMATION
+        </Text>
 
-          <Text className="text-base font-medium mb-2">Phone Number</Text>
-          <TextInput
-            value={phoneNumber}
-            onChangeText={setPhoneNumber}
-            placeholder="e.g., 9662345502"
-            keyboardType="phone-pad"
-            className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4"
-          />
+        <TextInput
+          placeholder="Farmer Name"
+          value={farmerName}
+          onChangeText={setFarmerName}
+          className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 mb-4"
+        />
+
+        <TextInput
+          placeholder="Phone Number"
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          keyboardType="phone-pad"
+          className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 mb-4"
+        />
+
+        {/* FARMER TYPE */}
+        <Text className="text-sm font-semibold text-green-600 mb-3">
+          FARMER TYPE
+        </Text>
+
+        <View className="flex-row flex-wrap mb-6">
+          {farmerTypes.map((type) => (
+            <TouchableOpacity
+              key={type}
+              onPress={() => setFarmerType(type)}
+              className={`px-4 py-2 rounded-full mr-3 mb-3 ${
+                farmerType === type
+                  ? "bg-green-500"
+                  : "bg-gray-200"
+              }`}
+            >
+              <Text
+                className={`${
+                  farmerType === type ? "text-white" : "text-gray-700"
+                }`}
+              >
+                {type}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
-
-        <View className="border-t border-gray-100 my-6" />
 
         {/* LOCATION */}
-        <View className="mb-6">
-          <View className="flex-row items-center mb-4">
-            <Feather name="map-pin" size={18} color="#16a34a" />
-            <Text className="ml-2 text-xs font-bold tracking-widest text-green-600">
-              LOCATION
-            </Text>
-          </View>
+        <Text className="text-sm font-semibold text-green-600 mb-3">
+          LOCATION
+        </Text>
 
-          <View className="flex-row space-x-4 mb-4">
-            <TextInput
-              value={village}
-              onChangeText={setVillage}
-              placeholder="Village"
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-4"
-            />
-            <TextInput
-              value={taluka}
-              onChangeText={setTaluka}
-              placeholder="Taluka"
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-4"
-            />
-          </View>
+        <TextInput
+          placeholder="Bull Center"
+          value={bullCenter}
+          onChangeText={setBullCenter}
+          className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 mb-4"
+        />
 
-          <View className="flex-row space-x-4">
-            <TextInput
-              value={district}
-              onChangeText={setDistrict}
-              placeholder="District"
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-4"
-            />
-            <TextInput
-              value={stateName}
-              onChangeText={setStateName}
-              placeholder="State"
-              className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-4"
-            />
-          </View>
+        <TextInput
+          placeholder="District"
+          value={district}
+          onChangeText={setDistrict}
+          className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 mb-4"
+        />
+
+        <TextInput
+          placeholder="Taluka"
+          value={taluka}
+          onChangeText={setTaluka}
+          className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 mb-4"
+        />
+
+        <TextInput
+          placeholder="Village"
+          value={village}
+          onChangeText={setVillage}
+          className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 mb-6"
+        />
+
+        {/* FARMING DETAILS */}
+        <Text className="text-sm font-semibold text-green-600 mb-3">
+          FARMING DETAILS
+        </Text>
+
+        <TextInput
+          placeholder="Total Bigha"
+          value={bigha}
+          onChangeText={setBigha}
+          keyboardType="numeric"
+          className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 mb-4"
+        />
+
+        <View className="flex-row flex-wrap mb-6">
+          {cropOptions.map((crop) => (
+            <TouchableOpacity
+              key={crop}
+              onPress={() => toggleCrop(crop)}
+              className={`px-4 py-2 rounded-full mr-3 mb-3 ${
+                selectedCrops.includes(crop)
+                  ? "bg-green-500"
+                  : "bg-gray-200"
+              }`}
+            >
+              <Text
+                className={`${
+                  selectedCrops.includes(crop)
+                    ? "text-white"
+                    : "text-gray-700"
+                }`}
+              >
+                {crop}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        <View className="border-t border-gray-100 my-6" />
+        {/* YES / NO TOGGLES */}
+        <Text className="text-sm font-semibold text-green-600 mb-3">
+          OTHER DETAILS
+        </Text>
 
-        {/* MARKETING */}
-<View className="mb-6">
-  <View className="flex-row items-center mb-4">
-    <MaterialIcons name="campaign" size={18} color="#16a34a" />
-    <Text className="ml-2 text-xs font-bold tracking-widest text-green-600">
-      MARKETING
-    </Text>
-  </View>
+        {[
+          { label: "Interested in Warehouse", state: warehouseInterest, setter: setWarehouseInterest },
+          { label: "Previous Experience with Bull", state: previousExperience, setter: setPreviousExperience },
+        ].map((item) => (
+          <View key={item.label} className="mb-5">
+            <Text className="mb-2 text-gray-700">{item.label}</Text>
+            <View className="flex-row">
+              {["Yes", "No"].map((val) => (
+                <TouchableOpacity
+                  key={val}
+                  onPress={() => item.setter(val as "Yes" | "No")}
+                  className={`px-6 py-3 rounded-full mr-4 ${
+                    item.state === val ? "bg-green-500" : "bg-gray-200"
+                  }`}
+                >
+                  <Text
+                    className={`${
+                      item.state === val ? "text-white" : "text-gray-700"
+                    }`}
+                  >
+                    {val}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        ))}
 
-  <Text className="text-base font-medium mb-2">Campaign</Text>
-
-  <TouchableOpacity
-    onPress={() => setCampaignModalVisible(true)}
-    className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-4 flex-row justify-between items-center"
-  >
-    <Text className={`${campaignId ? "text-black" : "text-gray-400"}`}>
-      {campaignId
-        ? campaigns.find((c) => c.id === campaignId)?.name
-        : "Select Campaign"}
-    </Text>
-    <Feather name="chevron-down" size={20} color="#9ca3af" />
-  </TouchableOpacity>
-</View>
-
-        {/* BUTTON */}
+        {/* SUBMIT BUTTON */}
         <TouchableOpacity
           onPress={handleCreateLead}
           disabled={loading}
-          className={`py-5 rounded-2xl items-center justify-center ${
-            loading ? "bg-green-300" : "bg-[#13ec49]"
+          className={`py-5 rounded-2xl items-center ${
+            loading ? "bg-green-300" : "bg-green-500"
           }`}
         >
           {loading ? (
-            <ActivityIndicator color="black" />
+            <ActivityIndicator color="white" />
           ) : (
-            <Text className="text-black font-bold text-lg">
-              Add Lead
+            <Text className="text-white font-bold text-lg">
+              Create Lead
             </Text>
           )}
         </TouchableOpacity>
       </View>
-      <Modal
-  transparent
-  animationType="slide"
-  visible={campaignModalVisible}
-  onRequestClose={() => setCampaignModalVisible(false)}
->
-  <Pressable
-    className="flex-1 bg-black/30 justify-end"
-    onPress={() => setCampaignModalVisible(false)}
-  >
-    <View className="bg-white rounded-t-3xl p-6">
-      <Text className="text-lg font-bold mb-4">Select Campaign</Text>
-
-      {campaigns.map((campaign) => (
-        <TouchableOpacity
-          key={campaign.id}
-          onPress={() => {
-            setCampaignId(campaign.id);
-            setCampaignModalVisible(false);
-          }}
-          className="py-4 border-b border-gray-100"
-        >
-          <Text className="text-base">{campaign.name}</Text>
-        </TouchableOpacity>
-      ))}
-    </View>
-  </Pressable>
-</Modal>
     </ScrollView>
   );
 }

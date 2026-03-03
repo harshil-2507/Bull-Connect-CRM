@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -13,10 +13,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as SecureStore from "expo-secure-store";
 
+import LeadDetailsCard from "./LeadDetailsCard";
+import CallHistorySection from "./CallHistorySection";
+
 interface Props {
   lead: any | null;
   onClose: () => void;
-  onSuccess?: () => void; // refresh list after action
+  onSuccess?: () => void;
 }
 
 export default function TelecallerLeadActions({
@@ -24,178 +27,218 @@ export default function TelecallerLeadActions({
   onClose,
   onSuccess,
 }: Props) {
-  if (!lead) return null;
+  const [leadDetails, setLeadDetails] = useState<any>(null);
+  const [callHistory, setCallHistory] = useState<any[]>([]);
+  const [leadLoading, setLeadLoading] = useState(true);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [disposition, setDisposition] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [cropType, setCropType] = useState("");
   const [acreage, setAcreage] = useState("");
-  const [dropReason, setDropReason] = useState("");
+
+  const fetchData = async () => {
+    if (!lead) return;
+
+    try {
+      const token = await SecureStore.getItemAsync("authToken");
+      if (!token) return;
+
+      setLeadLoading(true);
+      setHistoryLoading(true);
+      setHistoryError(false);
+
+      const [leadRes, historyRes] = await Promise.all([
+        fetch(
+          `https://bull-connect-crm.onrender.com/leads/${lead.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+        fetch(
+          `https://bull-connect-crm.onrender.com/lead/call/${lead.id}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        ),
+      ]);
+
+      if (leadRes.ok) {
+        const leadData = await leadRes.json();
+        setLeadDetails(leadData);
+      } else {
+        setLeadDetails(null);
+      }
+
+      if (historyRes.ok) {
+        const historyData = await historyRes.json();
+        setCallHistory(historyData || []);
+      } else {
+        setHistoryError(true);
+      }
+    } catch (err) {
+      setHistoryError(true);
+    } finally {
+      setLeadLoading(false);
+      setHistoryLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [lead]);
 
   const submitCall = async () => {
-  if (!disposition) {
-    Alert.alert("Error", "Please select a disposition");
-    return;
-  }
-
-  if (disposition === "INTERESTED" && (!cropType || !acreage)) {
-    Alert.alert("Error", "Crop type and acreage required");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const token = await SecureStore.getItemAsync("authToken");
-    if (!token) throw new Error("Authentication failed");
-
-    // 🔥 Build payload conditionally (CLEAN)
-    let payload: any = {
-      leadId: lead.id,
-      disposition,
-      notes: notes.trim(),
-    };
-
-    if (disposition === "INTERESTED") {
-      payload.cropType = cropType.trim();
-      payload.acreage = Number(acreage);
+    if (!disposition) {
+      Alert.alert("Error", "Please select disposition");
+      return;
     }
 
-    if (disposition === "CONTACTED") {
-      payload.durationSeconds = 60;
-    }
+    try {
+      setLoading(true);
 
-    // ❗ For NOT_INTERESTED we send NOTHING extra
-    // Backend will auto set dropReason = "OTHER"
+      const token = await SecureStore.getItemAsync("authToken");
+      if (!token) throw new Error("Authentication failed");
 
-    console.log("Sending payload:", payload);
+      const payload: any = {
+        leadId: lead.id,
+        disposition,
+        notes,
+      };
 
-    const response = await fetch(
-      "https://bull-connect-crm.onrender.com/telecaller/call",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
+      if (disposition === "INTERESTED") {
+        payload.cropType = cropType;
+        payload.acreage = Number(acreage);
       }
-    );
 
-    const result = await response.json();
+      const response = await fetch(
+        "https://bull-connect-crm.onrender.com/telecaller/call",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
-    if (!response.ok) {
-      throw new Error(result.error || result.message || "Failed to log call");
+      if (!response.ok) throw new Error("Failed to log call");
+
+      Alert.alert("Success", "Call logged successfully");
+
+      // 🔥 Refresh history instead of closing immediately
+      fetchData();
+      setDisposition(null);
+      setNotes("");
+      setCropType("");
+      setAcreage("");
+
+      onSuccess?.();
+    } catch (err: any) {
+      Alert.alert("Error", err.message);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    Alert.alert("Success", "Call logged successfully");
-    onClose();
-    onSuccess?.();
-  } catch (err: any) {
-    Alert.alert("Error", err.message);
-  } finally {
-    setLoading(false);
-  }
-};
+  if (!lead) return null;
 
   return (
-    <Modal visible={!!lead} animationType="slide" onRequestClose={onClose}>
-      <SafeAreaView className="flex-1 bg-gray-50">
-        {/* Header */}
-        <View className="flex-row justify-between items-center p-4 bg-white border-b">
-          <Text className="text-xl font-bold text-[#1a4d2e]">
-            Call Action
+    <Modal visible animationType="slide">
+      <SafeAreaView className="flex-1 bg-[#f4f6f5]">
+
+        {/* HEADER */}
+        <View className="flex-row justify-between items-center px-4 py-4 bg-white border-b border-gray-100">
+          <Text className="text-xl font-bold text-gray-800">
+            Lead Profile
           </Text>
           <TouchableOpacity onPress={onClose}>
-            <MaterialIcons name="close" size={26} color="#1a4d2e" />
+            <MaterialIcons name="close" size={26} color="#14532d" />
           </TouchableOpacity>
         </View>
 
-        <ScrollView className="p-4 space-y-4">
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        >
 
-          {/* Disposition Buttons */}
-          <Text className="font-semibold">Disposition</Text>
+          <LeadDetailsCard lead={leadDetails} loading={leadLoading} />
 
-          {["CONTACTED", "INTERESTED", "NOT_INTERESTED"].map((type) => (
-            <TouchableOpacity
-              key={type}
-              onPress={() => setDisposition(type)}
-              className={`p-3 rounded-xl mb-2 ${
-                disposition === type
-                  ? "bg-[#1a4d2e]"
-                  : "bg-white border border-gray-300"
-              }`}
-            >
-              <Text
-                className={`text-center font-semibold ${
-                  disposition === type ? "text-white" : "text-gray-700"
-                }`}
-              >
-                {type}
-              </Text>
-            </TouchableOpacity>
-          ))}
-
-          {/* Notes */}
-          <Text className="font-semibold mt-4">Notes</Text>
-          <TextInput
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Enter call notes"
-            className="bg-white border border-gray-300 rounded-xl p-3"
-            multiline
+          <CallHistorySection
+            calls={callHistory}
+            loading={historyLoading}
+            error={historyError}
           />
 
-          {/* Interested Fields */}
-          {disposition === "INTERESTED" && (
-            <>
-              <Text className="font-semibold mt-4">Crop Type</Text>
-              <TextInput
-                value={cropType}
-                onChangeText={setCropType}
-                placeholder="Enter crop type"
-                className="bg-white border border-gray-300 rounded-xl p-3"
-              />
+          {/* CALL ACTION (STAYS HERE) */}
+          <View className="bg-white rounded-3xl px-5 py-6 border border-gray-100 shadow-sm">
 
-              <Text className="font-semibold mt-4">Acreage</Text>
-              <TextInput
-                value={acreage}
-                onChangeText={setAcreage}
-                placeholder="Enter acreage"
-                keyboardType="numeric"
-                className="bg-white border border-gray-300 rounded-xl p-3"
-              />
-            </>
-          )}
+            <Text className="text-xs font-bold tracking-widest text-green-600 mb-4">
+              LOG NEW CALL
+            </Text>
 
-          {/* Drop Fields */}
-          {disposition === "NOT_INTERESTED" && (
-            <>
-              <Text className="font-semibold mt-4">Drop Reason</Text>
-              <TextInput
-                value={dropReason}
-                onChangeText={setDropReason}
-                placeholder="Enter drop reason"
-                className="bg-white border border-gray-300 rounded-xl p-3"
-              />
-            </>
-          )}
+            {["CONTACTED", "INTERESTED", "NOT_INTERESTED"].map((type) => (
+              <TouchableOpacity
+                key={type}
+                onPress={() => setDisposition(type)}
+                className={`py-3 rounded-xl mb-3 ${
+                  disposition === type
+                    ? "bg-green-600"
+                    : "bg-gray-100"
+                }`}
+              >
+                <Text
+                  className={`text-center font-semibold ${
+                    disposition === type
+                      ? "text-white"
+                      : "text-gray-700"
+                  }`}
+                >
+                  {type}
+                </Text>
+              </TouchableOpacity>
+            ))}
 
-          {/* Submit */}
-          <TouchableOpacity
-            onPress={submitCall}
-            disabled={loading}
-            className="bg-[#0ea633] p-4 rounded-2xl mt-6 items-center"
-          >
-            {loading ? (
-              <ActivityIndicator color="white" />
-            ) : (
-              <Text className="text-white font-bold text-lg">
-                Submit Call
-              </Text>
+            <TextInput
+              value={notes}
+              onChangeText={setNotes}
+              placeholder="Call notes"
+              multiline
+              className="bg-gray-100 rounded-xl p-4 mt-2"
+            />
+
+            {disposition === "INTERESTED" && (
+              <>
+                <TextInput
+                  value={cropType}
+                  onChangeText={setCropType}
+                  placeholder="Crop type"
+                  className="bg-gray-100 rounded-xl p-4 mt-3"
+                />
+                <TextInput
+                  value={acreage}
+                  onChangeText={setAcreage}
+                  placeholder="Acreage"
+                  keyboardType="numeric"
+                  className="bg-gray-100 rounded-xl p-4 mt-3"
+                />
+              </>
             )}
-          </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={submitCall}
+              disabled={loading}
+              className="bg-green-600 py-5 rounded-2xl mt-6 items-center"
+            >
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white font-bold text-lg">
+                  Submit Call
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+
         </ScrollView>
       </SafeAreaView>
     </Modal>
