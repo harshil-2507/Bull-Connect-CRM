@@ -21,7 +21,7 @@ exports.canRoleAccessStatus = canRoleAccessStatus;
  * Terminal states (FIELD_REQUESTED, DROPPED) have no outgoing transitions
  */
 exports.ALLOWED_TRANSITIONS = {
-    NEW: ['ASSIGNED'],
+    NEW: ['ASSIGNED', 'CONTACTED', 'DROPPED'],
     ASSIGNED: ['CONTACTED', 'DROPPED'],
     CONTACTED: ['VISIT_REQUESTED', 'DROPPED', 'CONTACTED'],
     VISIT_REQUESTED: ['VISIT_ASSIGNED'],

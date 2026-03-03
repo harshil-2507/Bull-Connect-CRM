@@ -73,7 +73,7 @@ class LeadStateService {
                 (0, stateMachine_service_1.validateLeadTransition)(lead.status, "CONTACTED");
                 await this.leadRepo.updateState(tx, leadId, "CONTACTED");
                 (0, stateMachine_service_1.validateLeadTransition)("CONTACTED", "VISIT_REQUESTED");
-                await this.actionRepo.requestFieldVisit(tx, leadId, telecallerId, "UNKNOWN");
+                await this.actionRepo.requestFieldVisit(tx, leadId, telecallerId, notes);
                 await this.leadRepo.updateState(tx, leadId, "VISIT_REQUESTED");
             }
             if (disposition === "NOT_INTERESTED") {
@@ -99,9 +99,9 @@ class LeadStateService {
     */
     async getAllFieldRequests() {
         return (0, transactions_1.withTransaction)(async (tx) => {
-            const res = await tx.query(`SELECT fr.id, fr.lead_id, fr.requested_by, fr.primary_crop, fr.requested_at
-         FROM field_requests fr
-         ORDER BY fr.requested_at DESC`);
+            const res = await tx.query(`SELECT vr.id, vr.lead_id, vr.requested_by, vr.primary_crop, vr.requested_at
+       FROM visit_requests vr
+       ORDER BY vr.requested_at DESC`);
             return res.rows;
         });
     }
@@ -110,11 +110,11 @@ class LeadStateService {
      */
     async getFieldRequestById(id) {
         return (0, transactions_1.withTransaction)(async (tx) => {
-            const res = await tx.query(`SELECT fr.id, fr.lead_id, fr.requested_by, fr.primary_crop, fr.requested_at
-         FROM field_requests fr
-         WHERE fr.id = $1`, [id]);
+            const res = await tx.query(`SELECT vr.id, vr.lead_id, vr.requested_by, vr.primary_crop, vr.requested_at
+       FROM visit_requests vr
+       WHERE vr.id = $1`, [id]);
             if (!res.rowCount)
-                throw new Error("Field request not found");
+                throw new Error("Visit request not found");
             return res.rows[0];
         });
     }
@@ -123,9 +123,9 @@ class LeadStateService {
      */
     async getAllFieldVerifications() {
         return (0, transactions_1.withTransaction)(async (tx) => {
-            const res = await tx.query(`SELECT fv.id, fv.lead_id, fv.field_exec_id, fv.gps_checkin_ok, fv.photo_ref, fv.final_status, fv.verified_at
-         FROM field_verifications fv
-         ORDER BY fv.verified_at DESC`);
+            const res = await tx.query(`SELECT v.id, v.lead_id, v.field_exec_id, v.gps_checkin_ok, v.photo_ref, v.final_status, v.verified_at
+       FROM visits v
+       ORDER BY v.verified_at DESC`);
             return res.rows;
         });
     }
@@ -134,11 +134,11 @@ class LeadStateService {
      */
     async getFieldVerificationById(id) {
         return (0, transactions_1.withTransaction)(async (tx) => {
-            const res = await tx.query(`SELECT fv.id, fv.lead_id, fv.field_exec_id, fv.gps_checkin_ok, fv.photo_ref, fv.final_status, fv.verified_at
-         FROM field_verifications fv
-         WHERE fv.id = $1`, [id]);
+            const res = await tx.query(`SELECT v.id, v.lead_id, v.field_exec_id, v.gps_checkin_ok, v.photo_ref, v.final_status, v.verified_at
+       FROM visits v
+       WHERE v.id = $1`, [id]);
             if (!res.rowCount)
-                throw new Error("Field verification not found");
+                throw new Error("Visit not found");
             return res.rows[0];
         });
     }
@@ -160,12 +160,10 @@ class LeadStateService {
     */
     async getAssignmentsForExec(fieldExecId) {
         return (0, transactions_1.withTransaction)(async (tx) => {
-            const res = await tx.query(`SELECT fa.id, fa.field_request_id, fa.field_exec_id, fa.assigned_by, fa.assigned_at,
-                fr.lead_id, fr.primary_crop
-         FROM field_assignments fa
-         JOIN field_requests fr ON fr.id = fa.field_request_id
-         WHERE fa.field_exec_id = $1
-         ORDER BY fa.assigned_at DESC`, [fieldExecId]);
+            const res = await tx.query(`SELECT a.id, a.lead_id, a.user_id, a.assigned_by, a.assigned_at
+       FROM assignments a
+       WHERE a.user_id = $1
+       ORDER BY a.assigned_at DESC`, [fieldExecId]);
             return res.rows;
         });
     }
@@ -184,13 +182,17 @@ class LeadStateService {
      */
     async getAssignmentByIdForExec(id, fieldExecId) {
         return (0, transactions_1.withTransaction)(async (tx) => {
-            const res = await tx.query(`SELECT fa.id, fa.field_request_id, fa.field_exec_id, fa.assigned_by, fa.assigned_at,
-                fr.lead_id, fr.primary_crop
-         FROM field_assignments fa
-         JOIN field_requests fr ON fr.id = fa.field_request_id
-         WHERE fa.id = $1 AND fa.field_exec_id = $2`, [id, fieldExecId]);
-            if (!res.rowCount)
+            const res = await tx.query(`SELECT a.id,
+              a.lead_id,
+              a.user_id,
+              a.assigned_by,
+              a.assigned_at
+       FROM assignments a
+       WHERE a.id = $1
+         AND a.user_id = $2`, [id, fieldExecId]);
+            if (!res.rowCount) {
                 throw new Error("Assignment not found or not assigned to you");
+            }
             return res.rows[0];
         });
     }
