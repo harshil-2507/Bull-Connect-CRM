@@ -8,6 +8,7 @@ import { login } from "./controllers/auth.controller";
   import adminRoutes from "./routes/admin.routes";
   import leadRoutes from "./routes/lead.routes";
   import campaignRoutes from "./routes/campaign.routes";
+  import adminDashboardRoutes from "./routes/adminDashboard.routes";
   import { env } from "./config/env";
 
   const app = express();
@@ -53,8 +54,8 @@ import { login } from "./controllers/auth.controller";
   app.use("/telecaller", telecallerRoutes);
   app.use("/field-manager", fieldManagerRoutes);
   app.use("/field-exec", fieldExecRoutes);
-  console.log("Campaign routes loaded");
-
+  
   app.use("/campaigns", campaignRoutes);
+  app.use("/admin/dashboard", adminDashboardRoutes);
 
   export default app;
