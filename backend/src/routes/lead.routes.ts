@@ -1,11 +1,19 @@
 import { Router } from "express";
-import { createLead, getAllLeads, getLeadById, updateLead } from "../controllers/lead.controller";
+import { auth } from "../middlewares/auth";
+import { 
+  createLead, 
+  getAllLeads, 
+  getLeadById, 
+  updateLead,
+  logCall
+} from "../controllers/lead.controller";
 
 const router = Router();
 
-router.post("/", createLead);
-router.get("/", getAllLeads);
-router.get("/:id", getLeadById);
-router.put("/:id", updateLead);
+router.post("/", auth, createLead);
+router.get("/", auth, getAllLeads);
+router.get("/:id", auth, getLeadById);
+router.put("/:id", auth, updateLead);
+router.post("/:id/call", auth, logCall);
 
 export default router;

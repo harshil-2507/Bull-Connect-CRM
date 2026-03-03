@@ -129,37 +129,138 @@ export class LeadService {
 
     return res.rows;
   }
-
   async getLeadById(id: string) {
     const res = await pool.query(
-      `
-      SELECT 
-        l.id,
-        l.farmer_name,
-        l.phone_number,
-        l.village,
-        l.taluka,
-        l.district,
-        l.state,
-        l.farmer_type,
-        l.bull_centre,
-        l.crop_type,
-        l.acreage,
-        l.total_land_bigha,
-        l.interested_in_warehouse,
-        l.previous_experience,
-        l.status,
-        l.created_at
-      FROM leads l
-      WHERE l.id = $1
-      `,
+      `SELECT * FROM leads WHERE id = $1`,
       [id]
     );
 
-    if (!res.rowCount) throw new Error("Lead not found");
+    if (!res.rowCount) {
+      throw new Error("Lead not found");
+    }
 
     return res.rows[0];
   }
+  //   async logCall(
+  //     leadId: string,
+  //     userId: string,
+  //     outcome: "CONTACTED" | "INTERESTED" | "NOT_INTERESTED",
+  //     notes?: string
+  //   ) {
+  //     const client = await pool.connect();
+
+  //     try {
+  //       await client.query("BEGIN");
+
+  //       //  Get current lead
+  //       const leadRes = await client.query(
+  //         `SELECT status, attempt_count FROM leads WHERE id = $1`,
+  //         [leadId]
+  //       );
+
+  //       if (!leadRes.rowCount) {
+  //         throw new Error("Lead not found");
+  //       }
+
+  //       const currentStatus = leadRes.rows[0].status;
+  //       const attemptCount = leadRes.rows[0].attempt_count || 0;
+
+  //       //  Determine new status
+  //       let newStatus = currentStatus;
+
+  //       if (outcome === "CONTACTED") newStatus = "CONTACTED";
+  //       if (outcome === "INTERESTED") newStatus = "VISIT_REQUESTED";
+  //       if (outcome === "NOT_INTERESTED") newStatus = "DROPPED";
+
+  //       //  Update lead
+  //       await client.query(
+  //         `
+  //       UPDATE leads
+  //       SET 
+  //         status = $1,
+  //         attempt_count = $2,
+  //         last_contacted_at = CURRENT_TIMESTAMP,
+  //         updated_at = CURRENT_TIMESTAMP
+  //       WHERE id = $3
+  //       `,
+  //         [newStatus, attemptCount + 1, leadId]
+  //       );
+
+  //       //  Insert CALL activity
+  //       await client.query(
+  //         `
+  //       INSERT INTO activity_logs (lead_id, user_id, type, metadata)
+  //       VALUES ($1, $2, 'CALL', $3)
+  //       `,
+  //         [
+  //           leadId,
+  //           userId,
+  //           JSON.stringify({
+  //             outcome,
+  //             notes: notes || null,
+  //           }),
+  //         ]
+  //       );
+
+  //       //  Insert STATUS_CHANGE activity (only if changed)
+  //       if (currentStatus !== newStatus) {
+  //         await client.query(
+  //           `
+  //         INSERT INTO activity_logs (lead_id, user_id, type, metadata)
+  //         VALUES ($1, $2, 'STATUS_CHANGE', $3)
+  //         `,
+  //           [
+  //             leadId,
+  //             userId,
+  //             JSON.stringify({
+  //               from: currentStatus,
+  //               to: newStatus,
+  //             }),
+  //           ]
+  //         );
+  //       }
+
+  //       await client.query("COMMIT");
+
+  //       return { success: true };
+  //     } catch (err) {
+  //       await client.query("ROLLBACK");
+  //       throw err;
+  //     } finally {
+  //       client.release();
+  //     }
+  //   }
+  //   async getLeadById(id: string) {
+  //   const leadRes = await pool.query(
+  //     `SELECT * FROM leads WHERE id = $1`,
+  //     [id]
+  //   );
+
+  //   if (!leadRes.rowCount) {
+  //     throw new Error("Lead not found");
+  //   }
+
+  //   const activityRes = await pool.query(
+  //     `
+  //     SELECT 
+  //       a.id,
+  //       a.type,
+  //       a.metadata,
+  //       a.created_at,
+  //       u.username AS performed_by
+  //     FROM activity_logs a
+  //     LEFT JOIN users u ON a.user_id = u.id
+  //     WHERE a.lead_id = $1
+  //     ORDER BY a.created_at DESC
+  //     `,
+  //     [id]
+  //   );
+
+  //   return {
+  //     lead: leadRes.rows[0],
+  //     activity_history: activityRes.rows,
+  //   };
+  // }
 
 
 
