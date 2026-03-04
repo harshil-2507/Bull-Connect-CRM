@@ -1,0 +1,21 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+@layer base {
+  :root {
+  --brand-primary: #2563eb; /* professional blue */
+}
+
+  .dark {
+    --background: 15 23 42;
+    --foreground: 248 250 252;
+    --card: 17 24 39;
+    --border: 31 41 55;
+  }
+  html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--foreground));
+  }
+}
