@@ -26,14 +26,12 @@ export class AdminDashboardService {
 
     const params = from && to ? [from, to] : [];
 
-    // Total leads
     const totalLeadsQuery = `
       SELECT COUNT(*) AS total
       FROM leads
       ${dateCondition}
     `;
 
-    // Active leads
     const activeLeadsQuery = `
       SELECT COUNT(*) AS total
       FROM leads
@@ -41,7 +39,6 @@ export class AdminDashboardService {
       status NOT IN ('SOLD', 'DROPPED')
     `;
 
-    // Sold leads
     const soldLeadsQuery = `
       SELECT COUNT(*) AS total
       FROM leads
@@ -49,7 +46,6 @@ export class AdminDashboardService {
       status = 'SOLD'
     `;
 
-    // Visit completed
     const visitCompletedQuery = `
       SELECT COUNT(*) AS total
       FROM leads
@@ -57,14 +53,12 @@ export class AdminDashboardService {
       status = 'VISIT_COMPLETED'
     `;
 
-    // Avg attempt count
     const avgAttemptQuery = `
       SELECT AVG(attempt_count) AS avg_attempt
       FROM leads
       ${dateCondition}
     `;
 
-    // Revenue from SOLD deals
     const revenueQuery = `
       SELECT COALESCE(SUM(expected_value), 0) AS revenue
       FROM deals
@@ -157,43 +151,38 @@ export class AdminDashboardService {
 
     const offset = (page - 1) * limit;
 
-    const dateCondition =
-      from && to
-        ? `AND l.created_at BETWEEN $1 AND $2`
-        : "";
-
     const params =
       from && to ? [from, to, limit, offset] : [limit, offset];
 
     const query = `
-  SELECT
-    u.id,
-    u.name,
-    COUNT(l.id) AS assigned,
-    COUNT(CASE WHEN l.status = 'CONTACTED' THEN 1 END) AS contacted,
-    COUNT(CASE WHEN l.status = 'VISIT_REQUESTED' THEN 1 END) AS visit_requested,
-    COUNT(CASE WHEN l.status = 'VISIT_COMPLETED' THEN 1 END) AS visit_completed,
-    COUNT(CASE WHEN l.status = 'SOLD' THEN 1 END) AS closed,
-    AVG(l.attempt_count) AS avg_attempts
-  FROM users u
-  LEFT JOIN leads l 
-    ON l.assigned_to = u.id
-    ${from && to ? "AND l.created_at BETWEEN $1 AND $2" : ""}
-  WHERE u.role = 'TELECALLER'
-  GROUP BY u.id
-  ORDER BY closed DESC
-  LIMIT $${from && to ? 3 : 1}
-  OFFSET $${from && to ? 4 : 2}
-`;
+      SELECT
+        u.id,
+        u.name,
+        COUNT(l.id) AS assigned,
+        COUNT(CASE WHEN l.status = 'CONTACTED' THEN 1 END) AS contacted,
+        COUNT(CASE WHEN l.status = 'VISIT_REQUESTED' THEN 1 END) AS visit_requested,
+        COUNT(CASE WHEN l.status = 'VISIT_COMPLETED' THEN 1 END) AS visit_completed,
+        COUNT(CASE WHEN l.status = 'SOLD' THEN 1 END) AS closed,
+        AVG(l.attempt_count) AS avg_attempts
+      FROM users u
+      LEFT JOIN leads l 
+        ON l.assigned_to = u.id
+        ${from && to ? "AND l.created_at BETWEEN $1 AND $2" : ""}
+      WHERE u.role = 'TELECALLER'
+      GROUP BY u.id
+      ORDER BY closed DESC
+      LIMIT $${from && to ? 3 : 1}
+      OFFSET $${from && to ? 4 : 2}
+    `;
 
     const result = await pool.query(query, params);
 
     return result.rows.map((row) => {
       const assigned = Number(row.assigned);
-      const sold = Number(row.sold);
+      const closed = Number(row.closed); // ✅ FIXED HERE
 
       const conversionRate =
-        assigned > 0 ? (sold / assigned) * 100 : 0;
+        assigned > 0 ? (closed / assigned) * 100 : 0;
 
       return {
         telecallerId: row.id,
@@ -201,7 +190,8 @@ export class AdminDashboardService {
         assigned,
         contacted: Number(row.contacted),
         visitRequested: Number(row.visit_requested),
-        sold,
+        visitCompleted: Number(row.visit_completed),
+        closed,
         conversionRate: Number(conversionRate.toFixed(2)),
         avgAttempts: Number(row.avg_attempts || 0),
       };
