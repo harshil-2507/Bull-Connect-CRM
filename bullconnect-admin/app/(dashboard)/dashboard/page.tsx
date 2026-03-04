@@ -9,7 +9,7 @@ import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel"
 import { staggerContainer, fadeUp } from "@/lib/motion"
 import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { PipelineAnalytics } from "@/components/dashboard/PipelineAnalytics"
-
+import { TelecallerPerformanceTable } from "@/components/dashboard/TelecallerPerformanceTable"
 
 const mockTrendData = [
     { value: 10 },
@@ -123,8 +123,8 @@ export default function DashboardPage() {
                                 key={tf}
                                 onClick={() => setActiveTimeframe(tf)}
                                 className={`px-3 py-1.5 text-sm rounded-lg transition-all ${activeTimeframe === tf
-                                        ? "bg-blue-600 text-white shadow"
-                                        : "text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                                    ? "bg-blue-600 text-white shadow"
+                                    : "text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
                                     }`}
                             >
                                 {tf}
@@ -176,9 +176,13 @@ export default function DashboardPage() {
                     <PipelineAnalytics />
                 </div>
 
+                <div className="mt-12">
+                    <TelecallerPerformanceTable />
+                </div>
 
-                
-                {/* Funnel + Insights */}
+
+
+                {/* Funnel + hard coded Insights to align cards design */}
 
 
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">

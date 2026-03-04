@@ -166,23 +166,25 @@ export class AdminDashboardService {
       from && to ? [from, to, limit, offset] : [limit, offset];
 
     const query = `
-      SELECT
-        u.id,
-        u.name,
-        COUNT(l.id) AS assigned,
-        COUNT(CASE WHEN l.status = 'CONTACTED' THEN 1 END) AS contacted,
-        COUNT(CASE WHEN l.status = 'VISIT_REQUESTED' THEN 1 END) AS visit_requested,
-        COUNT(CASE WHEN l.status = 'SOLD' THEN 1 END) AS sold,
-        AVG(l.attempt_count) AS avg_attempts
-      FROM users u
-      LEFT JOIN leads l ON l.assigned_to = u.id
-      ${from && to ? "WHERE l.created_at BETWEEN $1 AND $2" : ""}
-      AND u.role = 'TELECALLER'
-      GROUP BY u.id
-      ORDER BY sold DESC
-      LIMIT $${from && to ? 3 : 1}
-      OFFSET $${from && to ? 4 : 2}
-    `;
+  SELECT
+    u.id,
+    u.name,
+    COUNT(l.id) AS assigned,
+    COUNT(CASE WHEN l.status = 'CONTACTED' THEN 1 END) AS contacted,
+    COUNT(CASE WHEN l.status = 'VISIT_REQUESTED' THEN 1 END) AS visit_requested,
+    COUNT(CASE WHEN l.status = 'VISIT_COMPLETED' THEN 1 END) AS visit_completed,
+    COUNT(CASE WHEN l.status = 'SOLD' THEN 1 END) AS closed,
+    AVG(l.attempt_count) AS avg_attempts
+  FROM users u
+  LEFT JOIN leads l 
+    ON l.assigned_to = u.id
+    ${from && to ? "AND l.created_at BETWEEN $1 AND $2" : ""}
+  WHERE u.role = 'TELECALLER'
+  GROUP BY u.id
+  ORDER BY closed DESC
+  LIMIT $${from && to ? 3 : 1}
+  OFFSET $${from && to ? 4 : 2}
+`;
 
     const result = await pool.query(query, params);
 
