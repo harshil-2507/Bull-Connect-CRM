@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 
 export default function Index() {
   const [secure, setSecure] = useState(true);
@@ -24,56 +23,49 @@ export default function Index() {
   const router = useRouter();
 
   const handleLogin = async () => {
-    if (!username.trim() || !password.trim()) {
-      Alert.alert("Error", "Please enter username and password");
+  if (!username.trim() || !password.trim()) {
+    Alert.alert("Error", "Please enter username and password");
+    return;
+  }
+
+  setLoading(true);
+
+  const user = username.trim();
+  const pass = password.trim();
+
+  setTimeout(() => {
+    setLoading(false);
+
+    // Check username first
+    if (user !== "manager56" && user !== "telecaller56" && user !== "groundmanager56" && user !== "groundexecutive56") {
+      Alert.alert("Login Failed", "Wrong username");
       return;
     }
 
-    try {
-      setLoading(true);
-
-      const response = await fetch(
-        "https://bull-connect-crm.onrender.com/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            // ⚠️ If backend expects "name" instead of "username",
-            // change this to: name: username.trim()
-            username: username.trim(),
-            password: password.trim(),
-          }),
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Invalid credentials");
-      }
-
-      // ✅ Store token securely
-      await SecureStore.setItemAsync("authToken", data.token);
-      await SecureStore.setItemAsync("user", JSON.stringify(data.user));
-
-      // Navigate and prevent going back to login
-      const role = data.user.role;
-
-if (role === "TELECALLER") {
-  router.replace("/telecaller");
-} else if (role === "MANAGER") {
-  router.replace("/manager")
-} else {
-  Alert.alert("Access Denied", "Unauthorized role");
-}
-    } catch (error: any) {
-      Alert.alert("Login Failed", error.message);
-    } finally {
-      setLoading(false);
+    // Check password
+    if (pass !== "pass123") {
+      Alert.alert("Login Failed", "Wrong password");
+      return;
     }
-  };
+
+    // Navigate if correct
+    if (user === "manager56") {
+      router.replace("/manager");
+    }
+
+    if (user === "telecaller56") {
+      router.replace("/telecaller");
+    }
+
+    if (user === "groundmanager56") {
+      router.replace("/groundmanager");
+    }
+
+    if (user === "groundexecutive56") {
+      router.replace("/groundexecutive");
+    }
+  }, 500);
+};
 
   return (
     <SafeAreaView className="flex-1 bg-[#fafbf9]">
@@ -94,11 +86,7 @@ if (role === "TELECALLER") {
 
           <View className="absolute bottom-8 w-full items-center">
             <View className="bg-white p-4 rounded-2xl shadow-md border border-gray-100">
-              <MaterialIcons
-                name="agriculture"
-                size={32}
-                color="#0ea633"
-              />
+              <MaterialIcons name="agriculture" size={32} color="#0ea633" />
             </View>
 
             <Text className="text-3xl font-bold text-[#1a4d2e] mt-4">

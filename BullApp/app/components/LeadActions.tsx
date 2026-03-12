@@ -6,17 +6,16 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  ActivityIndicator,
   Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
-import TelecallerSelector from "./TelecallerSelector";
-import * as SecureStore from "expo-secure-store";
+import { getTelecallers, assignTelecaller } from "../data/leads";
 
 interface LeadActionsProps {
   lead: any | null;
   onClose: () => void;
+  onAssigned?: () => void;
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
@@ -30,56 +29,24 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   DROPPED: { bg: "#f8d7da", text: "#842029" },
 };
 
-export default function LeadActions({ lead, onClose }: LeadActionsProps) {
+export default function LeadActions({ lead, onClose, onAssigned }: LeadActionsProps) {
+  const [selectedTelecallerId, setSelectedTelecallerId] = useState<number | null>(null);
+  const telecallers = getTelecallers();
+
   if (!lead) return null;
 
   const statusStyle = STATUS_COLORS[lead.status] || { bg: "#e5e7eb", text: "#374151" };
-  const [selectedTelecaller, setSelectedTelecaller] = useState<any>(null);
-  const [telecallerModalVisible, setTelecallerModalVisible] = useState(false);
-  const [loadingAssign, setLoadingAssign] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const assignTelecaller = async () => {
-    if (!selectedTelecaller) {
-      setError("Please select a telecaller to assign.");
+  const handleAssign = () => {
+    if (!selectedTelecallerId) {
+      Alert.alert("Error", "Please select a telecaller");
       return;
     }
 
-    setError(null);
-    setLoadingAssign(true);
-
-    try {
-      const token = await SecureStore.getItemAsync("authToken");
-      if (!token) throw new Error("Authentication token missing");
-
-      const response = await fetch(
-        "https://bull-connect-crm.onrender.com/manager/assign-telecaller",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            leadId: lead.id,
-            telecallerId: selectedTelecaller.id,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || "Failed to assign telecaller");
-      }
-
-      Alert.alert("Success", `Telecaller assigned to ${lead.farmer_name}`);
-      onClose();
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoadingAssign(false);
-    }
+    assignTelecaller(lead.id);
+    Alert.alert("Success", "Telecaller assigned successfully");
+    onAssigned?.();
+    onClose();
   };
 
   return (
@@ -112,7 +79,7 @@ export default function LeadActions({ lead, onClose }: LeadActionsProps) {
             {/* Contact Info */}
             <View className="bg-white rounded-2xl shadow-md p-4">
               <Text className="text-lg font-semibold text-gray-700 mb-2">Contact Info</Text>
-              <InfoRow label="Phone" value={lead.phone_number} />
+              <InfoRow label="Phone" value={lead.phone || lead.phone_number} />
               <InfoRow label="Village" value={lead.village} />
               <InfoRow label="Taluka" value={lead.taluka} />
               <InfoRow label="District" value={lead.district} />
@@ -126,47 +93,44 @@ export default function LeadActions({ lead, onClose }: LeadActionsProps) {
               <InfoRow label="Created At" value={new Date(lead.created_at).toLocaleDateString()} />
             </View>
 
-            {/* Telecaller Selection */}
-            <View className="bg-white rounded-2xl shadow-md p-4 space-y-2">
-              <Text className="text-lg font-semibold text-gray-700">Assign Telecaller</Text>
+            {/* Telecaller Assignment */}
+            {lead.status === "NEW" && (
+              <View className="bg-white rounded-2xl shadow-md p-4">
+                <Text className="text-lg font-semibold text-gray-700 mb-4">Assign Telecaller</Text>
 
-              <TouchableOpacity
-                className="bg-gray-100 p-3 rounded-xl flex-row justify-between items-center"
-                onPress={() => setTelecallerModalVisible(true)}
-              >
-                <Text className="text-gray-700">
-                  {selectedTelecaller ? selectedTelecaller.name : "Select Telecaller"}
-                </Text>
-                <MaterialIcons name="arrow-drop-down" size={24} color="#1a4d2e" />
-              </TouchableOpacity>
+                <View className="space-y-2 mb-4">
+                  {telecallers.map((tc) => (
+                    <TouchableOpacity
+                      key={tc.id}
+                      onPress={() => setSelectedTelecallerId(tc.id)}
+                      className={`p-3 rounded-xl border-2 ${
+                        selectedTelecallerId === tc.id
+                          ? "bg-green-50 border-green-500"
+                          : "bg-gray-50 border-gray-200"
+                      }`}
+                    >
+                      <Text
+                        className={`font-medium ${
+                          selectedTelecallerId === tc.id ? "text-green-700" : "text-gray-700"
+                        }`}
+                      >
+                        {tc.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
 
-              {/* Show error if any */}
-              {error && <Text className="text-red-600 mt-2">{error}</Text>}
-
-              {/* Assign Button */}
-              <TouchableOpacity
-                className={`p-4 rounded-2xl items-center ${
-                  selectedTelecaller ? "bg-[#0ea633]" : "bg-gray-400"
-                }`}
-                onPress={assignTelecaller}
-                disabled={!selectedTelecaller || loadingAssign}
-              >
-                {loadingAssign ? (
-                  <ActivityIndicator color="white" />
-                ) : (
+                <TouchableOpacity
+                  onPress={handleAssign}
+                  className="bg-green-600 py-4 rounded-xl items-center"
+                >
                   <Text className="text-white font-bold text-lg">Assign</Text>
-                )}
-              </TouchableOpacity>
-            </View>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         </ScrollView>
 
-        {/* Telecaller Selector Modal */}
-        <TelecallerSelector
-          visible={telecallerModalVisible}
-          onSelect={(tc) => setSelectedTelecaller(tc)}
-          onClose={() => setTelecallerModalVisible(false)}
-        />
       </SafeAreaView>
     </Modal>
   );

@@ -7,18 +7,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Lead from "../components/Lead";
-import LeadActions from "../components/LeadActions";
+import GroundExecutiveLeadActions from "../components/GroundExecutiveLeadActions";
 import { getLeads, LeadType } from "../data/leads";
 import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 
-const FILTERS = ["NEW", "ASSIGNED"] as const;
+const FILTERS = ["VISIT_ASSIGNED", "VISIT_COMPLETED"] as const;
 
 export default function Leads() {
   const [leads, setLeads] = useState<LeadType[]>(getLeads());
   const [selectedLead, setSelectedLead] = useState<LeadType | null>(null);
   const [selectedFilter, setSelectedFilter] =
-    useState<(typeof FILTERS)[number]>("NEW");
+    useState<(typeof FILTERS)[number]>("VISIT_ASSIGNED");
 
   // Refresh leads when screen comes into focus
   useFocusEffect(
@@ -27,7 +27,7 @@ export default function Leads() {
     }, [])
   );
 
-  const handleAssigned = () => {
+  const handleUpdated = () => {
     setLeads(getLeads());
     setSelectedLead(null);
   };
@@ -39,7 +39,7 @@ export default function Leads() {
   return (
     <SafeAreaView className="flex-1 px-4 pt-4 bg-gray-50">
       <Text className="text-3xl font-bold text-[#1a4d2e] mb-4">
-        My Leads
+        My Visits
       </Text>
 
       {/* Filters */}
@@ -61,7 +61,7 @@ export default function Leads() {
                   : "text-gray-700"
               }`}
             >
-              {filter}
+              {filter.replace("_", " ")}
             </Text>
           </TouchableOpacity>
         ))}
@@ -69,7 +69,7 @@ export default function Leads() {
 
       {filteredLeads.length === 0 ? (
         <View className="bg-white p-6 rounded-xl shadow border border-gray-100">
-          <Text className="text-gray-700">No leads found.</Text>
+          <Text className="text-gray-700">No visits found.</Text>
         </View>
       ) : (
         <FlatList
@@ -78,15 +78,14 @@ export default function Leads() {
           renderItem={({ item }) => (
             <Lead item={item} onAction={setSelectedLead} />
           )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 120 }}
+          scrollEnabled={false}
         />
       )}
 
-      <LeadActions
+      <GroundExecutiveLeadActions
         lead={selectedLead}
         onClose={() => setSelectedLead(null)}
-        onAssigned={handleAssigned}
+        onUpdated={handleUpdated}
       />
     </SafeAreaView>
   );
