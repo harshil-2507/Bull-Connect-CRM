@@ -1,9 +1,14 @@
-import AppLayout from "@/components/layout/app-layout"
+"use client"
+
+import { ReactNode } from "react"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: ReactNode
 }) {
-  return <AppLayout>{children}</AppLayout>
+  useAuth()
+
+  return <>{children}</>
 }
