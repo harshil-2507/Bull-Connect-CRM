@@ -65,6 +65,12 @@ export class AdminDashboardService {
       WHERE status = 'SOLD'
     `;
 
+    const visitRequestedQuery = `
+  SELECT COUNT(*) AS total
+  FROM leads
+  ${dateCondition ? dateCondition + " AND" : "WHERE"}
+  status = 'VISIT_REQUESTED'
+`;
     const [
       totalRes,
       activeRes,
@@ -72,6 +78,7 @@ export class AdminDashboardService {
       visitCompletedRes,
       avgAttemptRes,
       revenueRes,
+      visitRequestedRes
     ] = await Promise.all([
       pool.query(totalLeadsQuery, params),
       pool.query(activeLeadsQuery, params),
@@ -79,11 +86,13 @@ export class AdminDashboardService {
       pool.query(visitCompletedQuery, params),
       pool.query(avgAttemptQuery, params),
       pool.query(revenueQuery),
+      pool.query(visitRequestedQuery, params)
     ]);
 
     const totalLeads = Number(totalRes.rows[0].total);
     const soldLeads = Number(soldRes.rows[0].total);
     const visitCompleted = Number(visitCompletedRes.rows[0].total);
+    const visitRequested = Number(visitRequestedRes.rows[0].total);
 
     const conversionRate =
       totalLeads > 0 ? (soldLeads / totalLeads) * 100 : 0;
@@ -97,6 +106,8 @@ export class AdminDashboardService {
       totalLeads,
       activeLeads: Number(activeRes.rows[0].total),
       soldLeads,
+      visitCompleted,
+      visitRequested: Number(visitRequestedRes.rows[0].total),
       conversionRate: Number(conversionRate.toFixed(2)),
       visitConversionRate: Number(
         visitConversionRate.toFixed(2)
@@ -205,36 +216,29 @@ export class AdminDashboardService {
    */
   async getVisitAnalytics(filters: DateFilter) {
     const query = `
-      SELECT
-        COUNT(*) AS total_visits,
-        COUNT(CASE WHEN status = 'SCHEDULED' THEN 1 END) AS scheduled,
-        COUNT(CASE WHEN status = 'IN_PROGRESS' THEN 1 END) AS in_progress,
-        COUNT(CASE WHEN status = 'COMPLETED' THEN 1 END) AS completed,
-        COUNT(CASE WHEN outcome = 'SOLD' THEN 1 END) AS sold_after_visit
-      FROM visits
-    `;
+    SELECT
+      COUNT(CASE WHEN status = 'VISIT_REQUESTED' THEN 1 END) AS visit_requested,
+      COUNT(CASE WHEN status = 'VISIT_ASSIGNED' THEN 1 END) AS visit_assigned,
+      COUNT(CASE WHEN status = 'VISIT_COMPLETED' THEN 1 END) AS visit_completed,
+      COUNT(CASE WHEN status = 'SOLD' THEN 1 END) AS sold
+    FROM leads
+  `;
 
     const result = await pool.query(query);
-
     const row = result.rows[0];
 
-    const completed = Number(row.completed);
-    const soldAfterVisit = Number(row.sold_after_visit);
+    const visitCompleted = Number(row.visit_completed);
+    const sold = Number(row.sold);
 
     const visitToSaleRate =
-      completed > 0
-        ? (soldAfterVisit / completed) * 100
-        : 0;
+      visitCompleted > 0 ? (sold / visitCompleted) * 100 : 0;
 
     return {
-      totalVisits: Number(row.total_visits),
-      scheduled: Number(row.scheduled),
-      inProgress: Number(row.in_progress),
-      completed,
-      soldAfterVisit,
-      visitToSaleRate: Number(
-        visitToSaleRate.toFixed(2)
-      ),
+      visitRequested: Number(row.visit_requested),
+      visitAssigned: Number(row.visit_assigned),
+      visitCompleted,
+      soldAfterVisit: sold,
+      visitToSaleRate: Number(visitToSaleRate.toFixed(2)),
     };
   }
 

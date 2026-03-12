@@ -29,13 +29,12 @@ export const login = async (req: Request, res: Response) => {
     }
 
     const token = jwt.sign(
-      { 
-        id: user.id, 
-        role: user.role 
-      }, 
-      env.JWT_SECRET,  // In a real app, use process.env.JWT_SECRET
-      { expiresIn: "24h" }
-    );
+  { 
+    id: user.id, 
+    role: user.role 
+  }, 
+  env.JWT_SECRET
+);//removed expiry for now because of frequent token errors, can add later if needed
 
     // 4. Send Success Response
     res.json({

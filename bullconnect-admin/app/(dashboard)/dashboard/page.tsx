@@ -193,42 +193,57 @@ export default function DashboardPage() {
 
                     {/* Insights Card */}
                     <motion.div
-                        initial={{ opacity: 0, x: 40 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.6 }}
-                        className="
-              p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300
-              bg-white dark:bg-slate-900
-              border border-gray-200 dark:border-slate-800
-            "
-                    >
-                        <h2 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">
-                            Performance Insights
-                        </h2>
+  initial={{ opacity: 0, x: 40 }}
+  animate={{ opacity: 1, x: 0 }}
+  transition={{ duration: 0.6 }}
+  className="
+    p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300
+    bg-white dark:bg-slate-900
+    border border-gray-200 dark:border-slate-800
+  "
+>
+  <h2 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">
+    Performance Insights
+  </h2>
 
-                        <div className="space-y-6 text-sm text-gray-500 dark:text-slate-400">
-                            <div>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                    Lead to Visit Drop
-                                </p>
-                                <p>41% drop-off between lead creation and visit stage.</p>
-                            </div>
+  {data && (
+    <div className="space-y-6 text-sm text-gray-500 dark:text-slate-400">
 
-                            <div>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                    Deal Close Rate
-                                </p>
-                                <p>63% of visits convert to closed deals.</p>
-                            </div>
+      {/* Lead → Visit Conversion */}
+      <div>
+        <p className="font-medium text-gray-900 dark:text-white">
+          Lead → Visit Conversion
+        </p>
+        <p>
+          {((data.visitCompleted / data.totalLeads) * 100).toFixed(1)}% of leads
+          progressed to farm visits.
+        </p>
+      </div>
 
-                            <div>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                    Revenue Growth
-                                </p>
-                                <p>Revenue increased 12% compared to last month.</p>
-                            </div>
-                        </div>
-                    </motion.div>
+      {/* Visit → Deal Conversion */}
+      <div>
+        <p className="font-medium text-gray-900 dark:text-white">
+          Visit → Deal Conversion
+        </p>
+        <p>
+          {((data.soldLeads / data.visitCompleted) * 100).toFixed(1)}% of visits
+          converted into closed deals.
+        </p>
+      </div>
+
+      {/* Average Deal Value */}
+      <div>
+        <p className="font-medium text-gray-900 dark:text-white">
+          Average Deal Value
+        </p>
+        <p>
+          ₹{Math.round(data.totalRevenue / Math.max(data.soldLeads, 1)).toLocaleString()} per sale on average.
+        </p>
+      </div>
+
+    </div>
+  )}
+</motion.div>
 
                 </div>
 

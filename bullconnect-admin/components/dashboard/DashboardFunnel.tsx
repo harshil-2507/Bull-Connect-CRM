@@ -11,23 +11,18 @@ import {
 import { motion } from "framer-motion"
 import { useTheme } from "next-themes"
 import { useEffect, useState } from "react"
-
-const data = [
-  { name: "Leads", value: 307 },
-  { name: "Visits", value: 180 },
-  { name: "Deals", value: 60 },
-  { name: "Closed", value: 38 },
-]
+import { useDashboardSummary } from "@/hooks/useDashboardSummary"
 
 export function DashboardFunnel() {
   const { theme } = useTheme()
+  const { data } = useDashboardSummary()
+
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     setMounted(true)
   }, [])
 
-  // Prevent hydration mismatch
   if (!mounted) return null
 
   const isDark = theme === "dark"
@@ -35,6 +30,29 @@ export function DashboardFunnel() {
   const COLORS = isDark
     ? ["#3b82f6", "#60a5fa", "#93c5fd", "#bfdbfe"]
     : ["#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"]
+
+  /**
+   * REAL DATA FROM DATABASE
+   */
+
+const funnelData = [
+  {
+    name: "Leads",
+    value: data?.totalLeads || 0,
+  },
+  {
+    name: "Visit Requested",
+    value: data?.visitRequested || 0,
+  },
+  {
+    name: "Visit Completed",
+    value: data?.visitCompleted || 0,
+  },
+  {
+    name: "Sold",
+    value: data?.soldLeads || 0,
+  },
+]
 
   return (
     <motion.div
@@ -50,7 +68,6 @@ export function DashboardFunnel() {
         transition-all duration-300
       "
     >
-      {/* Background glow */}
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/10 dark:bg-blue-400/10 rounded-full blur-3xl pointer-events-none" />
 
       <h2 className="text-lg font-semibold tracking-tight mb-6 text-gray-900 dark:text-white">
@@ -74,7 +91,7 @@ export function DashboardFunnel() {
 
             <Funnel
               dataKey="value"
-              data={data}
+              data={funnelData}
               isAnimationActive
               animationDuration={1000}
             >
@@ -85,7 +102,7 @@ export function DashboardFunnel() {
                 dataKey="name"
               />
 
-              {data.map((_, index) => (
+              {funnelData.map((_, index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index]} />
               ))}
             </Funnel>
