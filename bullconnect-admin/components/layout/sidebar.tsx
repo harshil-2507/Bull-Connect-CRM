@@ -6,12 +6,12 @@ import { cn } from "@/lib/utils"
 
 const navItems = [
   { label: "Dashboard", href: "/dashboard" },
-  { label: "Leads", href: "/leads" },
-  { label: "Visits", href: "/visits" },
-  { label: "Deals", href: "/deals" },
-  { label: "Users", href: "/users" },
-  { label: "Analytics", href: "/analytics" },
-  { label: "Settings", href: "/settings" },
+  // { label: "Leads", href: "/leads" },
+  // { label: "Visits", href: "/visits" },
+  // { label: "Deals", href: "/deals" },
+  // { label: "Users", href: "/users" },
+  // { label: "Analytics", href: "/analytics" },
+  // { label: "Settings", href: "/settings" },
 ]
 
 export default function Sidebar() {
