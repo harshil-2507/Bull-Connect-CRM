@@ -1,6 +1,8 @@
-import { Pool } from "pg";
-import { env } from "./env";
+import { Pool } from "pg"
 
 export const pool = new Pool({
-  connectionString: env.DATABASE_URL,
-});
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+})
