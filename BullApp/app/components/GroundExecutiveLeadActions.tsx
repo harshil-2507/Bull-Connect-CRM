@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
-import { updateLeadStatus } from "../data/leads";
+import { completeVisit } from "../data/leads";
 
 interface Props {
   lead: any | null;
@@ -19,75 +19,62 @@ interface Props {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  ASSIGNED: { bg: "#fef9c3", text: "#b45309" },
-  CONTACTED: { bg: "#d1fae5", text: "#047857" },
-  VISIT_REQUESTED: { bg: "#fcd5ce", text: "#b91c1c" },
   VISIT_ASSIGNED: { bg: "#ede9fe", text: "#7c3aed" },
   VISIT_COMPLETED: { bg: "#dcfce7", text: "#166534" },
 };
 
-export default function TelecallerLeadActions({
+export default function GroundExecutiveLeadActions({
   lead,
   onClose,
   onUpdated,
 }: Props) {
-  const [noteText, setNoteText] = useState("");
+  const [completionNotes, setCompletionNotes] = useState("");
   const [showNoteInput, setShowNoteInput] = useState(false);
-  const [pendingStatus, setPendingStatus] = useState<"CONTACTED" | "VISIT_REQUESTED" | null>(null);
 
   if (!lead) return null;
 
   const statusStyle = STATUS_COLORS[lead.status] || { bg: "#e5e7eb", text: "#374151" };
 
-  const handleStatusButtonPress = (newStatus: "CONTACTED" | "VISIT_REQUESTED") => {
-    setNoteText("");
-    setPendingStatus(newStatus);
+  const handleCompleteVisit = () => {
+    setCompletionNotes("");
     setShowNoteInput(true);
   };
 
-  const handleConfirmStatusUpdate = () => {
-    if (pendingStatus) {
-      updateLeadStatus(lead.id, pendingStatus, noteText);
-      Alert.alert("Success", `Lead status updated to ${pendingStatus}`);
-      setShowNoteInput(false);
-      setPendingStatus(null);
-      onUpdated?.();
-      onClose();
-    }
+  const handleConfirmCompletion = () => {
+    completeVisit(lead.id, completionNotes);
+    Alert.alert("Success", "Visit marked as completed");
+    setShowNoteInput(false);
+    onUpdated?.();
+    onClose();
   };
 
   return (
-    <Modal visible animationType="slide">
+    <Modal visible={!!lead} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView className="flex-1 bg-gray-50">
-
-        {/* HEADER */}
-        <View className="flex-row justify-between items-center px-4 py-4 bg-white border-b border-gray-200 shadow-md">
-          <Text className="text-2xl font-bold text-[#1a4d2e]">Lead Details</Text>
+        {/* Header */}
+        <View className="flex-row items-center justify-between px-4 py-4 bg-white shadow-md border-b border-gray-200">
+          <Text className="text-2xl font-bold text-[#1a4d2e]">Visit Details</Text>
           <TouchableOpacity onPress={onClose}>
             <MaterialIcons name="close" size={28} color="#1a4d2e" />
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
-        >
-
+        <ScrollView className="p-4 space-y-5">
           {/* Lead Header: Name + Status */}
-          <View className="bg-white rounded-2xl shadow-lg p-5 flex-row justify-between items-center mb-4">
+          <View className="bg-white rounded-2xl shadow-lg p-5 flex-row justify-between items-center">
             <Text className="text-2xl font-bold text-[#1a4d2e]">{lead.farmer_name}</Text>
             <View
               className="px-3 py-1 rounded-full"
               style={{ backgroundColor: statusStyle.bg }}
             >
               <Text className="text-sm font-semibold" style={{ color: statusStyle.text }}>
-                {lead.status}
+                {lead.status.replace("_", " ")}
               </Text>
             </View>
           </View>
 
           {/* Contact Info */}
-          <View className="bg-white rounded-2xl shadow-md p-4 mb-4">
+          <View className="bg-white rounded-2xl shadow-md p-4">
             <Text className="text-lg font-semibold text-gray-700 mb-2">Contact Info</Text>
             <InfoRow label="Phone" value={lead.phone} />
             <InfoRow label="Village" value={lead.village} />
@@ -96,7 +83,7 @@ export default function TelecallerLeadActions({
           </View>
 
           {/* Campaign Info */}
-          <View className="bg-white rounded-2xl shadow-md p-4 mb-4">
+          <View className="bg-white rounded-2xl shadow-md p-4">
             <Text className="text-lg font-semibold text-gray-700 mb-2">Campaign Info</Text>
             <InfoRow label="Campaign" value={lead.campaign_name} />
             <InfoRow label="Created At" value={new Date(lead.created_at).toLocaleDateString()} />
@@ -104,42 +91,43 @@ export default function TelecallerLeadActions({
 
           {/* Notes Section */}
           {lead.notes && (
-            <View className="bg-blue-50 rounded-2xl border border-blue-200 p-4 mb-4">
+            <View className="bg-blue-50 rounded-2xl border border-blue-200 p-4">
               <Text className="text-lg font-semibold text-gray-700 mb-2">Notes</Text>
               <Text className="text-gray-700 leading-5">{lead.notes}</Text>
             </View>
           )}
 
-          {/* Update Status */}
+          {/* Complete Visit Section */}
           <View className="bg-white rounded-2xl shadow-md p-4">
-            <Text className="text-lg font-semibold text-gray-700 mb-4">Update Status</Text>
+            <Text className="text-lg font-semibold text-gray-700 mb-4">Visit Status</Text>
 
             {!showNoteInput ? (
               <>
-                <TouchableOpacity
-                  onPress={() => handleStatusButtonPress("CONTACTED")}
-                  className="bg-green-50 border-2 border-green-500 rounded-xl p-4 mb-3"
-                >
-                  <Text className="text-green-700 font-bold text-center">Mark as Contacted</Text>
-                </TouchableOpacity>
+                {lead.status === "VISIT_ASSIGNED" && (
+                  <TouchableOpacity
+                    onPress={handleCompleteVisit}
+                    className="bg-green-50 border-2 border-green-500 rounded-xl p-4"
+                  >
+                    <Text className="text-green-700 font-bold text-center">Mark as Completed</Text>
+                  </TouchableOpacity>
+                )}
 
-                <TouchableOpacity
-                  onPress={() => handleStatusButtonPress("VISIT_REQUESTED")}
-                  className="bg-blue-50 border-2 border-blue-500 rounded-xl p-4"
-                >
-                  <Text className="text-blue-700 font-bold text-center">Request Visit</Text>
-                </TouchableOpacity>
+                {lead.status === "VISIT_COMPLETED" && (
+                  <View className="bg-green-50 border-2 border-green-500 rounded-xl p-4">
+                    <Text className="text-green-700 font-bold text-center">✓ Visit Completed</Text>
+                  </View>
+                )}
               </>
             ) : (
               <>
                 <Text className="text-lg font-semibold text-gray-700 mb-3">
-                  Add Notes for {pendingStatus === "CONTACTED" ? "Contacted" : "Visit Requested"}
+                  Add Completion Notes
                 </Text>
                 
                 <TextInput
-                  placeholder="Enter your notes here..."
-                  value={noteText}
-                  onChangeText={setNoteText}
+                  placeholder="Enter completion details..."
+                  value={completionNotes}
+                  onChangeText={setCompletionNotes}
                   multiline
                   numberOfLines={4}
                   className="border-2 border-gray-300 rounded-xl p-3 mb-4 text-gray-700"
@@ -150,7 +138,7 @@ export default function TelecallerLeadActions({
                   <TouchableOpacity
                     onPress={() => {
                       setShowNoteInput(false);
-                      setPendingStatus(null);
+                      setCompletionNotes("");
                     }}
                     className="flex-1 bg-gray-300 rounded-lg p-3"
                   >
@@ -158,7 +146,7 @@ export default function TelecallerLeadActions({
                   </TouchableOpacity>
 
                   <TouchableOpacity
-                    onPress={handleConfirmStatusUpdate}
+                    onPress={handleConfirmCompletion}
                     className="flex-1 bg-green-600 rounded-lg p-3"
                   >
                     <Text className="text-white font-bold text-center">Confirm</Text>
@@ -168,6 +156,7 @@ export default function TelecallerLeadActions({
             )}
           </View>
         </ScrollView>
+
       </SafeAreaView>
     </Modal>
   );

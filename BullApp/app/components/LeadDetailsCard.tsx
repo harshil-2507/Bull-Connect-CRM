@@ -5,31 +5,27 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   StyleSheet,
 } from "react-native";
-import * as SecureStore from "expo-secure-store";
 
 interface Props {
   lead: any;
   loading: boolean;
-  onUpdated?: () => void;
 }
 
 export default function LeadDetailsCard({
   lead,
   loading,
-  onUpdated,
+  // onUpdated,
 }: Props) {
   const [editMode, setEditMode] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState<any>({});
 
   useEffect(() => {
     if (lead) {
       setFormData({
         farmer_name: lead.farmer_name || "",
-        phone_number: lead.phone_number || "",
+        phone_number: lead.phone_number || lead.phone || "",
         farmer_type: lead.farmer_type || "",
         bull_center: lead.bull_center || "",
         district: lead.district || "",
@@ -45,43 +41,6 @@ export default function LeadDetailsCard({
 
   const handleChange = (key: string, value: any) => {
     setFormData((prev: any) => ({ ...prev, [key]: value }));
-  };
-
-  const handleSave = async () => {
-    try {
-      setSaving(true);
-
-      const token = await SecureStore.getItemAsync("authToken");
-      if (!token) throw new Error("Authentication failed");
-
-      const response = await fetch(
-        `https://bull-connect-crm.onrender.com/leads/${lead.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            ...formData,
-            bigha: formData.bigha ? Number(formData.bigha) : null,
-            crops: formData.crops
-              ? formData.crops.split(",").map((c: string) => c.trim())
-              : [],
-          }),
-        }
-      );
-
-      if (!response.ok) throw new Error("Failed to update lead");
-
-      Alert.alert("Success", "Lead updated successfully");
-      setEditMode(false);
-      onUpdated?.();
-    } catch (err: any) {
-      Alert.alert("Error", err.message);
-    } finally {
-      setSaving(false);
-    }
   };
 
   if (loading) {
@@ -123,12 +82,6 @@ export default function LeadDetailsCard({
         <Text className="text-lg font-bold text-green-800">
           Farmer Profile
         </Text>
-
-        <TouchableOpacity onPress={() => setEditMode(!editMode)}>
-          <Text className="text-green-700 font-semibold">
-            {editMode ? "Cancel" : "Edit"}
-          </Text>
-        </TouchableOpacity>
       </View>
 
       {renderField("Farmer Name", "farmer_name")}
@@ -150,59 +103,15 @@ export default function LeadDetailsCard({
               : "Previous Experience"}
           </Text>
 
-          {editMode ? (
-            <View className="flex-row">
-              {["Yes", "No"].map((val) => (
-                <TouchableOpacity
-                  key={val}
-                  onPress={() =>
-                    handleChange(key, val === "Yes")
-                  }
-                  className={`px-4 py-2 rounded-full mr-3 ${
-                    formData[key] === (val === "Yes")
-                      ? "bg-green-600"
-                      : "bg-gray-200"
-                  }`}
-                >
-                  <Text
-                    className={`font-semibold ${
-                      formData[key] === (val === "Yes")
-                        ? "text-white"
-                        : "text-gray-700"
-                    }`}
-                  >
-                    {val}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : (
-            <Text className="text-base font-semibold text-gray-800">
-              {formData[key] === true
-                ? "Yes"
-                : formData[key] === false
-                ? "No"
-                : "—"}
-            </Text>
-          )}
+          <Text className="text-base font-semibold text-gray-800">
+            {formData[key] === true
+              ? "Yes"
+              : formData[key] === false
+              ? "No"
+              : "—"}
+          </Text>
         </View>
       ))}
-
-      {editMode && (
-        <TouchableOpacity
-          onPress={handleSave}
-          disabled={saving}
-          className="bg-green-600 py-4 rounded-2xl items-center mt-4"
-        >
-          {saving ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white font-bold text-lg">
-              Save Changes
-            </Text>
-          )}
-        </TouchableOpacity>
-      )}
     </View>
   );
 }

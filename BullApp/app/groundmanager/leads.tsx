@@ -7,18 +7,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Lead from "../components/Lead";
-import LeadActions from "../components/LeadActions";
+import GroundManagerLeadActions from "../components/GroundManagerLeadActions";
 import { getLeads, LeadType } from "../data/leads";
 import { useFocusEffect } from "expo-router";
 import { useCallback } from "react";
 
-const FILTERS = ["NEW", "ASSIGNED"] as const;
+const FILTERS = ["VISIT_REQUESTED", "VISIT_ASSIGNED"] as const;
 
 export default function Leads() {
   const [leads, setLeads] = useState<LeadType[]>(getLeads());
   const [selectedLead, setSelectedLead] = useState<LeadType | null>(null);
   const [selectedFilter, setSelectedFilter] =
-    useState<(typeof FILTERS)[number]>("NEW");
+    useState<(typeof FILTERS)[number]>("VISIT_REQUESTED");
 
   // Refresh leads when screen comes into focus
   useFocusEffect(
@@ -39,7 +39,7 @@ export default function Leads() {
   return (
     <SafeAreaView className="flex-1 px-4 pt-4 bg-gray-50">
       <Text className="text-3xl font-bold text-[#1a4d2e] mb-4">
-        My Leads
+        Visit Requests
       </Text>
 
       {/* Filters */}
@@ -61,7 +61,7 @@ export default function Leads() {
                   : "text-gray-700"
               }`}
             >
-              {filter}
+              {filter.replace("_", " ")}
             </Text>
           </TouchableOpacity>
         ))}
@@ -78,12 +78,11 @@ export default function Leads() {
           renderItem={({ item }) => (
             <Lead item={item} onAction={setSelectedLead} />
           )}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 120 }}
+          scrollEnabled={false}
         />
       )}
 
-      <LeadActions
+      <GroundManagerLeadActions
         lead={selectedLead}
         onClose={() => setSelectedLead(null)}
         onAssigned={handleAssigned}

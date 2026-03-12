@@ -7,11 +7,11 @@ export default function Profile() {
   const router = useRouter();
 
   const user = {
-    id: "TCR-001",
-    name: "Yogendar",
-    role: "Telecaller",
+    id: "GM-001",
+    name: "Ashish",
+    role: "Ground Manager",
     phone: "9988776655",
-    email: "yogendar@bullconnect.in",
+    email: "ashish@bullconnect.in",
     created_at: "2024-01-01",
   };
 

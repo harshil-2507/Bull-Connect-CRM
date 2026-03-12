@@ -4,7 +4,7 @@ import { MaterialIcons } from "@expo/vector-icons";
 
 interface LeadProps {
   item: any;
-  onAction?: (lead: any) => void; // Triggered when action button is pressed
+  onAction?: (lead: any) => void;
 }
 
 export default function Lead({ item, onAction }: LeadProps) {
@@ -21,12 +21,14 @@ export default function Lead({ item, onAction }: LeadProps) {
     DROPPED: { bg: "#f5f5f5", text: "#6b7280" },
   };
 
-  const statusStyle = statusColors[item.status] || { bg: "#f5f5f5", text: "#374151" };
+  const statusStyle =
+    statusColors[item.status] || { bg: "#f5f5f5", text: "#374151" };
 
   return (
     <View className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex-row items-center justify-between mb-3">
-      {/* Left Content */}
+
       <View className="flex-row items-center gap-4 flex-1">
+        
         {/* Avatar */}
         <View className="h-12 w-12 rounded-full bg-green-50 border border-green-100 items-center justify-center">
           <Text className="text-green-700 font-bold text-lg">{initials}</Text>
@@ -34,8 +36,9 @@ export default function Lead({ item, onAction }: LeadProps) {
 
         {/* Info */}
         <View className="flex-1">
+
           {/* Name + Status */}
-          <View className="flex-row justify-between items-start">
+          <View className="flex-row justify-between">
             <Text className="font-bold text-slate-800 text-base flex-1">
               {item.farmer_name}
             </Text>
@@ -45,36 +48,50 @@ export default function Lead({ item, onAction }: LeadProps) {
                 backgroundColor: statusStyle.bg,
                 color: statusStyle.text,
               }}
-              className="text-[10px] font-medium px-2 py-0.5 rounded-full border border-gray-200"
+              className="text-[10px] font-medium px-2 py-0.5 rounded-full"
             >
               {item.status}
             </Text>
           </View>
 
-          {/* Campaign + Location */}
-          <View className="flex-row items-center gap-2 mt-1">
-            <View className="flex-row items-center gap-1 bg-gray-50 px-2 py-0.5 rounded">
-              <MaterialIcons name="grass" size={14} color="#475569" />
-              <Text className="text-xs text-slate-600">
-                {item.campaign_name || "Campaign"}
-              </Text>
-            </View>
-
-            <View className="w-1 h-1 bg-gray-300 rounded-full" />
-
-            <View className="flex-row items-center gap-1">
-              <MaterialIcons name="location-on" size={14} color="#94a3b8" />
-              <Text className="text-xs text-slate-500">{item.state}</Text>
-            </View>
+          {/* Phone */}
+          <View className="flex-row items-center gap-1 mt-1">
+            <MaterialIcons name="phone" size={14} color="#64748b" />
+            <Text className="text-xs text-slate-600">{item.phone}</Text>
           </View>
 
-          {/* Created Date */}
+          {/* Crop Type */}
+          {item.crop_type && (
+            <View className="flex-row items-center gap-1 mt-1">
+              <MaterialIcons name="eco" size={14} color="#64748b" />
+              <Text className="text-xs text-slate-600">{item.crop_type}</Text>
+            </View>
+          )}
+
+          {/* Campaign */}
+          <View className="flex-row items-center gap-1 mt-1">
+            <MaterialIcons name="grass" size={14} color="#64748b" />
+            <Text className="text-xs text-slate-600">
+              {item.campaign_name}
+            </Text>
+          </View>
+
+          {/* Location */}
+          <View className="flex-row items-center gap-1 mt-1">
+            <MaterialIcons name="location-on" size={14} color="#94a3b8" />
+            <Text className="text-xs text-slate-500">
+              {item.village}, {item.taluka}, {item.district}, {item.state}
+            </Text>
+          </View>
+
+          {/* Created */}
           <View className="flex-row items-center gap-1 mt-1.5">
             <MaterialIcons name="history" size={12} color="#94a3b8" />
             <Text className="text-[11px] text-slate-400">
               Added: {new Date(item.created_at).toLocaleDateString()}
             </Text>
           </View>
+
         </View>
       </View>
 
@@ -85,11 +102,11 @@ export default function Lead({ item, onAction }: LeadProps) {
       >
         <MaterialIcons name="arrow-forward-ios" size={18} color="white" />
       </TouchableOpacity>
+
     </View>
   );
 }
 
-/* ------------------ Helpers ------------------ */
 function getInitials(name: string) {
   if (!name) return "";
   const parts = name.split(" ");
