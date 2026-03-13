@@ -104,30 +104,39 @@ export class LeadService {
 
     return res.rows[0];
   }
-  async getAllLeads() {
-    const res = await pool.query(`
-      SELECT 
-        l.id,
-        l.farmer_name,
-        l.phone_number,
-        l.village,
-        l.taluka,
-        l.district,
-        l.state,
-        l.farmer_type,
-        l.bull_centre,
-        l.crop_type,
-        l.acreage,
-        l.total_land_bigha,
-        l.interested_in_warehouse,
-        l.previous_experience,
-        l.status,
-        l.created_at
-      FROM leads l
-      ORDER BY l.created_at DESC
-    `);
+  async getAllLeads(page: number = 1, limit: number = 20) {
 
-    return res.rows;
+    const offset = (page - 1) * limit
+
+    const leads = await pool.query(`
+    SELECT 
+      l.id,
+      l.farmer_name,
+      l.phone_number,
+      l.village,
+      l.taluka,
+      l.district,
+      l.state,
+      l.crop_type,
+      l.acreage,
+      l.total_land_bigha,
+      l.interested_in_warehouse,
+      l.previous_experience,
+      l.status,
+      l.created_at
+    FROM leads l
+    ORDER BY l.created_at DESC
+    LIMIT $1 OFFSET $2
+  `, [limit, offset])
+
+    const total = await pool.query(`SELECT COUNT(*) FROM leads`)
+
+    return {
+      leads: leads.rows,
+      total: Number(total.rows[0].count),
+      page,
+      limit
+    }
   }
   async getLeadById(id: string) {
     const res = await pool.query(
