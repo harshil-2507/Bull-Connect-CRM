@@ -134,3 +134,25 @@ export const logCall = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+
+/**
+ * GET LEAD ACTIVITIES
+ */
+export const getLeadActivities = async (req: Request, res: Response) => {
+
+  try {
+
+    const activities = await leadService.getLeadActivities(req.params.id)
+
+    res.status(200).json(activities)
+
+  } catch (err: any) {
+
+    res.status(400).json({
+      error: err.message
+    })
+
+  }
+
+};

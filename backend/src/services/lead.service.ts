@@ -272,5 +272,25 @@ export class LeadService {
   // }
 
 
+//fetch lead activites
+  async getLeadActivities(leadId: string) {
+
+    const res = await pool.query(
+      `
+      SELECT
+        id,
+        activity_type,
+        description,
+        created_by,
+        created_at
+      FROM lead_activities
+      WHERE lead_id = $1
+      ORDER BY created_at DESC
+      `,
+      [leadId]
+    )
+
+    return res.rows
+  }
 
 }
