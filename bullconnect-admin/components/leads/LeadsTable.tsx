@@ -26,12 +26,22 @@ type Props = {
   leads: Lead[]
   toggleSort: (field: string) => void
   lastRowRef?: (node: HTMLTableRowElement | null) => void
+  filters: any
+  openVillageFilter: () => void
+  selected: string[]
+  toggleSelect: (id: string) => void
+  onPreview: (lead: Lead) => void
 }
 
 export default function LeadsTable({
   leads,
   toggleSort,
-  lastRowRef
+  lastRowRef,
+  filters,
+  openVillageFilter,
+  selected,
+  toggleSelect,
+  onPreview
 }: Props) {
 
   const router = useRouter()
@@ -44,32 +54,35 @@ export default function LeadsTable({
 
         <Table>
 
-          {/* Sticky Header */}
-
           <TableHeader className="bg-muted sticky top-0 z-10">
 
             <TableRow>
+
+              <TableHead className="w-[40px]"/>
 
               <TableHead
                 className="cursor-pointer"
                 onClick={() => toggleSort("farmer_name")}
               >
                 <div className="flex items-center gap-2">
-                  <User size={16} />
+                  <User size={16}/>
                   Farmer ↑↓
                 </div>
               </TableHead>
 
               <TableHead>
                 <div className="flex items-center gap-2">
-                  <Phone size={16} />
+                  <Phone size={16}/>
                   Phone
                 </div>
               </TableHead>
 
-              <TableHead>
+              <TableHead
+                className="cursor-pointer"
+                onClick={openVillageFilter}
+              >
                 <div className="flex items-center gap-2">
-                  <MapPin size={16} />
+                  <MapPin size={16}/>
                   Village
                 </div>
               </TableHead>
@@ -81,12 +94,12 @@ export default function LeadsTable({
                 onClick={() => toggleSort("created_at")}
               >
                 <div className="flex items-center gap-2">
-                  <Clock size={16} />
+                  <Clock size={16}/>
                   Created ↑↓
                 </div>
               </TableHead>
 
-              <TableHead className="w-[80px] text-center">
+              <TableHead className="text-center">
                 Actions
               </TableHead>
 
@@ -105,12 +118,22 @@ export default function LeadsTable({
                 <TableRow
                   key={lead.id}
                   ref={isLast ? lastRowRef : null}
-                  className="hover:bg-muted/50 transition cursor-pointer"
+                  className="hover:bg-muted/50 transition"
                 >
 
+                  <TableCell>
+
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(lead.id)}
+                      onChange={() => toggleSelect(lead.id)}
+                    />
+
+                  </TableCell>
+
                   <TableCell
-                    className="font-medium"
-                    onClick={() => router.push(`/leads/${lead.id}`)}
+                    className="cursor-pointer font-medium"
+                    onClick={() => onPreview(lead)}
                   >
                     {lead.farmer_name}
                   </TableCell>
@@ -124,7 +147,7 @@ export default function LeadsTable({
                   </TableCell>
 
                   <TableCell>
-                    <StatusBadge status={lead.status} />
+                    <StatusBadge status={lead.status}/>
                   </TableCell>
 
                   <TableCell>
@@ -153,5 +176,6 @@ export default function LeadsTable({
       </div>
 
     </div>
+
   )
 }
