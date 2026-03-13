@@ -5,7 +5,8 @@ import {
   getAllLeads, 
   getLeadById, 
   updateLead,
-  logCall
+  logCall,
+  getLeadActivities
 } from "../controllers/lead.controller";
 
 const router = Router();
@@ -13,6 +14,7 @@ const router = Router();
 router.post("/", auth, createLead);
 router.get("/", auth, getAllLeads);
 router.get("/:id", auth, getLeadById);
+router.get("/:id/activities", auth, getLeadActivities);
 router.put("/:id", auth, updateLead);
 router.post("/:id/call", auth, logCall);
 
