@@ -6,19 +6,46 @@ import { useRouter } from "next/navigation"
 import LeadsTable from "@/components/leads/LeadsTable"
 import LeadsToolbar from "@/components/leads/LeadsToolbar"
 import LeadsSkeleton from "@/components/leads/LeadsSkeleton"
+import MultiSelectFilterOverlay from "@/components/leads/MultiSelectFilterOverlay"
+import BulkActionBar from "@/components/leads/BulkActionBar"
+import LeadPreviewPanel from "@/components/leads/LeadPreviewPanel"
 
 import { useInfiniteLeads } from "@/hooks/useInfiniteLeads"
 import { Button } from "@/components/ui/button"
+import { Lead } from "@/types/leads"
 
 export default function LeadsPage() {
 
   const router = useRouter()
 
-  const [search, setSearch] = useState("")
-  const [status, setStatus] = useState("ALL")
+  const [search,setSearch] = useState("")
+  const [statusTab,setStatusTab] = useState("ALL")
 
-  const [sortBy, setSortBy] = useState("created_at")
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc")
+  const [sortBy,setSortBy] = useState("created_at")
+  const [sortDir,setSortDir] = useState<"asc"|"desc">("desc")
+
+  const [filters,setFilters] = useState({
+    village: [] as string[],
+  })
+
+  const [activeFilter,setActiveFilter] = useState<null|"village">(null)
+
+  const [selected,setSelected] = useState<string[]>([])
+  const [previewLead,setPreviewLead] = useState<Lead | null>(null)
+
+  const toggleSelect = (id:string)=>{
+
+    if(selected.includes(id)){
+      setSelected(selected.filter(i=>i!==id))
+    }else{
+      setSelected([...selected,id])
+    }
+
+  }
+
+  const clearSelection = ()=>{
+    setSelected([])
+  }
 
   const {
     data,
@@ -30,84 +57,82 @@ export default function LeadsPage() {
 
   const observer = useRef<IntersectionObserver | null>(null)
 
-  const lastRowRef = useCallback((node: HTMLTableRowElement | null) => {
+  const lastRowRef = useCallback((node:HTMLTableRowElement|null)=>{
 
-    if (isFetchingNextPage) return
+    if(isFetchingNextPage) return
 
-    if (observer.current) observer.current.disconnect()
+    if(observer.current) observer.current.disconnect()
 
-    observer.current = new IntersectionObserver(entries => {
+    observer.current = new IntersectionObserver(entries=>{
 
       const first = entries[0]
 
-      if (first?.isIntersecting && hasNextPage) {
+      if(first?.isIntersecting && hasNextPage){
         fetchNextPage()
       }
 
     })
 
-    if (node) observer.current.observe(node)
+    if(node) observer.current.observe(node)
 
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
+  },[fetchNextPage,hasNextPage,isFetchingNextPage])
 
-  if (isLoading) return <LeadsSkeleton />
-
-  /* Flatten pages */
+  if(isLoading) return <LeadsSkeleton/>
 
   let leads =
-    data?.pages?.flatMap((p: any) =>
+    data?.pages?.flatMap((p:any)=>
       Array.isArray(p) ? p : p.leads
     ) ?? []
 
-  /* SEARCH */
+  if(search){
 
-  if (search) {
-
-    leads = leads.filter((l: any) =>
+    leads = leads.filter((l:any)=>
       l.farmer_name.toLowerCase().includes(search.toLowerCase()) ||
       l.phone_number.includes(search)
     )
 
   }
 
-  /* STATUS FILTER */
+  if(statusTab!=="ALL"){
+    leads = leads.filter((l:any)=>l.status===statusTab)
+  }
 
-  if (status !== "ALL") {
+  if(filters.village.length>0){
 
-    leads = leads.filter((l: any) =>
-      l.status === status
+    leads = leads.filter((l:any)=>
+      filters.village.includes(l.village)
     )
 
   }
 
-  /* SORT */
-
-  leads = [...leads].sort((a: any, b: any) => {
+  leads = [...leads].sort((a:any,b:any)=>{
 
     const valA = a[sortBy]
     const valB = b[sortBy]
 
-    if (sortDir === "asc") return valA > valB ? 1 : -1
-    return valA < valB ? 1 : -1
+    if(sortDir==="asc") return valA>valB ? 1 : -1
+    return valA<valB ? 1 : -1
 
   })
 
-  const toggleSort = (field: string) => {
+  const toggleSort=(field:string)=>{
 
-    if (sortBy === field) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc")
-    } else {
+    if(sortBy===field){
+      setSortDir(sortDir==="asc"?"desc":"asc")
+    }else{
       setSortBy(field)
       setSortDir("asc")
     }
 
   }
 
-  return (
+  const villages = [
+    ...new Set(leads.map((l:any)=>l.village).filter(Boolean))
+  ]
+
+  return(
 
     <div className="flex flex-col h-full px-6 py-4">
-
-      {/* Header */}
 
       <div className="flex items-center justify-between mb-4">
 
@@ -115,22 +140,18 @@ export default function LeadsPage() {
           Leads
         </h1>
 
-        <Button onClick={() => router.push("/leads/new")}>
+        <Button onClick={()=>router.push("/leads/new")}>
           Create Lead
         </Button>
 
       </div>
 
-      {/* Toolbar */}
-
       <LeadsToolbar
         search={search}
         setSearch={setSearch}
-        status={status}
-        setStatus={setStatus}
+        status={statusTab}
+        setStatus={setStatusTab}
       />
-
-      {/* Table */}
 
       <div className="flex-1 mt-4">
 
@@ -138,28 +159,45 @@ export default function LeadsPage() {
           leads={leads}
           toggleSort={toggleSort}
           lastRowRef={lastRowRef}
+          filters={filters}
+          openVillageFilter={()=>setActiveFilter("village")}
+          selected={selected}
+          toggleSelect={toggleSelect}
+          onPreview={(lead)=>setPreviewLead(lead)}
         />
 
       </div>
 
-      {/* Loader */}
+      <BulkActionBar
+        selectedCount={selected.length}
+        onClear={clearSelection}
+      />
 
-      {isFetchingNextPage && (
+      {activeFilter==="village" &&(
 
-        <div className="flex justify-center py-4">
-
-          <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-
-        </div>
+        <MultiSelectFilterOverlay
+          title="Village"
+          options={villages}
+          selected={filters.village}
+          onApply={(values)=>
+            setFilters({...filters,village:values})
+          }
+          onClose={()=>setActiveFilter(null)}
+        />
 
       )}
 
-      {!hasNextPage && (
-        <p className="text-center text-sm text-muted-foreground pb-4">
-          No more leads
-        </p>
+      {previewLead && (
+
+        <LeadPreviewPanel
+          lead={previewLead}
+          onClose={()=>setPreviewLead(null)}
+        />
+
       )}
 
     </div>
+
   )
+
 }
