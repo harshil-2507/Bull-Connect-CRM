@@ -32,61 +32,57 @@ export type LeadSource =
 export interface Lead {
   id: string;
 
-  // Farmer Info
   farmerName: string;
   phoneNumber: string;
-  farmerType?: string | null;         //  NEW
+  alternatePhone?: string | null;   // NEW
+  farmerId?: string | null;         // NEW
 
-  // Location Info
+  farmerType?: string | null;
+  bullCentre?: string | null;
+
   village: string | null;
   taluka: string | null;
   district: string | null;
   state: string | null;
-  bullCentre?: string | null;         // NEW
 
-  // Business Info
-  cropType?: string | null;           // keep existing
-  estimatedQuantity?: number | null;  // keep existing
-  totalLandBigha?: number | null;     //  NEW
-  interestedInWarehouse?: boolean | null;  // NEW
-  previousExperience?: string | null;      //  NEW
+  source?: string | null;           // NEW
+  productType?: string | null;      // NEW
 
-  // Lifecycle
+  cropType?: string | null;
+  estimatedQuantity?: number | null;
+
+  totalLandBigha?: number | null;
+  interestedInWarehouse?: boolean | null;
+  previousExperience?: boolean | null;
+
+  experienceOrRemarks?: string | null; // NEW
+
+  // CASTOR
+  castorBori?: number | null;
+  castorExpectedPrice?: number | null;
+  castorOfferedPrice?: number | null;
+  castorExpectedHarvestTime?: Date | null;
+  castorVavetarBigha?: number | null;
+  castorDealStatus?: string | null;
+  castorIntentToSell?: string | null;
+
+  // GROUNDNUT
+  groundnutBori?: number | null;
+  groundnutExpectedPrice?: number | null;
+  groundnutOfferedPrice?: number | null;
+  groundnutExpectedHarvestTime?: Date | null;
+  groundnutVavetarBigha?: number | null;
+  groundnutIntentToSell?: string | null;
+
   status: LeadState;
-  source: LeadSource;
 
-  // Assignment Info
   telecallerId?: string | null;
   fieldExecId?: string | null;
 
-  // Metadata
   isActive: boolean;
+
   createdAt: Date;
   updatedAt: Date;
-}
-
-/**
- * DTO for creating a lead
- */
-export interface CreateLeadDTO {
-  farmerName: string;
-  phoneNumber: string;
-  farmerType?: string;              //  NEW
-
-  village?: string;
-  taluka?: string;
-  district?: string;
-  state?: string;
-  bullCentre?: string;              //  NEW
-
-  cropType?: string;
-  estimatedQuantity?: number;
-
-  totalLandBigha?: number;          //  NEW
-  interestedInWarehouse?: boolean;  //  NEW
-  previousExperience?: string;      //  NEW
-
-  source: LeadSource;
 }
 
 /**
