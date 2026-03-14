@@ -15,6 +15,12 @@ const isRole = (value: any): value is Role => {
 };
 
 export const auth = (req: Request, res: Response, next: NextFunction) => {
+
+  //  Allow CORS preflight requests to pass
+  if (req.method === "OPTIONS") {
+    return next();
+  }
+
   try {
     const authHeader = req.headers.authorization;
 
@@ -29,7 +35,7 @@ export const auth = (req: Request, res: Response, next: NextFunction) => {
       role: unknown;
     };
 
-    // 🔐 validate role before trusting it
+    //  validate role before trusting it
     if (!decoded.id || !isRole(decoded.role)) {
       return res.status(403).json({ error: "Invalid token payload" });
     }

@@ -40,36 +40,61 @@ export default function LeadPreviewPanel({ lead, onClose }: Props) {
         <div className="space-y-4">
 
           <div>
-            <p className="text-sm text-muted-foreground">
-              Farmer Name
-            </p>
+            <p className="text-sm text-muted-foreground">Farmer Name</p>
+            <p className="font-medium">{lead.farmer_name}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Phone</p>
+            <p className="font-medium">{lead.phone_number}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Farmer Type</p>
+            <p className="font-medium">{lead.farmer_type || "-"}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Village</p>
+            <p className="font-medium">{lead.village || "-"}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Bull Centre</p>
+            <p className="font-medium">{lead.bull_centre || "-"}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Crop Type</p>
+            <p className="font-medium">{lead.crop_type || "-"}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Acreage</p>
+            <p className="font-medium">{lead.acreage ?? "-"}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Total Land (Bigha)</p>
+            <p className="font-medium">{lead.total_land_bigha ?? "-"}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">Warehouse Interest</p>
             <p className="font-medium">
-              {lead.farmer_name}
+              {lead.interested_in_warehouse ? "Yes" : "No"}
             </p>
           </div>
 
           <div>
-            <p className="text-sm text-muted-foreground">
-              Phone
-            </p>
+            <p className="text-sm text-muted-foreground">Previous Experience</p>
             <p className="font-medium">
-              {lead.phone_number}
+              {lead.previous_experience ? "Yes" : "No"}
             </p>
           </div>
 
           <div>
-            <p className="text-sm text-muted-foreground">
-              Village
-            </p>
-            <p className="font-medium">
-              {lead.village || "-"}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-sm text-muted-foreground">
-              Status
-            </p>
+            <p className="text-sm text-muted-foreground">Status</p>
             <StatusBadge status={lead.status} />
           </div>
 

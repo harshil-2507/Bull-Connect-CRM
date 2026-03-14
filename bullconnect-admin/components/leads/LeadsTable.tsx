@@ -77,6 +77,8 @@ export default function LeadsTable({
                 </div>
               </TableHead>
 
+              <TableHead>Farmer Type</TableHead>
+
               <TableHead
                 className="cursor-pointer"
                 onClick={openVillageFilter}
@@ -86,6 +88,8 @@ export default function LeadsTable({
                   Village
                 </div>
               </TableHead>
+
+              <TableHead>Bull Centre</TableHead>
 
               <TableHead>Status</TableHead>
 
@@ -143,7 +147,15 @@ export default function LeadsTable({
                   </TableCell>
 
                   <TableCell>
+                    {lead.farmer_type ?? "-"}
+                  </TableCell>
+
+                  <TableCell>
                     {lead.village ?? "-"}
+                  </TableCell>
+
+                  <TableCell>
+                    {lead.bull_centre ?? "-"}
                   </TableCell>
 
                   <TableCell>
