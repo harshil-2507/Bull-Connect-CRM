@@ -13,17 +13,35 @@ export const createLead = async (req: Request, res: Response) => {
     const {
       farmer_name,
       phone_number,
+      alternate_phone,
+      farmer_id,
+
       village,
       taluka,
       district,
       state,
+
       farmer_type,
       bull_centre,
+
+      source,
+      product_type,
+
       crop_type,
       acreage,
+
       total_land_bigha,
       interested_in_warehouse,
-      previous_experience
+      previous_experience,
+
+      experience_or_remarks,
+
+      castor_bori,
+      castor_expected_price,
+      castor_intent_to_sell,
+
+      groundnut_bori,
+      groundnut_expected_price
     } = req.body;
 
     if (!farmer_name || !phone_number) {
@@ -35,17 +53,35 @@ export const createLead = async (req: Request, res: Response) => {
     const lead = await leadService.createLead({
       farmer_name,
       phone_number,
+      alternate_phone,
+      farmer_id,
+
       village,
       taluka,
       district,
       state,
+
       farmer_type,
       bull_centre,
+
+      source,
+      product_type,
+
       crop_type,
       acreage,
+
       total_land_bigha,
       interested_in_warehouse,
-      previous_experience
+      previous_experience,
+
+      experience_or_remarks,
+
+      castor_bori,
+      castor_expected_price,
+      castor_intent_to_sell,
+
+      groundnut_bori,
+      groundnut_expected_price
     });
 
     res.status(201).json(lead);

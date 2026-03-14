@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 
 export type LeadActivity = {
+  type: string
   id: string
   activity_type: string
   description: string
