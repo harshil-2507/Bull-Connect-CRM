@@ -9,6 +9,7 @@ import adminRoutes from "./routes/admin.routes";
 import leadRoutes from "./routes/lead.routes";
 import campaignRoutes from "./routes/campaign.routes";
 import adminDashboardRoutes from "./routes/adminDashboard.routes";
+import searchRoutes from "./routes/search.routes";
 import { env } from "./config/env";
 
 const app = express();
@@ -64,6 +65,8 @@ app.use(auth);
 app.post("/ping", (_req, res) => {
   res.json({ ok: true });
 });
+
+app.use("/search", searchRoutes);
 
 app.use("/leads", leadRoutes);
 app.use("/admin", adminRoutes);
