@@ -18,7 +18,7 @@ import { useDeleteUser } from "@/hooks/useDeleteUser"
 import { useDeactivateUser } from "@/hooks/useUpdateUserStatus"
 import { useResetPassword } from "@/hooks/useResetPassword"
 
-import { api } from "@/lib/api"
+// import { api } from "@/lib/api"
 import { useQueryClient } from "@tanstack/react-query"
 
 import { toast } from "sonner"
