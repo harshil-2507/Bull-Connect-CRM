@@ -1,13 +1,15 @@
 import { Router } from "express";
 import { roleGuard } from "../middlewares/roleGuard";
+
 import {
   createUser,
-  getAllUsersByRole,
+  getAllUsers,
+  getUsersByRole,
   getUserById,
   updateUser,
   deactivateUser,
+  resetPassword,
   deleteUser,
-  getAllUsers,
 } from "../controllers/admin.controller";
 
 const router = Router();
@@ -18,27 +20,43 @@ const router = Router();
 router.use(roleGuard(["ADMIN"]));
 
 /**
- * Create a user (MANAGER, TELECALLER, FIELD_MANAGER, FIELD_EXEC)
+ * Create user
  */
 router.post("/users", createUser);
 
 /**
- * Get all users (no filtering)
+ * Get all users
  */
 router.get("/users", getAllUsers);
 
 /**
- * Routes for a single user by role and ID must come BEFORE routes with only :role
+ * Get users by role
  */
-router.get("/users/:role/:id", getUserById);
-router.put("/users/:role/:id", updateUser);
-router.patch("/users/:role/:id", deactivateUser);
-router.delete("/users/:role/:id", deleteUser);
+router.get("/users/role/:role", getUsersByRole);
 
 /**
- * Get all users by role
- * (This comes after the /:role/:id routes)
+ * Get user by id
  */
-router.get("/users/:role", getAllUsersByRole);
+router.get("/users/:id", getUserById);
+
+/**
+ * Update user
+ */
+router.put("/users/:id", updateUser);
+
+/**
+ * Deactivate user
+ */
+router.patch("/users/:id/deactivate", deactivateUser);
+
+/**
+ * Reset password
+ */
+router.patch("/users/:id/reset-password", resetPassword);
+
+/**
+ * Delete user
+ */
+router.delete("/users/:id", deleteUser);
 
 export default router;

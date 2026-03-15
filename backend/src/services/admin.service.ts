@@ -9,32 +9,47 @@ interface CreateUserInput {
   password: string;
   name: string;
   phone: string;
-  adminId: string; // for audit
+  adminId: string;
   role: Role;
 }
 
 export class AdminService {
+
   /**
-   * Create any non-ADMIN user
+   * Create user
    */
   async createUser(input: CreateUserInput) {
-    await withTransaction(async (tx: PoolClient) => {
-      // Check username uniqueness
-      const existing = await tx.query(
+    return withTransaction(async (tx: PoolClient) => {
+
+      if (input.role === "ADMIN") {
+        throw new Error("Admin creation not allowed");
+      }
+
+      const existingUsername = await tx.query(
         "SELECT id FROM users WHERE username = $1",
         [input.username]
       );
 
-      if (existing.rowCount) {
+      if (existingUsername.rowCount !== 0) {
         throw new Error("Username already exists");
+      }
+
+      const existingPhone = await tx.query(
+        "SELECT id FROM users WHERE phone = $1",
+        [input.phone]
+      );
+
+      if (existingPhone.rowCount !== 0) {
+        throw new Error("Phone already exists");
       }
 
       const hashedPassword = await bcrypt.hash(input.password, 10);
 
-      await tx.query(
+      const result = await tx.query(
         `INSERT INTO users
-         (username, password_hash, name, phone, role)
-         VALUES ($1,$2,$3,$4,$5)`,
+        (username, password_hash, name, phone, role)
+        VALUES ($1,$2,$3,$4,$5)
+        RETURNING id, username, name, phone, role, is_active, created_at`,
         [
           input.username,
           hashedPassword,
@@ -43,111 +58,143 @@ export class AdminService {
           input.role,
         ]
       );
+
+      return result.rows[0];
     });
   }
 
   /**
- * Get all users (no role filtering)
- */
+   * Get all users
+   */
   async getAllUsersUnfiltered() {
-    const res = await pool.query(
-      `SELECT id, username, name, phone, role, is_active, created_at
-     FROM users`
-    );
+    const res = await pool.query(`
+      SELECT id, username, name, phone, role, is_active, created_at
+      FROM users
+      ORDER BY created_at DESC
+    `);
+
     return res.rows;
   }
 
   /**
-   * Get all users by role
+   * Get users by role
    */
-  async getAllUsers(role: Role) {
+  async getUsersByRole(role: Role) {
     const res = await pool.query(
-      `SELECT id, username, name, phone, is_active, created_at
-       FROM users
-       WHERE role = $1`,
+      `
+      SELECT id, username, name, phone, role, is_active, created_at
+      FROM users
+      WHERE role = $1
+      ORDER BY created_at DESC
+      `,
       [role]
     );
+
     return res.rows;
   }
 
   /**
-   * Get single user by ID and role
+   * Get single user
    */
-  async getUserById(id: string, role: Role) {
+  async getUserById(id: string) {
+
     const res = await pool.query(
-      `SELECT id, username, name, phone, is_active, created_at
-       FROM users
-       WHERE id = $1 AND role = $2`,
-      [id, role]
+      `
+      SELECT id, username, name, phone, role, is_active, created_at
+      FROM users
+      WHERE id = $1
+      `,
+      [id]
     );
 
-    if (!res.rowCount) throw new Error(`${role} not found`);
+    if (res.rowCount === 0) {
+      throw new Error("User not found");
+    }
+
     return res.rows[0];
   }
 
   /**
-   * Update user by ID and role
+   * Update user
    */
   async updateUser(
     id: string,
-    updates: Partial<{ name: string; phone: string; is_active: boolean }>,
-    role: Role
+    updates: Partial<{ name: string; phone: string; is_active: boolean }>
   ) {
-    await withTransaction(async (tx) => {
-      const exists = await tx.query(
-        "SELECT id FROM users WHERE id = $1 AND role = $2",
-        [id, role]
-      );
 
-      if (!exists.rowCount) throw new Error(`${role} not found`);
+    const allowedFields = ["name", "phone", "role", "is_active"]
 
-      const allowedFields = ["name", "phone", "is_active"];
+    const fields: string[] = [];
+    const values: any[] = [];
 
-      const fields: string[] = [];
-      const values: any[] = [];
-      let i = 1;
+    let i = 1;
 
-      for (const key of allowedFields) {
-        if (updates[key as keyof typeof updates] !== undefined) {
-          fields.push(`${key} = $${i++}`);
-          values.push(updates[key as keyof typeof updates]);
-        }
+    for (const key of allowedFields) {
+      if (updates[key as keyof typeof updates] !== undefined) {
+        fields.push(`${key} = $${i++}`);
+        values.push(updates[key as keyof typeof updates]);
       }
+    }
 
-      if (!fields.length) return;
+    if (!fields.length) return;
 
-      await tx.query(
-        `UPDATE users SET ${fields.join(", ")} WHERE id = $${i} AND role = $${i + 1}`,
-        [...values, id, role]
-      );
-    });
+    values.push(id);
+
+    await pool.query(
+      `UPDATE users SET ${fields.join(", ")} WHERE id = $${i}`,
+      values
+    );
   }
 
   /**
-   * Deactivate user by setting is_active = false
+   * Deactivate user
    */
-  async deactivateUser(id: string, role: Role) {
-    await withTransaction(async (tx) => {
-      const res = await tx.query(
-        `UPDATE users SET is_active = false WHERE id = $1 AND role = $2`,
-        [id, role]
-      );
+async setUserActiveStatus(id: string, isActive: boolean) {
 
-      if (!res.rowCount) throw new Error(`${role} not found`);
-    });
+  const res = await pool.query(
+    `UPDATE users SET is_active = $1 WHERE id = $2`,
+    [isActive, id]
+  )
+
+  if (res.rowCount === 0) {
+    throw new Error("User not found")
+  }
+
+}
+
+  /**
+   * Reset password
+   */
+  async resetPassword(id: string, newPassword: string) {
+
+    if (!newPassword) {
+      throw new Error("Password cannot be empty");
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const res = await pool.query(
+      `UPDATE users SET password_hash = $1 WHERE id = $2`,
+      [hashedPassword, id]
+    );
+
+    if (res.rowCount === 0) {
+      throw new Error("User not found");
+    }
   }
 
   /**
-   * Hard delete user (use with caution!)
+   * Delete user
    */
-  async deleteUser(id: string, role: Role) {
-    await withTransaction(async (tx) => {
-      const res = await tx.query(
-        `DELETE FROM users WHERE id = $1 AND role = $2`,
-        [id, role]
-      );
+  async deleteUser(id: string) {
 
-      if (!res.rowCount) throw new Error(`${role} not found or cannot delete due to FK constraints`);
-    });
+    const res = await pool.query(
+      `DELETE FROM users WHERE id = $1 AND role != 'ADMIN'`,
+      [id]
+    );
+
+    if (res.rowCount === 0) {
+      throw new Error("User not found or cannot delete admin");
+    }
   }
 }
