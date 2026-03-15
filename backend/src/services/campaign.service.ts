@@ -420,9 +420,9 @@ ORDER BY created_at DESC
         const res = await client.query(
           `
           INSERT INTO leads
-          (name,phone,taluka,district,geo_state,campaign_id)
+          (farmer_name,phone_number, taluka,district,geo_state,campaign_id)
           VALUES ${placeholders}
-          ON CONFLICT (phone) DO NOTHING
+          ON CONFLICT (phone_number) DO NOTHING
           `,
           values
         );
