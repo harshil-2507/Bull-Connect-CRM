@@ -192,3 +192,31 @@ export const getLeadActivities = async (req: Request, res: Response) => {
   }
 
 };
+
+
+export const moveLeadsToCampaign = async (req: Request, res: Response) => {
+
+  try {
+
+    const { campaignId, leadIds } = req.body
+
+    if (!campaignId || !Array.isArray(leadIds)) {
+      return res.status(400).json({
+        error: "campaignId and leadIds required"
+      })
+    }
+
+    const result = await leadService.moveLeadsToCampaign(
+      campaignId,
+      leadIds
+    )
+
+    res.status(200).json(result)
+
+  } catch (err:any) {
+
+    res.status(400).json({ error: err.message })
+
+  }
+
+};

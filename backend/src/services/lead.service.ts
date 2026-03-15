@@ -319,4 +319,26 @@ ORDER BY created_at DESC
 
     return res.rows;
   }
+
+
+  async moveLeadsToCampaign(campaignId: string, leadIds: string[]) {
+
+    if (!leadIds.length) {
+      throw new Error("No leads provided")
+    }
+
+    const res = await pool.query(
+      `
+    UPDATE leads
+    SET campaign_id = $1
+    WHERE id = ANY($2::uuid[])
+    RETURNING id
+    `,
+      [campaignId, leadIds]
+    )
+
+    return {
+      moved: res.rowCount
+    }
+  }
 }

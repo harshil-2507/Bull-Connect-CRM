@@ -6,7 +6,8 @@ import {
   getLeadById, 
   updateLead,
   logCall,
-  getLeadActivities
+  getLeadActivities,
+  moveLeadsToCampaign
 } from "../controllers/lead.controller";
 
 const router = Router();
@@ -17,5 +18,6 @@ router.get("/:id", auth, getLeadById);
 router.get("/:id/activities", auth, getLeadActivities);
 router.put("/:id", auth, updateLead);
 router.post("/:id/call", auth, logCall);
+router.patch("/move-to-campaign", moveLeadsToCampaign)
 
 export default router;

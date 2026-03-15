@@ -1,17 +1,19 @@
 import { Router } from "express";
 import multer from "multer";
 import { roleGuard } from "../middlewares/roleGuard";
+
 import {
   createCampaign,
   getAllCampaigns,
   getCampaignById,
-  toggleCampaign,
+  // toggleCampaign,
+  updateCampaignStatus,
   getCampaignLeads,
   getAllCampaignStats,
   getCampaignStatsById,
   getCampaignPipeline,
   uploadCampaignCsv,
-  bulkAssignCampaignLeads  
+  bulkAssignCampaignLeads
 } from "../controllers/campaign.controller";
 
 const router = Router();
@@ -19,8 +21,8 @@ const router = Router();
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 1024 * 1024 * 1024, // 1GB
-  },
+    fileSize: 1024 * 1024 * 1024
+  }
 });
 
 router.use(roleGuard(["ADMIN", "MANAGER"]));
@@ -36,7 +38,8 @@ router.get("/:id/stats", getCampaignStatsById);
 router.get("/:id/leads", getCampaignLeads);
 router.get("/:id", getCampaignById);
 
-router.patch("/:id/toggle", toggleCampaign);
+// router.patch("/:id/toggle", toggleCampaign);
+router.patch("/:id/status", updateCampaignStatus);
 
 router.post("/:id/upload", upload.single("file"), uploadCampaignCsv);
 

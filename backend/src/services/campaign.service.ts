@@ -7,14 +7,18 @@ export type CampaignInput = {
   description?: string;
   start_date?: string;
   end_date?: string;
+  region?: string;
   created_by: string;
 };
 
 export class CampaignService {
+
   async createCampaign(input: CampaignInput) {
+
     if (input.start_date && input.end_date) {
       const start = new Date(input.start_date);
       const end = new Date(input.end_date);
+
       if (end < start) {
         throw new Error("End date cannot be before start date");
       }
@@ -23,8 +27,8 @@ export class CampaignService {
     const res = await pool.query(
       `
       INSERT INTO campaigns
-      (name, description, start_date, end_date, created_by)
-      VALUES ($1,$2,$3,$4,$5)
+      (name, description, start_date, end_date, region, created_by)
+      VALUES ($1,$2,$3,$4,$5,$6)
       RETURNING *
       `,
       [
@@ -32,18 +36,21 @@ export class CampaignService {
         input.description || null,
         input.start_date || null,
         input.end_date || null,
-        input.created_by,
+        input.region || null,
+        input.created_by
       ]
     );
 
     return res.rows[0];
   }
 
+
   async getAllCampaigns(options: {
     page: number;
     limit: number;
     isActive?: boolean;
   }) {
+
     const offset = (options.page - 1) * options.limit;
 
     const values: any[] = [];
@@ -55,9 +62,16 @@ export class CampaignService {
       values.push(options.isActive);
     }
 
-    const dataQuery = `
-      SELECT 
-        c.*,
+    const dataResult = await pool.query(
+      `
+      SELECT
+        c.id,
+        c.name,
+        c.region,
+        c.status,
+        c.start_date,
+        c.end_date,
+        c.created_at,
         COUNT(l.id) AS total_leads
       FROM campaigns c
       LEFT JOIN leads l ON l.campaign_id = c.id
@@ -66,20 +80,19 @@ export class CampaignService {
       ORDER BY c.created_at DESC
       LIMIT $${index++}
       OFFSET $${index}
-    `;
-
-    const dataResult = await pool.query(
-      dataQuery,
+      `,
       [...values, options.limit, offset]
     );
 
-    const countQuery = `
-      SELECT COUNT(*) 
+    const countResult = await pool.query(
+      `
+      SELECT COUNT(*)
       FROM campaigns c
       ${whereClause}
-    `;
+      `,
+      values
+    );
 
-    const countResult = await pool.query(countQuery, values);
     const total = Number(countResult.rows[0].count);
 
     return {
@@ -88,15 +101,17 @@ export class CampaignService {
         total,
         page: options.page,
         limit: options.limit,
-        total_pages: Math.ceil(total / options.limit),
-      },
+        total_pages: Math.ceil(total / options.limit)
+      }
     };
   }
 
+
   async getCampaignById(id: string) {
+
     const res = await pool.query(
       `
-      SELECT 
+      SELECT
         c.*,
         COUNT(l.id) AS total_leads
       FROM campaigns c
@@ -114,15 +129,43 @@ export class CampaignService {
     return res.rows[0];
   }
 
-  async toggleCampaign(id: string, isActive: boolean) {
+
+  // async toggleCampaign(id: string, isActive: boolean) {
+
+  //   const res = await pool.query(
+  //     `
+  //     UPDATE campaigns
+  //     SET is_active = $1
+  //     WHERE id = $2
+  //     RETURNING *
+  //     `,
+  //     [isActive, id]
+  //   );
+
+  //   if (!res.rowCount) {
+  //     throw new Error("Campaign not found");
+  //   }
+
+  //   return res.rows[0];
+  // }
+
+
+  async updateCampaignStatus(id: string, status: string) {
+
+    const allowed = ["DRAFT", "ACTIVE", "PAUSED", "COMPLETED"];
+
+    if (!allowed.includes(status)) {
+      throw new Error("Invalid campaign status");
+    }
+
     const res = await pool.query(
       `
       UPDATE campaigns
-      SET is_active = $1
+      SET status = $1
       WHERE id = $2
       RETURNING *
       `,
-      [isActive, id]
+      [status, id]
     );
 
     if (!res.rowCount) {
@@ -132,10 +175,12 @@ export class CampaignService {
     return res.rows[0];
   }
 
+
   async getLeadsByCampaign(
     campaignId: string,
     options?: { page?: number; limit?: number }
   ) {
+
     const page = options?.page || 1;
     const limit = options?.limit || 10;
     const offset = (page - 1) * limit;
@@ -149,13 +194,23 @@ export class CampaignService {
       throw new Error("Campaign not found");
     }
 
-    const dataResult = await pool.query(
+    const leads = await pool.query(
       `
-      SELECT *
-      FROM leads
-      WHERE campaign_id = $1
-      ORDER BY created_at DESC
-      LIMIT $2 OFFSET $3
+      SELECT
+  id,
+  farmer_name AS name,
+  phone_number AS phone,
+  village,
+  taluka,
+  district,
+  state,
+  status,
+  assigned_to,
+  created_at
+FROM leads
+WHERE campaign_id = $1
+ORDER BY created_at DESC
+LIMIT $2 OFFSET $3
       `,
       [campaignId, limit, offset]
     );
@@ -168,45 +223,64 @@ export class CampaignService {
     const total = Number(countResult.rows[0].count);
 
     return {
-      data: dataResult.rows,
+      data: leads.rows,
       pagination: {
         total,
         page,
         limit,
-        total_pages: Math.ceil(total / limit),
-      },
+        total_pages: Math.ceil(total / limit)
+      }
     };
   }
 
+
   async getCampaignStatsById(id: string) {
+
     const res = await pool.query(
       `
       SELECT 
-        c.id,
-        c.name,
-        COALESCE(stats.total_leads, 0) AS total_leads,
-        COALESCE(stats.unassigned, 0) AS unassigned,
-        COALESCE(stats.tele_prospecting, 0) AS tele_prospecting,
-        COALESCE(stats.field_visit_pending, 0) AS field_visit_pending,
-        COALESCE(stats.field_verification, 0) AS field_verification,
-        COALESCE(stats.converted, 0) AS converted,
-        COALESCE(stats.dropped, 0) AS dropped
-      FROM campaigns c
-      LEFT JOIN (
-        SELECT 
-          campaign_id,
-          COUNT(*) AS total_leads,
-          COUNT(*) FILTER (WHERE lead_status = 'UNASSIGNED') AS unassigned,
-          COUNT(*) FILTER (WHERE lead_status = 'TELE_PROSPECTING') AS tele_prospecting,
-          COUNT(*) FILTER (WHERE lead_status = 'FIELD_VISIT_PENDING') AS field_visit_pending,
-          COUNT(*) FILTER (WHERE lead_status = 'FIELD_VERIFICATION') AS field_verification,
-          COUNT(*) FILTER (WHERE lead_status = 'CONVERTED') AS converted,
-          COUNT(*) FILTER (WHERE lead_status = 'DROPPED') AS dropped
-        FROM leads
-        WHERE campaign_id = $1
-        GROUP BY campaign_id
-      ) stats ON stats.campaign_id = c.id
-      WHERE c.id = $1
+  c.id,
+  c.name,
+
+  COALESCE(stats.total_leads,0) AS total_leads,
+  COALESCE(stats.new_leads,0) AS new_leads,
+  COALESCE(stats.assigned,0) AS assigned,
+  COALESCE(stats.contacted,0) AS contacted,
+  COALESCE(stats.field_requested,0) AS field_requested,
+  COALESCE(stats.visit_requested,0) AS visit_requested,
+  COALESCE(stats.visit_assigned,0) AS visit_assigned,
+  COALESCE(stats.visit_completed,0) AS visit_completed,
+  COALESCE(stats.sold,0) AS sold,
+  COALESCE(stats.dropped,0) AS dropped
+
+FROM campaigns c
+
+LEFT JOIN (
+
+SELECT
+  campaign_id,
+
+  COUNT(*) AS total_leads,
+
+  COUNT(*) FILTER (WHERE status = 'NEW') AS new_leads,
+  COUNT(*) FILTER (WHERE status = 'ASSIGNED') AS assigned,
+  COUNT(*) FILTER (WHERE status = 'CONTACTED') AS contacted,
+  COUNT(*) FILTER (WHERE status = 'FIELD_REQUESTED') AS field_requested,
+  COUNT(*) FILTER (WHERE status = 'VISIT_REQUESTED') AS visit_requested,
+  COUNT(*) FILTER (WHERE status = 'VISIT_ASSIGNED') AS visit_assigned,
+  COUNT(*) FILTER (WHERE status = 'VISIT_COMPLETED') AS visit_completed,
+  COUNT(*) FILTER (WHERE status = 'SOLD') AS sold,
+  COUNT(*) FILTER (WHERE status = 'DROPPED') AS dropped
+
+FROM leads
+WHERE campaign_id = $1
+GROUP BY campaign_id
+
+) stats
+
+ON stats.campaign_id = c.id
+
+WHERE c.id = $1
       `,
       [id]
     );
@@ -218,12 +292,15 @@ export class CampaignService {
     return res.rows[0];
   }
 
+
   async getAllCampaignStats() {
+
     const res = await pool.query(
       `
-      SELECT 
+      SELECT
         c.id,
         c.name,
+        c.status,
         COUNT(l.id) AS total_leads
       FROM campaigns c
       LEFT JOIN leads l ON l.campaign_id = c.id
@@ -235,7 +312,9 @@ export class CampaignService {
     return res.rows;
   }
 
+
   async getCampaignPipeline(id: string) {
+
     const campaignRes = await pool.query(
       `SELECT id, name FROM campaigns WHERE id = $1`,
       [id]
@@ -247,22 +326,32 @@ export class CampaignService {
 
     const leadsRes = await pool.query(
       `
-      SELECT id, name, phone, lead_status, created_at
-      FROM leads
-      WHERE campaign_id = $1
-      ORDER BY created_at DESC
+      SELECT
+  id,
+  farmer_name AS name,
+  phone_number AS phone,
+  status,
+  created_at
+FROM leads
+WHERE campaign_id = $1
+ORDER BY created_at DESC
       `,
       [id]
     );
 
     const pipeline: Record<string, any[]> = {
-      UNASSIGNED: [],
-      TELE_PROSPECTING: [],
-      FIELD_VISIT_PENDING: [],
-      FIELD_VERIFICATION: [],
-      CONVERTED: [],
-      DROPPED: [],
-    };
+
+  NEW: [],
+  ASSIGNED: [],
+  CONTACTED: [],
+  FIELD_REQUESTED: [],
+  VISIT_REQUESTED: [],
+  VISIT_ASSIGNED: [],
+  VISIT_COMPLETED: [],
+  SOLD: [],
+  DROPPED: []
+
+};
 
     for (const lead of leadsRes.rows) {
       if (pipeline[lead.status]) {
@@ -273,14 +362,17 @@ export class CampaignService {
     return {
       campaign_id: id,
       campaign_name: campaignRes.rows[0].name,
-      pipeline,
+      pipeline
     };
   }
 
+
   async uploadCsvToCampaign(campaignId: string, fileBuffer: Buffer) {
+
     const client = await pool.connect();
 
     try {
+
       const campaignCheck = await client.query(
         `SELECT id FROM campaigns WHERE id = $1`,
         [campaignId]
@@ -301,12 +393,16 @@ export class CampaignService {
       let batch: any[] = [];
 
       const insertBatch = async () => {
-        if (batch.length === 0) return;
+
+        if (!batch.length) return;
 
         const values: any[] = [];
+
         const placeholders = batch
-          .map((row, index) => {
-            const base = index * 6;
+          .map((row, i) => {
+
+            const base = i * 6;
+
             values.push(
               row.name,
               row.phone,
@@ -315,34 +411,39 @@ export class CampaignService {
               row.geo_state,
               campaignId
             );
-            return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6})`;
+
+            return `($${base + 1},$${base + 2},$${base + 3},$${base + 4},$${base + 5},$${base + 6})`;
+
           })
           .join(",");
 
         const res = await client.query(
           `
           INSERT INTO leads
-          (name, phone, taluka, district, geo_state, campaign_id)
+          (name,phone,taluka,district,geo_state,campaign_id)
           VALUES ${placeholders}
           ON CONFLICT (phone) DO NOTHING
           `,
           values
         );
 
-        const affectedRows = res.rowCount ?? 0;
+        const affected = res.rowCount ?? 0;
 
-        inserted += affectedRows;
-        duplicates += batch.length - affectedRows;
+        inserted += affected;
+        duplicates += batch.length - affected;
 
         batch = [];
+
       };
 
       const stream = Readable.from(fileBuffer);
 
       await new Promise<void>((resolve, reject) => {
+
         stream
           .pipe(csv())
-          .on("data", async (row) => {
+          .on("data", (row) => {
+
             stream.pause();
 
             totalRows++;
@@ -364,26 +465,36 @@ export class CampaignService {
               phone,
               taluka,
               district,
-              geo_state,
+              geo_state
             });
 
             if (batch.length >= batchSize) {
+
               insertBatch()
                 .then(() => stream.resume())
                 .catch(reject);
+
             } else {
+
               stream.resume();
+
             }
+
           })
           .on("end", async () => {
+
             try {
+
               await insertBatch();
               resolve();
+
             } catch (err) {
               reject(err);
             }
+
           })
           .on("error", reject);
+
       });
 
       await client.query("COMMIT");
@@ -392,13 +503,20 @@ export class CampaignService {
         totalRows,
         inserted,
         duplicates,
-        invalid,
+        invalid
       };
+
     } catch (err) {
+
       await client.query("ROLLBACK");
       throw err;
+
     } finally {
+
       client.release();
+
     }
+
   }
+
 }
