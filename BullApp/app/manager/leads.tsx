@@ -145,7 +145,7 @@ export default function Leads() {
       <LeadActions
         lead={selectedLead}
         onClose={() => setSelectedLead(null)}
-        onAssigned={refreshLeads}
+        onUpdated={refreshLeads}
       />
     </SafeAreaView>
   );

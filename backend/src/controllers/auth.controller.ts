@@ -6,7 +6,6 @@ import { env } from "../config/env";
 
 export const login = async (req: Request, res: Response) => {
   const { username, password } = req.body;
-
   try {
     /**
      * 1 Validate input
@@ -76,9 +75,9 @@ export const login = async (req: Request, res: Response) => {
 
   } catch (error) {
     console.error("Login Error:", error);
-
     return res.status(500).json({
       error: "Internal server error",
+      
     });
   }
 };
