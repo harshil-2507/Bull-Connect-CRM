@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,27 +8,50 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Lead from "../components/Lead";
 import GroundManagerLeadActions from "../components/GroundManagerLeadActions";
-import { getLeads, LeadType } from "../data/leads";
 import { useFocusEffect } from "expo-router";
-import { useCallback } from "react";
+import { apiRequest } from "../utils/api";
+
+type LeadType = {
+  id: string;
+  farmer_name: string;
+  phone_number: string;
+  status: string;
+  // Add other fields as needed
+};
 
 const FILTERS = ["VISIT_REQUESTED", "VISIT_ASSIGNED"] as const;
 
 export default function Leads() {
-  const [leads, setLeads] = useState<LeadType[]>(getLeads());
+  const [leads, setLeads] = useState<LeadType[]>([]);
   const [selectedLead, setSelectedLead] = useState<LeadType | null>(null);
   const [selectedFilter, setSelectedFilter] =
     useState<(typeof FILTERS)[number]>("VISIT_REQUESTED");
 
+  const fetchLeads = async () => {
+    try {
+      const res = await apiRequest(`/leads?status=${selectedFilter}`);
+      if (res.ok) {
+        const data = await res.json();
+        setLeads(data.leads || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch leads:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeads();
+  }, [selectedFilter]);
+
   // Refresh leads when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      setLeads(getLeads());
-    }, [])
+      fetchLeads();
+    }, [selectedFilter])
   );
 
   const handleAssigned = () => {
-    setLeads(getLeads());
+    fetchLeads();
     setSelectedLead(null);
   };
 

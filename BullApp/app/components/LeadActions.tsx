@@ -1,5 +1,5 @@
 // components/LeadActions.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
-import { getTelecallers, assignTelecaller } from "../data/leads";
+import { apiRequest } from "../utils/api";
 
 interface LeadActionsProps {
   lead: any | null;
@@ -31,22 +31,53 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 
 export default function LeadActions({ lead, onClose, onAssigned }: LeadActionsProps) {
   const [selectedTelecallerId, setSelectedTelecallerId] = useState<number | null>(null);
-  const telecallers = getTelecallers();
+  const [telecallers, setTelecallers] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchTelecallers = async () => {
+      try {
+        const res = await apiRequest('/manager/telecallers');
+        if (res.ok) {
+          const data = await res.json();
+          setTelecallers(data || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch telecallers:', error);
+      }
+    };
+    fetchTelecallers();
+  }, []);
 
   if (!lead) return null;
 
   const statusStyle = STATUS_COLORS[lead.status] || { bg: "#e5e7eb", text: "#374151" };
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (!selectedTelecallerId) {
       Alert.alert("Error", "Please select a telecaller");
       return;
     }
 
-    assignTelecaller(lead.id);
-    Alert.alert("Success", "Telecaller assigned successfully");
-    onAssigned?.();
-    onClose();
+    try {
+      const res = await apiRequest('/manager/assign-telecaller', {
+        method: 'POST',
+        body: JSON.stringify({
+          leadId: lead.id,
+          telecallerId: selectedTelecallerId,
+        }),
+      });
+
+      if (res.ok) {
+        Alert.alert("Success", "Telecaller assigned successfully");
+        onAssigned?.();
+        onClose();
+      } else {
+        Alert.alert("Error", "Failed to assign telecaller");
+      }
+    } catch (error) {
+      console.error('Failed to assign:', error);
+      Alert.alert("Error", "Failed to assign telecaller");
+    }
   };
 
   return (

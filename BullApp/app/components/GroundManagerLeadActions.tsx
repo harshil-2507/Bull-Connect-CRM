@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
-import { getGroundExecutives, assignGroundExecutive } from "../data/leads";
+import { apiRequest } from "../utils/api";
 
 interface Props {
   lead: any | null;
@@ -32,24 +32,77 @@ export default function GroundManagerLeadActions({
   onAssigned,
 }: Props) {
   const [selectedExecutiveId, setSelectedExecutiveId] = useState<number | null>(null);
-  const groundExecutives = getGroundExecutives();
+  const [groundExecutives, setGroundExecutives] = useState<any[]>([]);
+  const [fieldRequestId, setFieldRequestId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchExecutives = async () => {
+      try {
+        const res = await apiRequest('/users/role/FIELD_EXEC');
+        if (res.ok) {
+          const data = await res.json();
+          setGroundExecutives(data.users || []);
+        }
+      } catch (error) {
+        console.error('Failed to fetch ground executives:', error);
+      }
+    };
+    fetchExecutives();
+  }, []);
+
+  useEffect(() => {
+    const fetchFieldRequest = async () => {
+      if (!lead) return;
+      try {
+        const res = await apiRequest('/field-manager/field-requests');
+        if (res.ok) {
+          const data = await res.json();
+          const request = data.fieldRequests.find((r: any) => r.lead_id === lead.id);
+          if (request) {
+            setFieldRequestId(request.id);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch field request:', error);
+      }
+    };
+    fetchFieldRequest();
+  }, [lead]);
 
   if (!lead) return null;
 
   const statusStyle = STATUS_COLORS[lead.status] || { bg: "#e5e7eb", text: "#374151" };
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (!selectedExecutiveId) {
       Alert.alert("Error", "Please select a ground executive");
       return;
     }
 
-    const selectedExecutive = groundExecutives.find((e) => e.id === selectedExecutiveId);
-    if (selectedExecutive) {
-      assignGroundExecutive(lead.id, selectedExecutive.name);
-      Alert.alert("Success", "Ground executive assigned successfully");
-      onAssigned?.();
-      onClose();
+    if (!fieldRequestId) {
+      Alert.alert("Error", "No field request found for this lead");
+      return;
+    }
+
+    try {
+      const res = await apiRequest('/field-manager/assign-field-exec', {
+        method: 'POST',
+        body: JSON.stringify({
+          fieldRequestId,
+          fieldExecId: selectedExecutiveId,
+        }),
+      });
+
+      if (res.ok) {
+        Alert.alert("Success", "Ground executive assigned successfully");
+        onAssigned?.();
+        onClose();
+      } else {
+        Alert.alert("Error", "Failed to assign ground executive");
+      }
+    } catch (error) {
+      console.error('Failed to assign:', error);
+      Alert.alert("Error", "Failed to assign ground executive");
     }
   };
 

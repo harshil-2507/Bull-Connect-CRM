@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "BullApp",
-    "slug": "BullApp",
+    "slug": "BullAppDev",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -49,7 +49,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "9a477f46-3e85-476b-9d2b-4794ae68cfd9"
+        "projectId": "bb12c11f-0c54-4414-8fd4-e3acbbdd4d68"
       }
     }
   }

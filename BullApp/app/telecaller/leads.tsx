@@ -9,25 +9,40 @@ import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Lead from "../components/Lead";
 import TelecallerLeadActions from "../components/TelecallerLeadActions";
-
-import { getLeads } from "../data/leads";
+import { apiRequest } from "../utils/api";
 
 const FILTERS = ["ASSIGNED", "CONTACTED", "VISIT_REQUESTED"] as const;
 
 export default function Leads() {
-  const [leads, setLeads] = useState<any[]>(getLeads());
+  const [leads, setLeads] = useState<any[]>([]);
   const [selectedFilter, setSelectedFilter] = useState<typeof FILTERS[number]>("ASSIGNED");
   const [selectedLead, setSelectedLead] = useState<any>(null);
+
+  const fetchLeads = async () => {
+    try {
+      const res = await apiRequest(`/leads?status=${selectedFilter}`);
+      if (res.ok) {
+        const data = await res.json();
+        setLeads(data.leads || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch leads:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchLeads();
+  }, [selectedFilter]);
 
   // Refresh leads when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      setLeads(getLeads());
-    }, [])
+      fetchLeads();
+    }, [selectedFilter])
   );
 
   const handleUpdated = () => {
-    setLeads(getLeads());
+    fetchLeads();
     setSelectedLead(null);
   };
 

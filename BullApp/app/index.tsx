@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Index() {
   const [secure, setSecure] = useState(true);
@@ -22,49 +23,77 @@ export default function Index() {
 
   const router = useRouter();
 
-  const handleLogin = async () => {
+const handleLogin = async () => {
   if (!username.trim() || !password.trim()) {
     Alert.alert("Error", "Please enter username and password");
     return;
   }
 
-  setLoading(true);
+  try {
+    setLoading(true);
 
-  const user = username.trim();
-  const pass = password.trim();
+    const response = await fetch(
+      "https://bull-connect-crm.onrender.com/login",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password.trim(),
+        }),
+      }
+    );
 
-  setTimeout(() => {
+    console.log("Raw response status:", response.status, response.statusText);
+
+    // Try parsing JSON safely
+    let data;
+    try {
+      data = await response.json();
+      console.log("Parsed response data:", data);
+    } catch (jsonErr) {
+      const text = await response.text();
+      console.error("Failed to parse JSON:", text);
+      throw new Error("Invalid server response");
+    }
+
+    if (!response.ok) {
+      Alert.alert("Login Failed", data.error || "Invalid credentials");
+      setLoading(false);
+      return;
+    }
+
+    // Store token
+    await AsyncStorage.setItem("authToken", data.token);
+
+    const userRole = data.user.role;
+
+    // Navigate based on role
+    switch (userRole) {
+      case "MANAGER":
+        router.replace("/manager");
+        break;
+      case "TELECALLER":
+        router.replace("/telecaller");
+        break;
+      case "GROUND_MANAGER":
+        router.replace("/groundmanager");
+        break;
+      case "GROUND_EXECUTIVE":
+        router.replace("/groundexecutive");
+        break;
+      default:
+        Alert.alert("Login Failed", "Unauthorized role");
+    }
+
+  } catch (error: any) {
+    console.error("Login error:", error);
+    Alert.alert("Error", error.message || "Server connection failed");
+  } finally {
     setLoading(false);
-
-    // Check username first
-    if (user !== "manager56" && user !== "telecaller56" && user !== "groundmanager56" && user !== "groundexecutive56") {
-      Alert.alert("Login Failed", "Wrong username");
-      return;
-    }
-
-    // Check password
-    if (pass !== "pass123") {
-      Alert.alert("Login Failed", "Wrong password");
-      return;
-    }
-
-    // Navigate if correct
-    if (user === "manager56") {
-      router.replace("/manager");
-    }
-
-    if (user === "telecaller56") {
-      router.replace("/telecaller");
-    }
-
-    if (user === "groundmanager56") {
-      router.replace("/groundmanager");
-    }
-
-    if (user === "groundexecutive56") {
-      router.replace("/groundexecutive");
-    }
-  }, 500);
+  }
 };
 
   return (

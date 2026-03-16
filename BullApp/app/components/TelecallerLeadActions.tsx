@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { MaterialIcons } from "@expo/vector-icons";
-import { updateLeadStatus } from "../data/leads";
+import { apiRequest } from "../utils/api";
 
 interface Props {
   lead: any | null;
@@ -45,14 +45,30 @@ export default function TelecallerLeadActions({
     setShowNoteInput(true);
   };
 
-  const handleConfirmStatusUpdate = () => {
+  const handleConfirmStatusUpdate = async () => {
     if (pendingStatus) {
-      updateLeadStatus(lead.id, pendingStatus, noteText);
-      Alert.alert("Success", `Lead status updated to ${pendingStatus}`);
-      setShowNoteInput(false);
-      setPendingStatus(null);
-      onUpdated?.();
-      onClose();
+      try {
+        const res = await apiRequest(`/leads/${lead.id}`, {
+          method: 'PUT',
+          body: JSON.stringify({
+            status: pendingStatus,
+            // Note: noteText might need to be handled differently, perhaps as an activity
+          }),
+        });
+
+        if (res.ok) {
+          Alert.alert("Success", `Lead status updated to ${pendingStatus}`);
+          setShowNoteInput(false);
+          setPendingStatus(null);
+          onUpdated?.();
+          onClose();
+        } else {
+          Alert.alert("Error", "Failed to update lead status");
+        }
+      } catch (error) {
+        console.error('Failed to update status:', error);
+        Alert.alert("Error", "Failed to update lead status");
+      }
     }
   };
 
