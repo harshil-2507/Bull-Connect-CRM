@@ -11,6 +11,7 @@ import campaignRoutes from "./routes/campaign.routes";
 import adminDashboardRoutes from "./routes/adminDashboard.routes";
 import searchRoutes from "./routes/search.routes";
 import { env } from "./config/env";
+import analyticsRoutes from "./routes/analytics.routes"
 
 const app = express();
 
@@ -77,5 +78,7 @@ app.use("/field-exec", fieldExecRoutes);
 
 app.use("/campaigns", campaignRoutes);
 app.use("/admin/dashboard", adminDashboardRoutes);
+
+app.use("/analytics", analyticsRoutes);
 
 export default app;

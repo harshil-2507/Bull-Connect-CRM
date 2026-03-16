@@ -4,102 +4,116 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { api } from "@/lib/api"
 
-type UserRole =
-  | "ADMIN"
-  | "MANAGER"
-  | "TELECALLER"
-  | "GROUND_MANAGER"
-  | "FIELD_EXEC"
-
 export default function LoginPage() {
+
   const router = useRouter()
 
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
 
-  const redirectByRole = (role: UserRole) => {
-    switch (role) {
-      case "ADMIN":
-        router.push("/admin/dashboard")
-        break
-
-      case "MANAGER":
-        router.push("/manager/dashboard")
-        break
-
-      case "TELECALLER":
-        router.push("/telecaller/todo")
-        break
-
-      case "GROUND_MANAGER":
-        router.push("/ground-manager/map")
-        break
-
-      case "FIELD_EXEC":
-        router.push("/field-exec/visits")
-        break
-
-      default:
-        router.push("/admin/dashboard")
-    }
-  }
-
   const handleLogin = async () => {
+
     try {
+
       setLoading(true)
 
       const { data } = await api.post("/login", {
         username,
-        password,
+        password
       })
 
-      const token = data.token
-      const role: UserRole = data.user.role
+      /* store auth */
 
-      localStorage.setItem("token", token)
-      localStorage.setItem("role", role)
+      localStorage.setItem("token", data.token)
 
-      redirectByRole(role)
-    } catch (err) {
-      alert("Invalid credentials")
-    } finally {
-      setLoading(false)
+      localStorage.setItem(
+        "user",
+        JSON.stringify(data.user)
+      )
+
+      /* role routing */
+
+      const role = data.user.role
+
+      if (role === "ADMIN") {
+        router.push("/admin/dashboard")
+      }
+
+      else if (role === "MANAGER") {
+        router.push("/manager/dashboard")
+      }
+
+      else if (role === "TELECALLER") {
+        router.push("/telecaller")
+      }
+
+      else if (role === "FIELD_EXEC") {
+        router.push("/field-exec")
+      }
+
+      else {
+        router.push("/")
+      }
+
     }
+
+    catch (err) {
+
+      alert("Invalid credentials")
+
+    }
+
+    finally {
+
+      setLoading(false)
+
+    }
+
   }
 
   return (
-    <div className="flex items-center justify-center h-screen bg-gray-50 dark:bg-slate-950">
-      <div className="p-8 border rounded-xl w-80 bg-white dark:bg-slate-900">
 
-        <h1 className="text-xl font-bold mb-6 text-center">
-          Bull Connect CRM
+    <div className="flex items-center justify-center h-screen">
+
+      <div className="p-8 border rounded-xl w-80">
+
+        <h1 className="text-xl font-bold mb-4">
+          Login
         </h1>
 
         <input
-          className="border p-2 w-full mb-3 rounded"
+          className="border p-2 w-full mb-3"
           placeholder="Username"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) =>
+            setUsername(e.target.value)
+          }
         />
 
         <input
-          className="border p-2 w-full mb-4 rounded"
+          className="border p-2 w-full mb-3"
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) =>
+            setPassword(e.target.value)
+          }
         />
 
         <button
           onClick={handleLogin}
-          disabled={loading}
-          className="bg-blue-600 hover:bg-blue-700 transition text-white w-full p-2 rounded"
+          className="bg-blue-600 text-white w-full p-2 rounded"
         >
+
           {loading ? "Logging in..." : "Login"}
+
         </button>
 
       </div>
+
     </div>
+
   )
+
 }

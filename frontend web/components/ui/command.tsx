@@ -68,7 +68,6 @@ function CommandDialog({
           "transition-all duration-200",
           className
         )}
-        showCloseButton={showCloseButton}
       >
         <Command className="
           [&_[cmdk-group-heading]]:px-3

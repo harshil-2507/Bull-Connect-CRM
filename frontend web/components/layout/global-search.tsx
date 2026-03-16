@@ -1,38 +1,47 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+
 import {
   CommandDialog,
-  CommandEmpty,
-  CommandGroup,
   CommandInput,
-  CommandItem,
   CommandList,
+  CommandGroup,
+  CommandItem,
+  CommandEmpty
 } from "@/components/ui/command"
 
-import { useRouter } from "next/navigation"
-import { useQuery } from "@tanstack/react-query"
 import { api } from "@/lib/api"
+
+type Campaign = {
+  id: string
+  name: string
+}
+
+type User = {
+  id: string
+  name: string
+}
 
 export default function GlobalSearch() {
 
+  const [open, setOpen] = useState(false)
+
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [users, setUsers] = useState<User[]>([])
+
   const router = useRouter()
 
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState("")
+  /* CMD + K */
 
-  /**
-   * Keyboard shortcut (⌘K)
-   */
   useEffect(() => {
 
     const down = (e: KeyboardEvent) => {
 
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-
+      if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
         setOpen((prev) => !prev)
-
       }
 
     }
@@ -43,92 +52,114 @@ export default function GlobalSearch() {
 
   }, [])
 
-  /**
-   * API Search
-   */
-  const { data } = useQuery({
-    queryKey: ["global-search", query],
-    queryFn: async () => {
+  /* LOAD DATA */
 
-      if (!query) return null
+  useEffect(() => {
 
-      const res = await api.get(`/search?q=${query}`)
+    if (!open) return
 
-      return res.data
+    loadData()
 
-    },
-    enabled: query.length > 1,
-  })
+  }, [open])
+
+  async function loadData() {
+
+    try {
+
+      const [campaignRes, usersRes] = await Promise.all([
+        api.get("/campaigns"),
+        api.get("/admin/users")
+      ])
+
+      setCampaigns(campaignRes.data?.data || [])
+      setUsers(usersRes.data?.data || [])
+
+    } catch (err) {
+
+      console.error("Global search load error:", err)
+
+    }
+
+  }
+  const navigate = (path: string) => {
+
+    setOpen(false)
+    router.push(path)
+
+  }
 
   return (
 
     <CommandDialog open={open} onOpenChange={setOpen}>
 
-      <CommandInput
-        placeholder="Search leads, users, campaigns..."
-        value={query}
-        onValueChange={setQuery}
-      />
+      <CommandInput placeholder="Search leads, users, campaigns..." />
 
       <CommandList>
 
-        <CommandEmpty>
-          No results found.
-        </CommandEmpty>
+        <CommandEmpty>No results found</CommandEmpty>
 
-        {/* Leads */}
-        {data?.leads?.length > 0 && (
+        {/* USERS */}
 
-          <CommandGroup heading="Leads">
+        <CommandGroup heading="Users">
 
-            {data.leads.map((lead: any) => (
+          {users.slice(0, 6).map((user) => (
 
-              <CommandItem
-                key={lead.id}
-                onSelect={() => {
+            <CommandItem
+              key={user.id}
+              onSelect={() => navigate(`/admin/users`)}
+            >
+              {user.name}
+            </CommandItem>
 
-                  router.push(`/leads/${lead.id}`)
-                  setOpen(false)
+          ))}
 
-                }}
-              >
-                {lead.farmer_name}
-              </CommandItem>
+        </CommandGroup>
 
-            ))}
+        {/* CAMPAIGNS */}
 
-          </CommandGroup>
+        <CommandGroup heading="Campaigns">
 
-        )}
+          {campaigns.slice(0, 6).map((campaign) => (
 
-        {/* Users */}
-        {data?.users?.length > 0 && (
+            <CommandItem
+              key={campaign.id}
+              onSelect={() =>
+                navigate(`/admin/campaigns/${campaign.id}`)
+              }
+            >
+              {campaign.name}
+            </CommandItem>
 
-          <CommandGroup heading="Users">
+          ))}
 
-            {data.users.map((user: any) => (
+        </CommandGroup>
 
-              <CommandItem
-                key={user.id}
-                onSelect={() => {
+        {/* PAGES */}
 
-                  router.push(`/users/${user.id}`)
-                  setOpen(false)
+        <CommandGroup heading="Pages">
 
-                }}
-              >
-                {user.name}
-              </CommandItem>
+          <CommandItem onSelect={() => navigate("/admin/dashboard")}>
+            Dashboard
+          </CommandItem>
 
-            ))}
+          <CommandItem onSelect={() => navigate("/admin/users")}>
+            Users
+          </CommandItem>
 
-          </CommandGroup>
+          <CommandItem onSelect={() => navigate("/admin/campaigns")}>
+            Campaigns
+          </CommandItem>
 
-        )}
+          <CommandItem onSelect={() => navigate("/admin/leads")}>
+            Leads
+          </CommandItem>
+
+        </CommandGroup>
 
       </CommandList>
 
     </CommandDialog>
 
   )
+
 }

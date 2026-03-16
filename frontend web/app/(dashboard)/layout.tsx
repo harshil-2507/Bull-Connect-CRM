@@ -1,37 +1,42 @@
 "use client"
 
-import { ReactNode } from "react"
-import { useAuth } from "@/hooks/useAuth"
 import Sidebar from "@/components/layout/sidebar"
 import Topbar from "@/components/layout/topbar"
 
 export default function DashboardLayout({
   children,
 }: {
-  children: ReactNode
+  children: React.ReactNode
 }) {
 
-  useAuth()
-
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-slate-950">
+
+    <div className="flex h-screen bg-slate-50 relative">
 
       {/* Sidebar */}
+
       <Sidebar />
 
-      {/* Main Area */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      {/* Main */}
+
+      <div className="flex flex-col flex-1 overflow-hidden relative z-10">
 
         {/* Topbar */}
+
         <Topbar />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">
+
+        <main className="flex-1 overflow-y-auto p-8">
+
           {children}
+
         </main>
 
       </div>
 
     </div>
+
   )
+
 }

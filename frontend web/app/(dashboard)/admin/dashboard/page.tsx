@@ -7,7 +7,7 @@ import { useDashboardSummary } from "@/hooks/useDashboardSummary"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel"
 import { staggerContainer, fadeUp } from "@/lib/motion"
-import { ThemeToggle } from "@/components/layout/ThemeToggle"
+// import { ThemeToggle } from "@/components/layout/ThemeToggle"
 import { PipelineAnalytics } from "@/components/dashboard/PipelineAnalytics"
 import { TelecallerPerformanceTable } from "@/components/dashboard/TelecallerPerformanceTable"
 
@@ -69,8 +69,7 @@ export default function DashboardPage() {
             className="
         relative min-h-screen px-8 py-10 overflow-hidden
         bg-gradient-to-b
-        from-gray-50 via-white to-gray-100
-        dark:from-slate-900 dark:via-slate-950 dark:to-black
+from-gray-50 via-white to-gray-100
       "
         >
             {/* Floating Background Particles */}
@@ -91,7 +90,7 @@ export default function DashboardPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between">
 
-                    <ThemeToggle />
+                    {/* <ThemeToggle /> */}
 
                     <div>
                         <h1 className="text-3xl font-bold tracking-tight relative inline-block text-gray-900 dark:text-white">
