@@ -1,21 +1,30 @@
 import { Router } from "express";
 import { roleGuard } from "../middlewares/roleGuard";
-import { assignToTelecaller, getAllTeleAssignments, getTeleAssignmentById, getAllTelecallers } from "../controllers/manager.controller";
+
+import {
+  assignToTelecaller,
+  assignLeadsBulk,
+  getAllTeleAssignments,
+  getTeleAssignmentById,
+  getAllTelecallers,
+  getUnassignedLeads
+} from "../controllers/manager.controller";
 
 const router = Router();
 
-/**
- * MANAGER only routes
- */
 router.use(roleGuard(["MANAGER"]));
 
-// test
 router.get("/telecallers", getAllTelecallers);
 
+// NEW
+router.get("/campaigns/:campaignId/unassigned-leads", getUnassignedLeads);
+
+// OLD
 router.post("/assign-telecaller", assignToTelecaller);
+
+router.post("/assign-leads-bulk", assignLeadsBulk);
 
 router.get("/tele-assignments", getAllTeleAssignments);
 router.get("/tele-assignments/:id", getTeleAssignmentById);
-
 
 export default router;

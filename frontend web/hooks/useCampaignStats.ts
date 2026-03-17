@@ -3,9 +3,14 @@ import { api } from "@/lib/api"
 
 export function useCampaignStats() {
 
+  const role =
+    typeof window !== "undefined"
+      ? localStorage.getItem("role")
+      : null
+
   return useQuery({
 
-    queryKey: ["campaign-stats"],
+    queryKey: ["campaign-stats", role],
 
     queryFn: async () => {
 

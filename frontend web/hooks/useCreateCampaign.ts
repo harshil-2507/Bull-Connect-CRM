@@ -10,18 +10,21 @@ export function useCreateCampaign() {
     mutationFn: async (data: any) => {
 
       const res = await api.post("/campaigns", data)
-
       return res.data
 
     },
 
     onSuccess: () => {
 
-      queryClient.invalidateQueries({
-        queryKey: ["campaigns"]
-      })
+  queryClient.invalidateQueries({
+    queryKey: ["campaigns"]
+  })
 
-    },
+  queryClient.invalidateQueries({
+    queryKey: ["campaign-stats"]
+  })
+
+},
 
   })
 

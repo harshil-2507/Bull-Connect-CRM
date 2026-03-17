@@ -4,9 +4,14 @@ import { Campaign } from "@/types/campaign"
 
 export function useCampaigns() {
 
+  const role =
+    typeof window !== "undefined"
+      ? localStorage.getItem("role")
+      : null
+
   return useQuery<Campaign[]>({
 
-    queryKey: ["campaigns"],
+    queryKey: ["campaigns", role],
 
     queryFn: async () => {
 

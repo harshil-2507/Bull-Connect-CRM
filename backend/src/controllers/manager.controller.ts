@@ -4,13 +4,26 @@ import { LeadStateService } from "../services/leadState.service";
 const service = new LeadStateService();
 
 /**
- * MANAGER assigns a lead to a telecaller
- * Initial transition: UNASSIGNED → TELE_PROSPECTING
+ * BULK ASSIGN
  */
-export async function assignToTelecaller(
-  req: Request,
-  res: Response
-) {
+export async function assignLeadsBulk(req: Request, res: Response) {
+  const { assignments } = req.body;
+
+  const result = await service.assignLeadsBulk(
+    assignments,
+    req.user.id
+  );
+
+  res.status(200).json({
+    message: "Leads assigned successfully",
+    ...result
+  });
+}
+
+/**
+ * SINGLE (existing)
+ */
+export async function assignToTelecaller(req: Request, res: Response) {
   const { leadId, telecallerId } = req.body;
 
   await service.assignTelecaller(leadId, telecallerId, req.user.id);
@@ -20,27 +33,27 @@ export async function assignToTelecaller(
   });
 }
 
-/**
- * MANAGER: Get all telecallers
- */
 export async function getAllTelecallers(req: Request, res: Response) {
-  const telecallers = await service.getAllTelecallers();
-  res.status(200).json(telecallers);
+  const data = await service.getAllTelecallers();
+  res.status(200).json(data);
 }
 
-/**
- * MANAGER: Get all telecaller assignments
- */
 export async function getAllTeleAssignments(req: Request, res: Response) {
-  const assignments = await service.getAllTeleAssignments();
-  res.status(200).json(assignments);
+  const data = await service.getAllTeleAssignments();
+  res.status(200).json(data);
 }
 
-/**
- * MANAGER: Get telecaller assignment by ID
- */
 export async function getTeleAssignmentById(req: Request, res: Response) {
   const { id } = req.params;
-  const assignment = await service.getTeleAssignmentById(id);
-  res.status(200).json(assignment);
+  const data = await service.getTeleAssignmentById(id);
+  res.status(200).json(data);
+}
+
+/**
+ * NEW API
+ */
+export async function getUnassignedLeads(req: Request, res: Response) {
+  const { campaignId } = req.params;
+  const data = await service.getUnassignedLeads(campaignId);
+  res.status(200).json(data);
 }

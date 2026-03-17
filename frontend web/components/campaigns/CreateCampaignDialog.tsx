@@ -11,8 +11,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
-  DialogOverlay,
+  DialogTrigger
 } from "@/components/ui/dialog"
 
 export default function CreateCampaignDialog() {
@@ -55,80 +54,54 @@ export default function CreateCampaignDialog() {
         </Button>
       </DialogTrigger>
 
-      {/* Background overlay */}
-      <DialogOverlay className="bg-black/70 backdrop-blur-sm" />
-
-      <DialogContent className="sm:max-w-[520px] bg-white shadow-xl">
+      <DialogContent className="sm:max-w-[520px] bg-white">
 
         <DialogHeader>
-          <DialogTitle>
-            Create Campaign
-          </DialogTitle>
+          <DialogTitle>Create Campaign</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
 
-          {/* Campaign Name */}
           <div className="space-y-2">
-
-            <label className="text-sm font-medium">
-              Campaign Name
-            </label>
+            <label className="text-sm font-medium">Campaign Name</label>
 
             <Input
               placeholder="Enter campaign name"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
-
           </div>
 
-          {/* Description */}
           <div className="space-y-2">
-
-            <label className="text-sm font-medium">
-              Description
-            </label>
+            <label className="text-sm font-medium">Description</label>
 
             <Input
               placeholder="Campaign description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-
           </div>
 
-          {/* Start Date */}
           <div className="space-y-2">
-
-            <label className="text-sm font-medium">
-              Start Date
-            </label>
+            <label className="text-sm font-medium">Start Date</label>
 
             <Input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
             />
-
           </div>
 
-          {/* End Date */}
           <div className="space-y-2">
-
-            <label className="text-sm font-medium">
-              End Date
-            </label>
+            <label className="text-sm font-medium">End Date</label>
 
             <Input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
             />
-
           </div>
 
-          {/* Submit */}
           <Button
             className="w-full"
             onClick={handleSubmit}
@@ -144,6 +117,5 @@ export default function CreateCampaignDialog() {
       </DialogContent>
 
     </Dialog>
-
   )
 }

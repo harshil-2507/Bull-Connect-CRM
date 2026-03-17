@@ -22,9 +22,9 @@ export default function CampaignTable() {
 
   return (
 
-    <div className="border rounded-md">
+    <div className="border rounded-md overflow-x-auto bg-white text-black">
 
-      <Table>
+      <Table className="min-w-[900px]">
 
         <TableHeader>
 
@@ -45,11 +45,9 @@ export default function CampaignTable() {
 
           {data?.map((campaign:any) => (
 
-            <TableRow key={campaign.id}>
+            <TableRow key={campaign.id} className="hover:bg-gray-50">
 
-              <TableCell>
-                {campaign.name}
-              </TableCell>
+              <TableCell>{campaign.name}</TableCell>
 
               <TableCell>
                 <CampaignStatusBadge status={campaign.status}/>
@@ -68,9 +66,7 @@ export default function CampaignTable() {
               </TableCell>
 
               <TableCell>
-
                 <UploadLeadsDialog campaignId={campaign.id} />
-
               </TableCell>
 
             </TableRow>
