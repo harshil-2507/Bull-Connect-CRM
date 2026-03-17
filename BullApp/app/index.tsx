@@ -67,13 +67,14 @@ const handleLogin = async () => {
 
     // Store token
     await AsyncStorage.setItem("authToken", data.token);
+    await AsyncStorage.setItem("userData", JSON.stringify(data.user));
 
     const userRole = data.user.role;
 
     // Navigate based on role
     switch (userRole) {
       case "MANAGER":
-        router.replace("/manager");
+        router.replace("/manager/Home");
         break;
       case "TELECALLER":
         router.replace("/telecaller");

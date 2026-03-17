@@ -1,4 +1,3 @@
-// components/LeadActions.tsx
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -6,12 +5,22 @@ import {
   Modal,
   TouchableOpacity,
   ScrollView,
-  TextInput,
   Alert,
+  ActivityIndicator,
+  TextInput,
+  FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { MaterialIcons } from "@expo/vector-icons";
+import { MaterialIcons, Feather } from "@expo/vector-icons";
 import { apiRequest } from "../utils/api";
+
+type Telecaller = {
+  id: string;
+  username: string;
+  name: string;
+  phone: string;
+  email: string | null;
+};
 
 interface LeadActionsProps {
   lead: any | null;
@@ -20,67 +29,84 @@ interface LeadActionsProps {
 }
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  NEW: { bg: "#e0f2fe", text: "#0284c7" },
-  ASSIGNED: { bg: "#fef9c3", text: "#b45309" },
-  CONTACTED: { bg: "#d1fae5", text: "#047857" },
-  VISIT_REQUESTED: { bg: "#fcd5ce", text: "#b91c1c" },
-  VISIT_ASSIGNED: { bg: "#ede9fe", text: "#7c3aed" },
-  VISIT_COMPLETED: { bg: "#dcfce7", text: "#166534" },
-  SOLD: { bg: "#fefce8", text: "#b45309" },
-  DROPPED: { bg: "#f8d7da", text: "#842029" },
+  NEW: { bg: "#e0f7fa", text: "#006064" },
+  ASSIGNED: { bg: "#fff3e0", text: "#ef6c00" },
+  CONTACTED: { bg: "#e8f5e9", text: "#2e7d32" },
+  VISIT_REQUESTED: { bg: "#fce4ec", text: "#c2185b" },
+  VISIT_ASSIGNED: { bg: "#ede7f6", text: "#512da8" },
+  VISIT_COMPLETED: { bg: "#f1f8e9", text: "#33691e" },
+  SOLD: { bg: "#fff8e1", text: "#ff6f00" },
+  DROPPED: { bg: "#ffebee", text: "#b71c1c" },
 };
 
 export default function LeadActions({ lead, onClose, onUpdated }: LeadActionsProps) {
   const [editingLead, setEditingLead] = useState<any>(null);
-  const [activities, setActivities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [telecallers, setTelecallers] = useState<Telecaller[]>([]);
+  const [loadingTelecallers, setLoadingTelecallers] = useState(false);
+  const [assigningLead, setAssigningLead] = useState(false);
 
-  const [telecallers, setTelecallers] = useState<any[]>([]);
-  const [selectedTelecallerId, setSelectedTelecallerId] = useState<string | null>(null);
-  const [assigning, setAssigning] = useState(false);
-
+  // Set the lead when modal opens
   useEffect(() => {
-    if (!lead) return;
-    setEditingLead(lead);
-    setSelectedTelecallerId(null);
+    if (lead) setEditingLead(lead);
+  }, [lead]);
 
-    // Fetch activities
-    const fetchActivities = async () => {
-      try {
-        const res = await apiRequest(`/leads/${lead.id}/activities`);
-        if (res.ok) {
-          const data = await res.json();
-          setActivities(data);
-        }
-      } catch (err) {
-        console.error("Failed to fetch activities:", err);
-      }
-    };
-
-    fetchActivities();
-
-    // Fetch telecallers
-    const fetchTelecallers = async () => {
-      try {
-        const res = await apiRequest("/manager/telecallers");
-        if (!res.ok) throw new Error("Failed to fetch telecallers");
-        const data = await res.json();
-        setTelecallers(data || []);
-      } catch (err) {
-        console.error("Failed to fetch telecallers:", err);
-      }
-    };
-
-    if (lead.status === "NEW") {
+  // Fetch telecallers when assignment modal opens
+  useEffect(() => {
+    if (showAssignModal && telecallers.length === 0) {
       fetchTelecallers();
     }
-  }, [lead]);
+  }, [showAssignModal]);
+
+  const fetchTelecallers = async () => {
+    setLoadingTelecallers(true);
+    try {
+      const res = await apiRequest("/manager/telecallers");
+      if (!res.ok) throw new Error("Failed to fetch telecallers");
+      const data = await res.json();
+      setTelecallers(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert("Error", "Failed to load telecallers");
+    } finally {
+      setLoadingTelecallers(false);
+    }
+  };
+
+  const handleAssignTelecaller = async (telecallerId: string) => {
+    setAssigningLead(true);
+    try {
+      const res = await apiRequest("/manager/assign-telecaller", {
+        method: "POST",
+        body: JSON.stringify({
+          leadId: editingLead.id,
+          telecallerId: telecallerId,
+        }),
+      });
+
+      if (res.ok) {
+        Alert.alert("Success", "Lead assigned successfully");
+        setShowAssignModal(false);
+        onUpdated?.();
+      } else {
+        Alert.alert("Error", "Failed to assign lead");
+      }
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert("Error", err.message || "Failed to assign lead");
+    } finally {
+      setAssigningLead(false);
+    }
+  };
 
   if (!lead || !editingLead) return null;
 
-  const statusStyle = STATUS_COLORS[editingLead.status] || { bg: "#e5e7eb", text: "#374151" };
+  const statusStyle = STATUS_COLORS[editingLead.status] || { bg: "#f0f0f0", text: "#333" };
 
   const handleSave = async () => {
+    setLoading(true);
     try {
       const res = await apiRequest(`/leads/${editingLead.id}`, {
         method: "PUT",
@@ -94,49 +120,30 @@ export default function LeadActions({ lead, onClose, onUpdated }: LeadActionsPro
       } else {
         Alert.alert("Error", "Failed to update lead");
       }
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Error", "Failed to update lead");
-    }
-  };
-
-  const handleAssignTelecaller = async () => {
-    if (!selectedTelecallerId) {
-      Alert.alert("Error", "Please select a telecaller");
-      return;
-    }
-
-    setAssigning(true);
-    try {
-      const res = await apiRequest("/manager/assign-telecaller", {
-        method: "POST",
-        body: JSON.stringify({ leadId: editingLead.id, telecallerId: selectedTelecallerId }),
-      });
-
-      if (!res.ok) throw new Error("Failed to assign telecaller");
-
-      Alert.alert("Success", "Telecaller assigned successfully");
-      onUpdated?.();
-      setSelectedTelecallerId(null);
     } catch (err: any) {
-      Alert.alert("Error", err.message || "Failed to assign telecaller");
+      console.error(err);
+      Alert.alert("Error", err.message || "Failed to update lead");
     } finally {
-      setAssigning(false);
+      setLoading(false);
     }
   };
 
-  const renderField = (label: string, key: string, editable = true) => (
-    <View className="flex-row justify-between py-1 items-center">
-      <Text className="text-gray-500 font-medium">{label}</Text>
-      {isEditing && editable ? (
-        <TextInput
-          value={editingLead[key]?.toString() || ""}
-          onChangeText={(val) => setEditingLead({ ...editingLead, [key]: val })}
-          className="border border-gray-300 rounded px-2 py-1 w-40 text-gray-800"
-        />
-      ) : (
-        <Text className="text-gray-800">{editingLead[key] || "-"}</Text>
-      )}
+  const renderField = (label: string, key: string) => (
+    <View className="mb-3">
+      <Text className="text-gray-500 font-semibold mb-1">{label}</Text>
+      <View className="bg-white border border-gray-200 rounded-lg px-3 py-2">
+        {isEditing ? (
+          <TextInput
+            value={editingLead[key]?.toString() || ""}
+            onChangeText={(val: string) =>
+              setEditingLead((prev: any) => ({ ...prev, [key]: val }))
+            }
+            className="text-gray-800"
+          />
+        ) : (
+          <Text className="text-gray-800">{editingLead[key] || "-"}</Text>
+        )}
+      </View>
     </View>
   );
 
@@ -147,6 +154,9 @@ export default function LeadActions({ lead, onClose, onUpdated }: LeadActionsPro
         <View className="flex-row items-center justify-between px-4 py-4 bg-white shadow-md border-b border-gray-200">
           <Text className="text-2xl font-bold text-[#1a4d2e]">Lead Details</Text>
           <View className="flex-row items-center space-x-2">
+            <TouchableOpacity onPress={() => setShowAssignModal(true)}>
+              <MaterialIcons name="person-add" size={24} color="#0ea633" />
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => setIsEditing(!isEditing)}>
               <MaterialIcons name="edit" size={24} color="#1a4d2e" />
             </TouchableOpacity>
@@ -158,18 +168,21 @@ export default function LeadActions({ lead, onClose, onUpdated }: LeadActionsPro
 
         <ScrollView className="p-4 space-y-5">
           {/* Lead Header */}
-          <View className="bg-white rounded-2xl shadow-lg p-5 flex-row justify-between items-center">
+          <View className="bg-gradient-to-r from-green-100 to-teal-50 rounded-2xl p-5 shadow-lg flex-row justify-between items-center">
             <Text className="text-2xl font-bold text-[#1a4d2e]">{editingLead.farmer_name}</Text>
-            <View className="px-3 py-1 rounded-full" style={{ backgroundColor: statusStyle.bg }}>
-              <Text className="text-sm font-semibold" style={{ color: statusStyle.text }}>
+            <View
+              className="px-4 py-1 rounded-full"
+              style={{ backgroundColor: statusStyle.bg }}
+            >
+              <Text style={{ color: statusStyle.text, fontWeight: "700" }}>
                 {editingLead.status}
               </Text>
             </View>
           </View>
 
           {/* Contact Info */}
-          <View className="bg-white rounded-2xl shadow-md p-4 space-y-2">
-            <Text className="text-lg font-semibold text-gray-700 mb-2">Contact Info</Text>
+          <View className="bg-white rounded-2xl shadow-md p-4 space-y-3">
+            <Text className="text-lg font-bold text-gray-700 mb-2">Contact Info</Text>
             {renderField("Phone", "phone_number")}
             {renderField("Alternate Phone", "alternate_phone")}
             {renderField("Village", "village")}
@@ -179,15 +192,15 @@ export default function LeadActions({ lead, onClose, onUpdated }: LeadActionsPro
           </View>
 
           {/* Campaign Info */}
-          <View className="bg-white rounded-2xl shadow-md p-4 space-y-2">
-            <Text className="text-lg font-semibold text-gray-700 mb-2">Campaign Info</Text>
-            {renderField("Campaign", "campaign_name", false)}
-            {renderField("Created At", "created_at", false)}
+          <View className="bg-white rounded-2xl shadow-md p-4 space-y-3">
+            <Text className="text-lg font-bold text-gray-700 mb-2">Campaign Info</Text>
+            {renderField("campaign_name", "campaign_name")}
+            {renderField("created_at", "created_at")}
           </View>
 
           {/* Farm Info */}
-          <View className="bg-white rounded-2xl shadow-md p-4 space-y-2">
-            <Text className="text-lg font-semibold text-gray-700 mb-2">Farm Info</Text>
+          <View className="bg-white rounded-2xl shadow-md p-4 space-y-3">
+            <Text className="text-lg font-bold text-gray-700 mb-2">Farm Info</Text>
             {renderField("Farmer Type", "farmer_type")}
             {renderField("Bull Centre", "bull_centre")}
             {renderField("Crop Type", "crop_type")}
@@ -196,76 +209,102 @@ export default function LeadActions({ lead, onClose, onUpdated }: LeadActionsPro
           </View>
 
           {/* Crop Info */}
-          <View className="bg-white rounded-2xl shadow-md p-4 space-y-2">
-            <Text className="text-lg font-semibold text-gray-700 mb-2">Crop Info</Text>
-            {renderField("Castor Bori", "castor_bori")}
-            {renderField("Castor Expected Price", "castor_expected_price")}
-            {renderField("Castor Intent To Sell", "castor_intent_to_sell")}
-            {renderField("Groundnut Bori", "groundnut_bori")}
-            {renderField("Groundnut Expected Price", "groundnut_expected_price")}
-            {renderField("Groundnut Intent To Sell", "groundnut_intent_to_sell")}
+          <View className="bg-white rounded-2xl shadow-md p-4 space-y-3">
+            <Text className="text-lg font-bold text-gray-700 mb-2">Crop Info</Text>
+            {renderField("castor_bori", "castor_bori")}
+            {renderField("castor_expected_price", "castor_expected_price")}
+            {renderField("castor_intent_to_sell", "castor_intent_to_sell")}
+            {renderField("groundnut_bori", "groundnut_bori")}
+            {renderField("groundnut_expected_price", "groundnut_expected_price")}
+            {renderField("groundnut_intent_to_sell", "groundnut_intent_to_sell")}
           </View>
 
           {/* Experience */}
-          <View className="bg-white rounded-2xl shadow-md p-4 space-y-2">
-            <Text className="text-lg font-semibold text-gray-700 mb-2">Experience</Text>
-            {renderField("Previous Experience", "previous_experience")}
-            {renderField("Interested in Warehouse", "interested_in_warehouse")}
-            {renderField("Remarks", "experience_or_remarks")}
+          <View className="bg-white rounded-2xl shadow-md p-4 space-y-3">
+            <Text className="text-lg font-bold text-gray-700 mb-2">Experience</Text>
+            {renderField("previous_experience", "previous_experience")}
+            {renderField("interested_in_warehouse", "interested_in_warehouse")}
+            {renderField("experience_or_remarks", "experience_or_remarks")}
           </View>
-
-          {/* Activity Timeline */}
-          <View className="bg-white rounded-2xl shadow-md p-4 space-y-2">
-            <Text className="text-lg font-semibold text-gray-700 mb-2">Activity Timeline</Text>
-            {activities.length === 0 && <Text className="text-gray-400">No activities yet</Text>}
-            {activities.map((a) => (
-              <View key={a.id} className="border-l-2 border-green-500 pl-3 mb-3">
-                <Text className="font-semibold text-gray-700">{a.activity_type}</Text>
-                <Text className="text-gray-500 text-sm">{a.description}</Text>
-                <Text className="text-gray-400 text-xs">{new Date(a.created_at).toLocaleString()}</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Assign Telecaller (only for NEW leads) */}
-          {editingLead.status === "NEW" && telecallers.length > 0 && (
-            <View className="bg-white rounded-2xl shadow-md p-4 space-y-3">
-              <Text className="text-lg font-semibold text-gray-700 mb-2">Assign Telecaller</Text>
-              {telecallers.map((tc) => (
-                <TouchableOpacity
-                  key={tc.id}
-                  onPress={() => setSelectedTelecallerId(tc.id)}
-                  className={`p-3 rounded-xl border-2 ${
-                    selectedTelecallerId === tc.id ? "bg-green-50 border-green-500" : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  <Text className={`font-medium ${selectedTelecallerId === tc.id ? "text-green-700" : "text-gray-700"}`}>
-                    {tc.name} ({tc.phone})
-                  </Text>
-                </TouchableOpacity>
-              ))}
-
-              <TouchableOpacity
-                onPress={handleAssignTelecaller}
-                className={`bg-green-600 py-4 rounded-xl items-center ${assigning ? "opacity-50" : ""}`}
-                disabled={assigning}
-              >
-                <Text className="text-white font-bold text-lg">{assigning ? "Assigning..." : "Assign Telecaller"}</Text>
-              </TouchableOpacity>
-            </View>
-          )}
 
           {/* Save Button */}
           {isEditing && (
             <TouchableOpacity
               onPress={handleSave}
-              className="bg-green-600 py-4 rounded-xl items-center mt-4"
+              className="bg-green-600 py-4 rounded-xl items-center mt-2 mb-6"
+              disabled={loading}
             >
-              <Text className="text-white font-bold text-lg">Save Changes</Text>
+              {loading ? (
+                <ActivityIndicator color="white" />
+              ) : (
+                <Text className="text-white font-bold text-lg">Save Changes</Text>
+              )}
             </TouchableOpacity>
           )}
         </ScrollView>
       </SafeAreaView>
+
+      {/* Assignment Modal */}
+      <Modal visible={showAssignModal} animationType="slide" transparent={true}>
+        <View className="flex-1 bg-black/50 justify-end">
+          <SafeAreaView className="flex-1 bg-white rounded-t-3xl">
+            {/* Header */}
+            <View className="flex-row items-center justify-between px-4 py-4 border-b border-gray-200">
+              <Text className="text-2xl font-bold text-[#1a4d2e]">Assign Telecaller</Text>
+              <TouchableOpacity onPress={() => setShowAssignModal(false)}>
+                <MaterialIcons name="close" size={28} color="#1a4d2e" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Telecallers List */}
+            {loadingTelecallers ? (
+              <View className="flex-1 items-center justify-center">
+                <ActivityIndicator size="large" color="#1a4d2e" />
+              </View>
+            ) : telecallers.length === 0 ? (
+              <View className="flex-1 items-center justify-center px-4">
+                <MaterialIcons name="person-off" size={48} color="#ccc" />
+                <Text className="text-gray-500 mt-2">No telecallers available</Text>
+              </View>
+            ) : (
+              <FlatList
+                data={telecallers}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+                renderItem={({ item }) => (
+                  <TouchableOpacity
+                    onPress={() => handleAssignTelecaller(item.id)}
+                    disabled={assigningLead}
+                    className="bg-gray-50 rounded-2xl border border-gray-200 p-4 mb-3 flex-row items-center"
+                  >
+                    {/* Avatar */}
+                    <View className="bg-green-100 rounded-full w-12 h-12 flex items-center justify-center mr-4">
+                      <Text className="text-green-700 font-bold text-lg">{item.name[0]}</Text>
+                    </View>
+
+                    {/* Details */}
+                    <View className="flex-1">
+                      <Text className="text-lg font-semibold text-gray-800">{item.name}</Text>
+                      <Text className="text-gray-500 mt-1">Username: {item.username}</Text>
+                      <Text className="text-gray-500 mt-1">Phone: {item.phone}</Text>
+                      {item.email && <Text className="text-gray-500 mt-1">Email: {item.email}</Text>}
+                    </View>
+
+                    {/* Arrow */}
+                    <View className="ml-2">
+                      {assigningLead ? (
+                        <ActivityIndicator color="#0ea633" />
+                      ) : (
+                        <MaterialIcons name="arrow-forward-ios" size={18} color="#0ea633" />
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                )}
+              />
+            )}
+          </SafeAreaView>
+        </View>
+      </Modal>
     </Modal>
   );
 }

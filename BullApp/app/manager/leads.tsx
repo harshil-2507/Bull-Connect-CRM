@@ -45,14 +45,14 @@ export default function Leads() {
 
     if (!res.ok) throw new Error("Failed to fetch leads");
 
-    const data = await res.json();
+    const result = await res.json();
 
-    if (!Array.isArray(data)) {
+    if (!Array.isArray(result.leads)) {
       throw new Error("Invalid data format received");
     }
 
-    setLeads((prev) => (reset ? data : [...prev, ...data]));
-    setTotalLeads(data.length); // optional: for pagination display
+    setLeads((prev) => (reset ? result.leads : [...prev, ...result.leads]));
+setTotalLeads(result.leads.length);
     setPage(pageNum);
   } catch (error: any) {
     Alert.alert("Error", error.message || "Unknown error occurred");
@@ -90,7 +90,7 @@ export default function Leads() {
 
   return (
     <SafeAreaView className="flex-1 px-4 pt-4 bg-gray-50">
-      <Text className="text-3xl font-bold text-[#1a4d2e] mb-4">My Leads</Text>
+      <Text className="text-3xl font-bold text-[#1a4d2e] mb-4">Leads</Text>
 
       {/* Search Bar */}
       <View className="mb-4">

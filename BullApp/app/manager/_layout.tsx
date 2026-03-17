@@ -1,60 +1,40 @@
-import { Tabs } from "expo-router";
+import { Drawer } from "expo-router/drawer";
 import { Feather } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { TouchableOpacity } from "react-native";
+import { useNavigation } from "expo-router";
 
-export default function Layout() {
-  const insets = useSafeAreaInsets();
+function MenuButton() {
+  const navigation = useNavigation();
 
   return (
-    <Tabs
+    <TouchableOpacity
+      onPress={() => (navigation as any).openDrawer()}
+      style={{ marginLeft: 15 }}
+    >
+      <Feather name="menu" size={24} color="#1a4d2e" />
+    </TouchableOpacity>
+  );
+}
+
+export default function Layout() {
+  return (
+    <Drawer
       screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#0ea633",
-        tabBarInactiveTintColor: "#9ca3af",
-        tabBarStyle: {
-          height: 60 + insets.bottom,
-          paddingBottom: insets.bottom,
-          paddingTop: 6,
+        headerShown: true,
+        headerLeft: () => <MenuButton />,
+        headerStyle: {
+          backgroundColor: "#f9faf8",
+        },
+        headerTintColor: "#1a4d2e",
+        headerTitleStyle: {
+          fontWeight: "bold",
+        },
+        drawerActiveTintColor: "#0ea633",
+        drawerInactiveTintColor: "#9ca3af",
+        drawerStyle: {
+          backgroundColor: "#f9faf8",
         },
       }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Home",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="leads"
-        options={{
-          title: "Leads",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="users" size={size} color={color} />
-          ),
-        }}
-      />
-    <Tabs.Screen
-  name="add-lead"
-  options={{
-    title: "Add Lead",
-    tabBarIcon: ({ color, size }) => (
-      <Feather name="plus-circle" size={size} color={color} />
-    ),
-  }}
-/>
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "Profile",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="user" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+    />
   );
 }
