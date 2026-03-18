@@ -15,17 +15,17 @@ import analyticsRoutes from "./routes/analytics.routes"
 
 const app = express();
 
+//cors block
 app.use((req, res, next) => {
-
   const origin = req.headers.origin;
 
-  const allowedOrigins = [
-  "http://localhost:3000",
-  "http://localhost:3001",
-  "https://bull-connect-crm.vercel.app",
-];
-
-  if (origin && allowedOrigins.includes(origin)) {
+  if (
+    origin &&
+    (
+      origin.includes("localhost") ||
+      origin.includes("vercel.app")
+    )
+  ) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
   }
@@ -45,7 +45,6 @@ app.use((req, res, next) => {
     "true"
   );
 
-  //  allow preflight without hitting auth
   if (req.method === "OPTIONS") {
     return res.status(204).end();
   }
