@@ -159,7 +159,6 @@ export default function LeadsPage() {
           leads={leads}
           toggleSort={toggleSort}
           lastRowRef={lastRowRef}
-          filters={filters}
           openVillageFilter={()=>setActiveFilter("village")}
           selected={selected}
           toggleSelect={toggleSelect}
