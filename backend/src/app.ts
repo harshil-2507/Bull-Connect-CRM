@@ -20,9 +20,10 @@ app.use((req, res, next) => {
   const origin = req.headers.origin;
 
   const allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
-  ];
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://bull-connect-crm.vercel.app",
+];
 
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader("Access-Control-Allow-Origin", origin);
