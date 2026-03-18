@@ -19,13 +19,8 @@ const app = express();
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
-  if (
-    origin &&
-    (
-      origin.includes("localhost") ||
-      origin.includes("vercel.app")
-    )
-  ) {
+  //  ALWAYS set CORS (important)
+  if (origin) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
   }
@@ -45,8 +40,9 @@ app.use((req, res, next) => {
     "true"
   );
 
+  //  handle preflight AFTER headers set
   if (req.method === "OPTIONS") {
-    return res.status(204).end();
+    return res.sendStatus(204);
   }
 
   next();
