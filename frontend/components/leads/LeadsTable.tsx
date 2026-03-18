@@ -1,7 +1,7 @@
 "use client"
 
 import { Lead } from "@/types/leads"
-import { useRouter } from "next/navigation"
+// import { useRouter } from "next/navigation"
 
 import StatusBadge from "./StatusBadge"
 import LeadRowMenu from "./LeadRowMenu"
@@ -26,7 +26,7 @@ type Props = {
   leads: Lead[]
   toggleSort: (field: string) => void
   lastRowRef?: (node: HTMLTableRowElement | null) => void
-  filters: any
+  // filters: any
   openVillageFilter: () => void
   selected: string[]
   toggleSelect: (id: string) => void
@@ -37,14 +37,14 @@ export default function LeadsTable({
   leads,
   toggleSort,
   lastRowRef,
-  filters,
+  // filters,
   openVillageFilter,
   selected,
   toggleSelect,
   onPreview
 }: Props) {
 
-  const router = useRouter()
+  // const router = useRouter()
 
   return (
 
