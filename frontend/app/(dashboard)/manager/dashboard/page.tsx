@@ -259,7 +259,7 @@ export default function ManagerDashboardPage() {
                 }
               >
 
-                {statusData?.map((entry: any, index: number) => (
+                {statusData?.map((_: { name: string; value: number }, index: number) => (
                   <Cell key={index} fill={statusColors[index % statusColors.length]} />
                 ))}
 
