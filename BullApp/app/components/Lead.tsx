@@ -1,107 +1,229 @@
-// Lead.tsx
-import React from "react";
-import { View, Text, TouchableOpacity } from "react-native";
-import { MaterialIcons } from "@expo/vector-icons";
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, ScrollView, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
+import { apiRequest } from '../utils/api';
+import { useRouter } from 'expo-router';
 
-interface LeadProps {
-  item: any;
-  onAction?: (lead: any) => void;
-}
+export default function Lead({ id, onBack }: { id: string, onBack?: () => void }) {
+  const router = useRouter();
+  const [lead, setLead] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<any>({});
 
-export default function Lead({ item, onAction }: LeadProps) {
-  const initials = getInitials(item.farmer_name || "NA");
-
-  const statusColors: Record<string, { bg: string; text: string }> = {
-    NEW: { bg: "#e0f2fe", text: "#0284c7" },
-    ASSIGNED: { bg: "#fef3c7", text: "#b45309" },
-    CONTACTED: { bg: "#d1fae5", text: "#065f46" },
-    VISIT_REQUESTED: { bg: "#ede9fe", text: "#7c3aed" },
-    VISIT_ASSIGNED: { bg: "#fee2e2", text: "#b91c1c" },
-    VISIT_COMPLETED: { bg: "#dcfce7", text: "#16a34a" },
-    SOLD: { bg: "#fef9c3", text: "#ca8a04" },
-    DROPPED: { bg: "#f5f5f5", text: "#6b7280" },
+  const fetchLead = async () => {
+    try {
+      setLoading(true);
+      const res = await apiRequest(`/leads/${id}`);
+      const json = await res.json();
+      setLead(json);
+      setEditForm(json);
+    } catch (e) {
+      console.log(e);
+      Alert.alert('Error', 'Failed to fetch lead details');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const statusStyle = statusColors[item.status] || { bg: "#f5f5f5", text: "#374151" };
+  useEffect(() => {
+    if (id) fetchLead();
+  }, [id]);
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      const res = await apiRequest(`/leads/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) throw new Error('Failed to update');
+      const json = await res.json();
+      setLead(json.lead || editForm);
+      setIsEditing(false);
+      Alert.alert('Success', 'Lead updated successfully');
+    } catch (error) {
+      console.log(error);
+      Alert.alert('Error', 'Failed to update lead');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <View className="flex-1 items-center justify-center p-8"><ActivityIndicator size="large" color="#2563eb" /></View>;
+  if (!lead) return <View className="flex-1 items-center justify-center"><Text>Lead not found</Text></View>;
+
+  const getInitials = (name: string) => {
+    if (!name) return "?";
+    const parts = name.split(" ");
+    return parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0][0];
+  };
+
+  const renderField = (label: string, fieldName: string, multiline: boolean = false) => {
+    const val = editForm[fieldName];
+    const displayVal = val === null || val === undefined ? '' : String(val);
+
+    return (
+      <View className="mb-4" key={fieldName}>
+        <Text className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">{label}</Text>
+        {isEditing ? (
+           <TextInput
+            className="bg-gray-100 rounded-lg px-3 py-2 text-gray-900 border border-gray-200"
+            value={displayVal}
+            onChangeText={(text) => setEditForm((prev: any) => ({ ...prev, [fieldName]: text }))}
+            placeholder={`Enter ${label}`}
+            multiline={multiline}
+            style={multiline ? { minHeight: 80, textAlignVertical: 'top' } : {}}
+          />
+        ) : (
+          <Text className="text-base font-medium text-gray-900">{displayVal || '—'}</Text>
+        )}
+      </View>
+    );
+  };
 
   return (
-    <View className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex-row items-center justify-between mb-3">
-      <View className="flex-row items-center gap-4 flex-1">
-        {/* Avatar */}
-        <View className="h-12 w-12 rounded-full bg-green-50 border border-green-100 items-center justify-center">
-          <Text className="text-green-700 font-bold text-lg">{initials}</Text>
+    <View className="flex-1 bg-gray-50">
+      {/* Header */}
+      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+        <View className="flex-row items-center gap-2">
+          <TouchableOpacity onPress={() => { if (onBack) onBack(); else router.back(); }} className="p-2">
+            <MaterialIcons name="arrow-back" size={24} color="#111827" />
+          </TouchableOpacity>
+          <Text className="text-xl font-bold text-gray-900">Lead Details</Text>
         </View>
-
-        {/* Info */}
-        <View className="flex-1">
-          {/* Name + Status */}
-          <View className="flex-row justify-between">
-            <Text className="font-bold text-slate-800 text-base flex-1">
-              {item.farmer_name || "Unknown"}
-            </Text>
-            <Text
-              style={{ backgroundColor: statusStyle.bg, color: statusStyle.text }}
-              className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-            >
-              {item.status}
-            </Text>
-          </View>
-
-          {/* Phone */}
-          <View className="flex-row items-center gap-1 mt-1">
-            <MaterialIcons name="phone" size={14} color="#64748b" />
-            <Text className="text-xs text-slate-600">{item.phone_number || "N/A"}</Text>
-          </View>
-
-          {/* Crop Type */}
-          {item.crop_type && (
-            <View className="flex-row items-center gap-1 mt-1">
-              <MaterialIcons name="eco" size={14} color="#64748b" />
-              <Text className="text-xs text-slate-600">{item.crop_type}</Text>
-            </View>
+        <View className="flex-row items-center gap-2">
+          {isEditing ? (
+            <TouchableOpacity onPress={handleSave} disabled={saving} className="bg-blue-600 px-4 py-1.5 rounded-full">
+              {saving ? <ActivityIndicator size="small" color="#fff" /> : <Text className="text-white font-bold">Save</Text>}
+            </TouchableOpacity>
+          ) : (
+             <TouchableOpacity onPress={() => setIsEditing(true)} className="p-2 bg-gray-100 rounded-full">
+              <MaterialIcons name="edit" size={20} color="#374151" />
+            </TouchableOpacity>
           )}
-
-          {/* Campaign */}
-          {item.campaign_name && (
-            <View className="flex-row items-center gap-1 mt-1">
-              <MaterialIcons name="grass" size={14} color="#64748b" />
-              <Text className="text-xs text-slate-600">{item.campaign_name}</Text>
-            </View>
-          )}
-
-          {/* Location */}
-          <View className="flex-row items-center gap-1 mt-1">
-            <MaterialIcons name="location-on" size={14} color="#94a3b8" />
-            <Text className="text-xs text-slate-500">
-              {[item.village, item.taluka, item.district, item.state]
-                .filter(Boolean)
-                .join(", ")}
-            </Text>
-          </View>
-
-          {/* Created */}
-          <View className="flex-row items-center gap-1 mt-1.5">
-            <MaterialIcons name="history" size={12} color="#94a3b8" />
-            <Text className="text-[11px] text-slate-400">
-              Added: {new Date(item.created_at).toLocaleDateString()}
-            </Text>
-          </View>
         </View>
       </View>
 
-      {/* Action Button */}
-      <TouchableOpacity
-        onPress={() => onAction?.(item)}
-        className="ml-3 h-10 w-10 rounded-full bg-[#13ec49] items-center justify-center shadow-lg"
-      >
-        <MaterialIcons name="arrow-forward-ios" size={18} color="white" />
-      </TouchableOpacity>
+      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+         {/* Profile Card */}
+        <View className="items-center bg-white px-6 pt-6 pb-4 border-b border-gray-100">
+           <View className="h-24 w-24 bg-blue-100 rounded-full items-center justify-center border-4 border-white shadow-sm mb-3">
+             <Text className="text-3xl font-bold text-blue-600">{getInitials(editForm.farmer_name)}</Text>
+          </View>
+          <Text className="text-2xl font-bold text-gray-900 mb-1 text-center">{editForm.farmer_name || 'N/A'}</Text>
+           <Text className="text-sm font-medium text-gray-500 mb-3 text-center">
+            {editForm.village || 'Unknown Village'} @ {editForm.taluka || 'Unknown Taluka'}
+           </Text>
+          <View className="flex-row items-center gap-2">
+            <View className="bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+              <Text className="text-blue-700 text-xs font-bold uppercase tracking-wider">{editForm.status || 'NEW'}</Text>
+            </View>
+            <View className="bg-gray-100 px-3 py-1 rounded-full border border-gray-200">
+              <Text className="text-gray-700 text-xs font-bold uppercase tracking-wider">PRIORITY: {editForm.priority || 0}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Info Sections */}
+        <View className="px-4 mt-6">
+          {/* Card: Basic Info */}
+          <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
+            <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
+              <MaterialIcons name="info" size={20} color="#2563eb" />
+              <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Basic Info</Text>
+            </View>
+            {renderField("Farmer Name", "farmer_name")}
+            {renderField("Phone", "phone_number")}
+            {renderField("Alternate Phone", "alternate_phone")}
+            {renderField("Village", "village")}
+            {renderField("Taluka", "taluka")}
+            {renderField("District", "district")}
+            {renderField("State", "state")}
+            {renderField("Geo State", "geo_state")}
+          </View>
+
+          {/* Card: Farming Details */}
+          <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
+             <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
+              <MaterialIcons name="eco" size={20} color="#16a34a" />
+              <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Farming Details</Text>
+             </View>
+             {renderField("Farmer Type", "farmer_type")}
+             {renderField("Total Land (Bigha)", "total_land_bigha")}
+             {renderField("Crop Type", "crop_type")}
+             {renderField("Acreage", "acreage")}
+             {renderField("Bull Centre", "bull_centre")}
+             {renderField("Farmer ID", "farmer_id")}
+          </View>
+
+          {/* Card: Castor Crop */}
+           <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
+             <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
+              <MaterialIcons name="spa" size={20} color="#b45309" />
+              <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Castor Crop Details</Text>
+             </View>
+             {renderField("Castor Bori", "castor_bori")}
+             {renderField("Castor Expected Price", "castor_expected_price")}
+             {renderField("Castor Offered Price", "castor_offered_price")}
+             {renderField("Castor Expected Harvest Time", "castor_expected_harvest_time")}
+             {renderField("Castor Vavetar Bigha", "castor_vavetar_bigha")}
+             {renderField("Castor Deal Status", "castor_deal_status")}
+             {renderField("Castor Intent To Sell", "castor_intent_to_sell")}
+          </View>
+
+          {/* Card: Groundnut Crop */}
+           <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
+              <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
+              <MaterialIcons name="spa" size={20} color="#b45309" />
+               <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Groundnut Crop Details</Text>
+             </View>
+             {renderField("Groundnut Bori", "groundnut_bori")}
+             {renderField("Groundnut Expected Price", "groundnut_expected_price")}
+             {renderField("Groundnut Offered Price", "groundnut_offered_price")}
+             {renderField("Groundnut Expected Harvest Time", "groundnut_expected_harvest_time")}
+             {renderField("Groundnut Vavetar Bigha", "groundnut_vavetar_bigha")}
+             {renderField("Groundnut Intent To Sell", "groundnut_intent_to_sell")}
+          </View>
+
+          {/* Card: Additional Info */}
+           <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
+             <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
+               <MaterialIcons name="post-add" size={20} color="#9333ea" />
+               <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Additional Information</Text>
+             </View>
+             {renderField("Interested in Warehouse", "interested_in_warehouse")}
+             {renderField("Previous Experience", "previous_experience")}
+             {renderField("Sold Before Bull", "sold_before_bull")}
+             {renderField("Sold After Bull", "sold_after_bull")}
+             {renderField("Experience / Remarks", "experience_or_remarks", true)}
+             {renderField("Source", "source")}
+             {renderField("Product Type", "product_type")}
+          </View>
+
+          {/* Card: Campaign & Status */}
+          <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
+             <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
+               <MaterialIcons name="campaign" size={20} color="#db2777" />
+               <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Campaign & Status Info</Text>
+             </View>
+             {renderField("Campaign ID", "campaign_id")}
+             {renderField("Status", "status")}
+             {renderField("Assigned To", "assigned_to")}
+             {renderField("Priority", "priority")}
+             {renderField("Attempt Count", "attempt_count")}
+             {renderField("Last Contacted At", "last_contacted_at")}
+             {renderField("Next Callback At", "next_callback_at")}
+             {renderField("Last Call Duration", "last_call_duration")}
+             {renderField("Drop Reason", "drop_reason")}
+             {renderField("Drop Notes", "drop_notes", true)}
+           </View>
+        </View>
+      </ScrollView>
     </View>
   );
-}
-
-function getInitials(name: string) {
-  if (!name) return "";
-  const parts = name.split(" ");
-  return parts.length > 1 ? parts[0][0] + parts[1][0] : parts[0][0];
 }
