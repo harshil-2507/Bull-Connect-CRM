@@ -1,14 +1,10 @@
 import { Request, Response } from "express"
-import db from "../db/connectioon"
+import { pool } from "../config/db"
 
-export const getLeadFunnel = async (
-  req: Request,
-  res: Response
-) => {
-
+export const getLeadFunnel = async (req: Request, res: Response) => {
   try {
 
-    const result = await db.query(`
+    const result = await pool.query(`
       SELECT status, COUNT(*) as count
       FROM leads
       GROUP BY status
@@ -20,27 +16,22 @@ export const getLeadFunnel = async (
       data: result.rows
     })
 
-  } catch (error) {
+  } catch (error: any) {
 
-    console.error(error)
+    console.error("FUNNEL ERROR:", error)
 
     res.status(500).json({
       success: false,
-      message: "Failed to fetch lead funnel"
+      message: error.message
     })
 
   }
-
 }
 
-export const getLeadStatusDistribution = async (
-  req: Request,
-  res: Response
-) => {
-
+export const getLeadStatusDistribution = async (req: Request, res: Response) => {
   try {
 
-    const result = await db.query(`
+    const result = await pool.query(`
       SELECT status, COUNT(*) as count
       FROM leads
       GROUP BY status
@@ -51,25 +42,22 @@ export const getLeadStatusDistribution = async (
       data: result.rows
     })
 
-  } catch (error) {
+  } catch (error: any) {
+
+    console.error("STATUS ERROR:", error)
 
     res.status(500).json({
       success: false,
-      message: "Failed to fetch lead status distribution"
+      message: error.message
     })
 
   }
-
 }
 
-export const getLeadTrend = async (
-  req: Request,
-  res: Response
-) => {
-
+export const getLeadTrend = async (req: Request, res: Response) => {
   try {
 
-    const result = await db.query(`
+    const result = await pool.query(`
       SELECT
         DATE(created_at) as day,
         COUNT(*) as leads
@@ -84,13 +72,14 @@ export const getLeadTrend = async (
       data: result.rows
     })
 
-  } catch (error) {
+  } catch (error: any) {
+
+    console.error("TREND ERROR:", error)
 
     res.status(500).json({
       success: false,
-      message: "Failed to fetch lead trend"
+      message: error.message
     })
 
   }
-
 }

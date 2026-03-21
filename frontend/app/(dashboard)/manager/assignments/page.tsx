@@ -7,15 +7,17 @@ export default function AssignmentsPage() {
 
   return (
 
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50 text-gray-900 p-6 space-y-6">
 
+      {/* HEADER */}
       <div className="flex items-center justify-between">
 
         <div>
           <h1 className="text-2xl font-semibold">
             Assignments
           </h1>
-          <p className="text-muted-foreground">
+
+          <p className="text-gray-500">
             Manage lead assignments
           </p>
         </div>
@@ -24,6 +26,7 @@ export default function AssignmentsPage() {
 
       </div>
 
+      {/* TABLE */}
       <AssignmentsTable />
 
     </div>

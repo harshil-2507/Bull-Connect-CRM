@@ -11,15 +11,22 @@ import campaignRoutes from "./routes/campaign.routes";
 import adminDashboardRoutes from "./routes/adminDashboard.routes";
 import searchRoutes from "./routes/search.routes";
 import { env } from "./config/env";
-import analyticsRoutes from "./routes/analytics.routes"
+import analyticsRoutes from "./routes/analytics.routes";
 
 const app = express();
 
-//cors block
+/*  DISABLE CACHING COMPLETELY */
+app.set("etag", false);
+
+app.use((req, res, next) => {
+  res.setHeader("Cache-Control", "no-store");
+  next();
+});
+
+/* CORS */
 app.use((req, res, next) => {
   const origin = req.headers.origin;
 
-  //  ALWAYS set CORS (important)
   if (origin) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Vary", "Origin");
@@ -40,7 +47,6 @@ app.use((req, res, next) => {
     "true"
   );
 
-  //  handle preflight AFTER headers set
   if (req.method === "OPTIONS") {
     return res.sendStatus(204);
   }
@@ -58,23 +64,19 @@ app.post("/login", login);
 
 app.use(auth);
 
-// TEMP health check
 app.post("/ping", (_req, res) => {
   res.json({ ok: true });
 });
 
 app.use("/search", searchRoutes);
-
 app.use("/leads", leadRoutes);
 app.use("/admin", adminRoutes);
 app.use("/manager", managerRoutes);
 app.use("/telecaller", telecallerRoutes);
 app.use("/field-manager", fieldManagerRoutes);
 app.use("/field-exec", fieldExecRoutes);
-
 app.use("/campaigns", campaignRoutes);
 app.use("/admin/dashboard", adminDashboardRoutes);
-
 app.use("/analytics", analyticsRoutes);
 
 export default app;

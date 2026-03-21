@@ -1,32 +1,73 @@
+// src/services/telecaller.service.ts
+
 import { pool } from "../config/db";
 
 export class TelecallerService {
-  /**
-   * Get Telecaller Work Queue (Phase 1 - FIFO)
-   */
-  async getWorkQueue(telecallerId: String) {
+
+  async getWorkQueue(userId: string) {
+
     const res = await pool.query(
       `
-      SELECT 
-        l.id,
-        l.farmer_name,
-        l.phone_number,
-        l.village,
-        l.taluka,
-        l.district,
-        l.state,
-        l.status,
-        l.created_at,
-        t.assigned_at
-      FROM assignments t
-      JOIN leads l ON l.id = t.lead_id
-      WHERE 
-        t.user_id = $1
-      ORDER BY t.assigned_at ASC
+      SELECT l.*
+      FROM leads l
+      JOIN assignments a ON a.lead_id = l.id
+      WHERE a.user_id = $1
+        AND a.is_active = true
+        AND l.status IN ('ASSIGNED', 'CONTACTED', 'INTERESTED', 'WAITING')
+      ORDER BY l.updated_at DESC
+      LIMIT 20
       `,
-      [telecallerId]
+      [userId]
     );
 
-    return res.rows;
+    return res.rows || [];
+  }
+
+  async getMyStats(userId: string) {
+
+    const res = await pool.query(
+      `
+      SELECT
+        COUNT(*) AS total_calls,
+
+        COUNT(*) FILTER (WHERE disposition = 'INTERESTED') AS interested,
+        COUNT(*) FILTER (WHERE disposition = 'NOT_INTERESTED') AS not_interested,
+        COUNT(*) FILTER (WHERE disposition = 'CALLBACK') AS callback,
+        COUNT(*) FILTER (WHERE disposition = 'NO_ANSWER') AS no_answer
+
+      FROM call_logs
+      WHERE user_id = $1
+      `,
+      [userId]
+    );
+
+    const row = res.rows[0] || {};
+
+    return {
+      callsMade: Number(row.total_calls) || 0,
+      contacted: Number(row.total_calls) || 0,
+      interested: Number(row.interested) || 0,
+      notInterested: Number(row.not_interested) || 0,
+      callback: Number(row.callback) || 0,
+      noAnswer: Number(row.no_answer) || 0,
+      points: (Number(row.interested) || 0) * 10,
+    };
+  }
+
+  async getLeaderboard() {
+
+    const res = await pool.query(
+      `
+      SELECT
+        user_id,
+        COUNT(*) FILTER (WHERE disposition = 'INTERESTED') * 10 AS points
+      FROM call_logs
+      GROUP BY user_id
+      ORDER BY points DESC
+      LIMIT 10
+      `
+    );
+
+    return res.rows || [];
   }
 }

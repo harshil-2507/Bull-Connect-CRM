@@ -29,32 +29,57 @@ export default function TelecallerSelector({
   }
 
   return (
+
     <div className="space-y-2">
-      <label className="text-sm font-medium">
+
+      {/* LABEL */}
+      <label className="text-sm font-medium text-gray-700">
         Select Telecallers
       </label>
 
-      <div className="border rounded-lg p-2 max-h-40 overflow-y-auto">
+      {/* LIST BOX */}
+      <div className="border rounded-lg p-2 max-h-40 overflow-y-auto bg-white text-gray-900 shadow-sm">
+
+        {telecallers.length === 0 && (
+          <div className="text-sm text-gray-500 p-2">
+            No telecallers found
+          </div>
+        )}
 
         {telecallers.map((t) => (
 
           <div
             key={t.id}
-            className="flex items-center gap-2 py-1"
+            onClick={() => toggle(t.id)}
+            className={`flex items-center gap-3 py-2 px-2 rounded-md cursor-pointer transition 
+              ${selected.includes(t.id)
+                ? "bg-blue-50"
+                : "hover:bg-gray-100"
+              }`}
           >
+
+            {/* CHECKBOX */}
             <Checkbox
               checked={selected.includes(t.id)}
               onCheckedChange={() => toggle(t.id)}
             />
 
-            <span className="text-sm">
+            {/* NAME */}
+            <span className="text-sm font-medium text-gray-900">
               {t.name}
             </span>
+
           </div>
 
         ))}
 
       </div>
+
+      {/* FOOTER INFO */}
+      <div className="text-xs text-gray-500">
+        {selected.length} selected
+      </div>
+
     </div>
   )
 }

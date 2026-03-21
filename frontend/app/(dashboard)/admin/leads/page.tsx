@@ -140,7 +140,7 @@ export default function LeadsPage() {
           Leads
         </h1>
 
-        <Button onClick={()=>router.push("/leads/new")}>
+        <Button onClick={()=>router.push("/admin/leads/new")}>
           Create Lead
         </Button>
 

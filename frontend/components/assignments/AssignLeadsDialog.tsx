@@ -30,20 +30,16 @@ export default function AssignLeadsDialog() {
   const [distribution, setDistribution] = useState<Record<string, number>>({})
   const [selectedTelecallers, setSelectedTelecallers] = useState<string[]>([])
 
-  // ✅ FIX: fetch telecallers FIRST
   const { data: telecallers = [] } = useTelecallers()
   const { data: leads = [] } = useUnassignedLeads(campaignId)
 
   const assignMutation = useAssignLeadsBulk()
 
-  // ✅ FILTER SELECTED TELECALLERS
   const selectedTelecallerObjects = telecallers.filter(t =>
     selectedTelecallers.includes(t.id)
   )
 
-  // ===============================
   // AUTO DISTRIBUTION
-  // ===============================
   const autoDistribution = useMemo(() => {
 
     if (!selectedTelecallerObjects.length || !leads.length) return {}
@@ -59,13 +55,11 @@ export default function AssignLeadsDialog() {
 
     return dist
 
-  }, [selectedTelecallerObjects, leads]) // ✅ FIX dependency
+  }, [selectedTelecallerObjects, leads])
 
-  // ===============================
   const finalDistribution =
     mode === "AUTO" ? autoDistribution : distribution
 
-  // ===============================
   const handleAssign = async () => {
 
     if (!leads.length || !selectedTelecallerObjects.length) return
@@ -96,7 +90,6 @@ export default function AssignLeadsDialog() {
     setOpen(false)
   }
 
-  // ===============================
   const totalManualAssigned = Object.values(distribution)
     .reduce((a, b) => a + b, 0)
 
@@ -114,10 +107,13 @@ export default function AssignLeadsDialog() {
         <Button>Assign Leads</Button>
       </DialogTrigger>
 
-      <DialogContent className="bg-white max-w-xl">
+      {/* ✅ FIXED DIALOG */}
+      <DialogContent className="bg-white text-gray-900 max-w-xl shadow-xl">
 
         <DialogHeader>
-          <DialogTitle>Assign Leads</DialogTitle>
+          <DialogTitle className="text-lg font-semibold text-gray-900">
+            Assign Leads
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -128,7 +124,7 @@ export default function AssignLeadsDialog() {
             onChange={setCampaignId}
           />
 
-          {/* ✅ Telecaller Selector */}
+          {/* Telecaller Selector */}
           <TelecallerSelector
             telecallers={telecallers}
             selected={selectedTelecallers}
@@ -136,11 +132,11 @@ export default function AssignLeadsDialog() {
           />
 
           {/* Stats */}
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-600">
             {leads.length} unassigned leads
           </div>
 
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-gray-600">
             {selectedTelecallerObjects.length} selected telecallers
           </div>
 

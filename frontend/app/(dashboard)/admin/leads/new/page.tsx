@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { api } from "@/lib/api"   // ✅ USE AXIOS INSTANCE
 
 export default function CreateLeadPage() {
 
@@ -29,7 +30,6 @@ export default function CreateLeadPage() {
   const [loading, setLoading] = useState(false)
 
   const handleChange = (e: any) => {
-
     const { name, value, type, checked } = e.target
 
     setForm({
@@ -65,28 +65,14 @@ export default function CreateLeadPage() {
 
     try {
 
-      const token = localStorage.getItem("token")
+      // ✅ FIXED ENDPOINT + USING API INSTANCE
+      await api.post("/leads", payload)
 
-      const res = await fetch("http://localhost:3000/leads", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
-        body: JSON.stringify(payload)
-      })
-
-      if (!res.ok) {
-        const text = await res.text()
-        console.error("Backend error:", text)
-        throw new Error("Failed to create lead")
-      }
-
-      router.push("/leads")
+      router.push("/admin/leads")
 
     } catch (err) {
 
-      console.error(err)
+      console.error("Create lead failed:", err)
 
     } finally {
 

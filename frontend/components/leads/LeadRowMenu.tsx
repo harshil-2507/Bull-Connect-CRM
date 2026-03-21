@@ -53,7 +53,7 @@ export default function LeadRowMenu({
         <DropdownMenuItem
           onClick={(e) => {
             e.stopPropagation()
-            router.push(`/leads/${leadId}`)
+            router.push(`/admin/leads/${leadId}`)
           }}
         >
           <Eye size={16} className="mr-2" />
@@ -63,7 +63,7 @@ export default function LeadRowMenu({
         <DropdownMenuItem
           onClick={(e) => {
             e.stopPropagation()
-            router.push(`/leads/${leadId}/edit`)
+            router.push(`/admin/leads/${leadId}/edit`)
           }}
         >
           <Edit size={16} className="mr-2" />

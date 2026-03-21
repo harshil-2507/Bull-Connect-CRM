@@ -10,33 +10,57 @@ export default function AssignmentsTable() {
 
   return (
 
-    <div className="border rounded-lg">
+    <div className="border rounded-lg bg-white text-black">
 
       <table className="w-full text-sm">
 
-        <thead className="bg-gray-100">
+        {/* HEADER */}
+        <thead className="bg-gray-100 text-black">
           <tr>
-            <th className="p-2 text-left">Lead</th>
-            <th className="p-2 text-left">Telecaller</th>
-            <th className="p-2 text-left">Assigned At</th>
+            <th className="p-3 text-left font-medium">Lead</th>
+            <th className="p-3 text-left font-medium">Telecaller</th>
+            <th className="p-3 text-left font-medium">Assigned At</th>
           </tr>
         </thead>
 
+        {/* BODY */}
         <tbody>
 
-          {assignments.map((a) => (
-
-            <tr key={a.id} className="border-t">
-
-              <td className="p-2">{a.lead_id}</td>
-              <td className="p-2">{a.telecaller_name}</td>
-              <td className="p-2">
-                {new Date(a.assigned_at).toLocaleString()}
+          {assignments.length === 0 ? (
+            <tr>
+              <td
+                colSpan={3}
+                className="p-6 text-center text-gray-500"
+              >
+                No assignments found
               </td>
-
             </tr>
+          ) : (
 
-          ))}
+            assignments.map((a) => (
+
+              <tr
+                key={a.id}
+                className="border-t hover:bg-gray-50 transition"
+              >
+
+                <td className="p-3">
+                  {a.lead_id}
+                </td>
+
+                <td className="p-3">
+                  {a.telecaller_name}
+                </td>
+
+                <td className="p-3">
+                  {new Date(a.assigned_at).toLocaleString()}
+                </td>
+
+              </tr>
+
+            ))
+
+          )}
 
         </tbody>
 

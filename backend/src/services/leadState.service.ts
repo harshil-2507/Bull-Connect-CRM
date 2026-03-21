@@ -120,7 +120,95 @@ export class LeadStateService {
       return res.rows[0];
     });
   }
+  // ADD THIS INSIDE LeadStateService
 
+  async handleTelecallerCall(input: {
+    leadId: string;
+    userId: string;
+    disposition: "NOT_INTERESTED" | "INTERESTED" | "FOLLOW_UP" | "CONTACTED";
+    notes?: string;
+    cropType?: string;
+    acreage?: number;
+    nextCallbackAt?: Date;
+  }) {
+    return withTransaction(async (tx) => {
+
+      const lead = await this.leadRepo.lock(tx, input.leadId);
+
+      if (lead.assigned_to !== input.userId) {
+        throw new Error("Lead not assigned to you");
+      }
+
+      // ================= CONTACTED =================
+      if (input.disposition === "CONTACTED") {
+        await this.leadRepo.updateState(tx, input.leadId, "CONTACTED");
+        return { status: "CONTACTED" };
+      }
+
+      // ================= FOLLOW UP =================
+      if (input.disposition === "FOLLOW_UP") {
+        await tx.query(
+          `UPDATE leads 
+         SET next_callback_at = $1,
+             updated_at = NOW()
+         WHERE id = $2`,
+          [input.nextCallbackAt || null, input.leadId]
+        );
+
+        await this.leadRepo.updateState(tx, input.leadId, "CONTACTED");
+
+        return { status: "CONTACTED" };
+      }
+
+      // ================= NOT INTERESTED =================
+      if (input.disposition === "NOT_INTERESTED") {
+        await this.leadRepo.updateState(tx, input.leadId, "CONTACTED");
+
+        await this.actionRepo.drop(
+          tx,
+          input.leadId,
+          input.userId,
+          input.notes || "No reason"
+        );
+
+        await this.leadRepo.updateState(tx, input.leadId, "DROPPED");
+
+        return { status: "DROPPED" };
+      }
+
+      // ================= INTERESTED =================
+      if (input.disposition === "INTERESTED") {
+
+        if (!input.cropType || !input.acreage) {
+          throw new Error("INTERESTED requires cropType & acreage");
+        }
+
+        const deal = await this.dealRepo.create(tx, {
+          leadId: input.leadId,
+          cropType: input.cropType,
+          estimatedQuantity: input.acreage,
+          createdBy: input.userId,
+        });
+
+        await this.dealRepo.updateState(tx, deal.id, "CONTACTED");
+
+        await this.leadRepo.updateState(tx, input.leadId, "CONTACTED");
+
+        await this.actionRepo.requestFieldVisit(
+          tx,
+          input.leadId,
+          input.userId,
+          input.notes || null
+        );
+
+        await this.leadRepo.updateState(tx, input.leadId, "VISIT_REQUESTED");
+
+        return { status: "VISIT_REQUESTED" };
+      }
+
+      throw new Error("Invalid disposition");
+    });
+  }
   // ============================================================
   //  CALL LOGIC (UNCHANGED BUT CLEANED)
   // ============================================================
@@ -349,13 +437,13 @@ export class LeadStateService {
 
 
   // ============================================================
-// 👨‍🌾 FIELD EXEC ASSIGNMENTS
-// ============================================================
+  // 👨‍🌾 FIELD EXEC ASSIGNMENTS
+  // ============================================================
 
-async getAssignmentsForExec(fieldExecId: string) {
-  return withTransaction(async (tx) => {
-    const res = await tx.query(
-      `
+  async getAssignmentsForExec(fieldExecId: string) {
+    return withTransaction(async (tx) => {
+      const res = await tx.query(
+        `
       SELECT a.id,
              a.lead_id,
              a.user_id,
@@ -366,17 +454,17 @@ async getAssignmentsForExec(fieldExecId: string) {
         AND a.is_active = true
       ORDER BY a.assigned_at DESC
       `,
-      [fieldExecId]
-    );
+        [fieldExecId]
+      );
 
-    return res.rows;
-  });
-}
+      return res.rows;
+    });
+  }
 
-async getAssignmentByIdForExec(id: string, fieldExecId: string) {
-  return withTransaction(async (tx) => {
-    const res = await tx.query(
-      `
+  async getAssignmentByIdForExec(id: string, fieldExecId: string) {
+    return withTransaction(async (tx) => {
+      const res = await tx.query(
+        `
       SELECT a.id,
              a.lead_id,
              a.user_id,
@@ -386,14 +474,14 @@ async getAssignmentByIdForExec(id: string, fieldExecId: string) {
       WHERE a.id = $1
         AND a.user_id = $2
       `,
-      [id, fieldExecId]
-    );
+        [id, fieldExecId]
+      );
 
-    if (!res.rowCount) {
-      throw new Error("Assignment not found or not assigned to you");
-    }
+      if (!res.rowCount) {
+        throw new Error("Assignment not found or not assigned to you");
+      }
 
-    return res.rows[0];
-  });
-}
+      return res.rows[0];
+    });
+  }
 }

@@ -1,97 +1,113 @@
 // src/controllers/telecaller.controller.ts
+
 import { Request, Response } from "express";
 import { TelecallerService } from "../services/telecaller.service";
-import { recordCallLog, CallLogInput } from "../services/callLog.service";
+import { recordCallOnly } from "../services/callLog.service";
 import { LeadStateService } from "../services/leadState.service";
 
 const telecallerService = new TelecallerService();
-const service = new LeadStateService();
-
+const leadStateService = new LeadStateService();
 
 /**
- * TELECALLER logs a call outcome
+ * TELECALLER logs call + updates state
  */
 export async function logCall(req: Request, res: Response) {
-  const {
-    leadId,
-    disposition,
-    notes,
-    nextCallbackAt,
-    durationSeconds,
-    cropType,
-    acreage,
-    dropReason,
-    dropNotes,
-  } = req.body;
-
   try {
-    // No early required-dropReason check here; service will fill a sensible default.
+    const {
+      leadId,
+      disposition,
+      notes,
+      durationSeconds,
+      cropType,
+      acreage,
+      nextCallbackAt
+    } = req.body;
 
-    const callInput: CallLogInput = {
+    // Step 1: log call (fixed mapping inside service)
+    await recordCallOnly({
       leadId,
       userId: req.user.id,
       disposition,
       notes,
-      nextCallbackAt: nextCallbackAt ? new Date(nextCallbackAt) : undefined,
-      durationSeconds,
+      durationSeconds
+    });
+
+    // Step 2: update lead state
+    const result = await leadStateService.handleTelecallerCall({
+      leadId,
+      userId: req.user.id,
+      disposition,
+      notes,
       cropType,
       acreage,
-      dropReason
-    };
-
-    const result = await recordCallLog(callInput);
+      nextCallbackAt: nextCallbackAt ? new Date(nextCallbackAt) : undefined
+    });
 
     res.status(200).json({
-      message: "Call logged successfully",
-      callLogId: result.callLogId,
-      newStatus: result.newStatus,
-      attemptCount: result.attemptCount,
+      message: "Call processed successfully",
+      newStatus: result.status
     });
+
   } catch (err: any) {
-    console.error('Error in telecaller.logCall:', err);
-    const msg = err.message || '';
-    // treat expected validation or ownership errors as 400
-    if (
-      msg.includes('Invalid') ||
-      msg.includes('required') ||
-      msg.includes('Lead is not assigned') ||
-      msg.includes('Lead cannot be called')
-    ) {
-      return res.status(400).json({ error: msg });
-    }
-    // otherwise it's unexpected
-    return res.status(500).json({ error: 'Internal Server Error' });
+    console.error("logCall error:", err);
+    res.status(400).json({ error: err.message });
   }
 }
 
-
 /**
- * TELECALLER fetches the next lead assigned to them
+ * NEXT LEAD
  */
 export async function getNextLead(req: Request, res: Response) {
   try {
-    const lead = await service.getNextLeadForTelecaller(req.user.id);
+    const lead = await leadStateService.getNextLeadForTelecaller(req.user.id);
 
     if (!lead) {
       return res.status(200).json({ message: "No leads available" });
     }
 
     res.status(200).json({ lead });
+
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
 }
 
-//work queue for telecaller - list of all leads assigned to them, with current status and last disposition
-//phase 1 -> strict queue(no ai or priority sorting) - leads are returned in order of assignment, but telecaller can choose any lead from the queue
+/**
+ * WORK QUEUE
+ */
 export async function getWorkQueue(req: Request, res: Response) {
   try {
-    const telecallerId = req.user.id;
-    const queue = await telecallerService.getWorkQueue(telecallerId);
+    const queue = await telecallerService.getWorkQueue(req.user.id);
+
     res.status(200).json({
       total: queue.length,
       data: queue,
     });
+
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+/**
+ * STATS
+ */
+export async function getMyStats(req: Request, res: Response) {
+  try {
+    const stats = await telecallerService.getMyStats(req.user.id);
+    res.status(200).json(stats);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+}
+
+/**
+ * LEADERBOARD
+ */
+export async function getLeaderboard(req: Request, res: Response) {
+  try {
+    const data = await telecallerService.getLeaderboard();
+    res.status(200).json(data);
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }

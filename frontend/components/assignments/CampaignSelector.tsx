@@ -20,18 +20,28 @@ export default function CampaignSelector({ value, onChange }: Props) {
 
   return (
     <div className="space-y-2">
-      <label className="text-sm font-medium">
+
+      <label className="text-sm font-medium text-gray-700">
         Select Campaign
       </label>
 
       <Select value={value} onValueChange={onChange}>
-        <SelectTrigger>
+
+        {/* ✅ FIX 1: proper styling */}
+        <SelectTrigger className="bg-white text-gray-900 border">
           <SelectValue placeholder="Choose campaign" />
         </SelectTrigger>
 
-        <SelectContent>
+        {/* ✅ FIX 2: z-index + bg + shadow */}
+        <SelectContent
+          className="z-[9999] bg-white text-gray-900 shadow-lg border"
+          position="popper"
+        >
+
           {isLoading && (
-            <div className="p-2 text-sm">Loading...</div>
+            <div className="p-2 text-sm text-gray-500">
+              Loading...
+            </div>
           )}
 
           {campaigns?.map((c) => (
@@ -39,8 +49,11 @@ export default function CampaignSelector({ value, onChange }: Props) {
               {c.name}
             </SelectItem>
           ))}
+
         </SelectContent>
+
       </Select>
+
     </div>
   )
 }
