@@ -14,7 +14,7 @@ export default function ManagerLayout() {
         headerShown: false,
         tabBarActiveTintColor: isDark ? "#60a5fa" : "#245feb", // Lighter blue in dark mode
         tabBarInactiveTintColor: isDark ? "#64748b" : "#9ca3af",
-        
+
         tabBarStyle: {
           backgroundColor: isDark ? "#1e293b" : "#ffffff", // slate-800 or white
           borderTopColor: isDark ? "#334155" : "#e5e7eb", // slate-700 or gray-200

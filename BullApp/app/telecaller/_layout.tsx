@@ -1,17 +1,30 @@
 import { Tabs } from "expo-router";
-import { Feather } from "@expo/vector-icons";
+import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColorScheme } from "nativewind";
 
-export default function Layout() {
+import { useEffect } from "react";
+
+export default function TelecallerLayout() {
   const insets = useSafeAreaInsets();
+  const { colorScheme, setColorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
+
+  useEffect(() => {
+    // Set default theme to light for telecaller
+    setColorScheme("light");
+  }, []);
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#0ea633",
-        tabBarInactiveTintColor: "#9ca3af",
+        tabBarActiveTintColor: isDark ? "#60a5fa" : "#245feb",
+        tabBarInactiveTintColor: isDark ? "#64748b" : "#9ca3af",
+        
         tabBarStyle: {
+          backgroundColor: isDark ? "#1e293b" : "#ffffff",
+          borderTopColor: isDark ? "#334155" : "#e5e7eb",
           height: 60 + insets.bottom,
           paddingBottom: insets.bottom,
           paddingTop: 6,
@@ -29,6 +42,16 @@ export default function Layout() {
       />
 
       <Tabs.Screen
+        name="campaigns"
+        options={{
+          title: "Campaigns",
+          tabBarIcon: ({ color, size }) => (
+            <MaterialIcons name="campaign" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
         name="leads"
         options={{
           title: "Leads",
@@ -37,15 +60,7 @@ export default function Layout() {
           ),
         }}
       />
-    <Tabs.Screen
-  name="add-lead"
-  options={{
-    title: "Add Lead",
-    tabBarIcon: ({ color, size }) => (
-      <Feather name="plus-circle" size={size} color={color} />
-    ),
-  }}
-/>
+
       <Tabs.Screen
         name="profile"
         options={{
