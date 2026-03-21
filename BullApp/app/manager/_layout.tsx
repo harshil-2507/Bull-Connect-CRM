@@ -1,20 +1,25 @@
 import { Tabs } from "expo-router";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useColorScheme } from "nativewind";
 
 export default function ManagerLayout() {
-  const insets = useSafeAreaInsets(); // 👈 key
+  const insets = useSafeAreaInsets();
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#245feb",
-        tabBarInactiveTintColor: "#9ca3af",
-
+        tabBarActiveTintColor: isDark ? "#60a5fa" : "#245feb", // Lighter blue in dark mode
+        tabBarInactiveTintColor: isDark ? "#64748b" : "#9ca3af",
+        
         tabBarStyle: {
-          height: 60 + insets.bottom, // 👈 dynamic height
-          paddingBottom: insets.bottom, // 👈 pushes above system nav
+          backgroundColor: isDark ? "#1e293b" : "#ffffff", // slate-800 or white
+          borderTopColor: isDark ? "#334155" : "#e5e7eb", // slate-700 or gray-200
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom,
           paddingTop: 6,
         },
       }}

@@ -341,17 +341,17 @@ ORDER BY created_at DESC
 
     const pipeline: Record<string, any[]> = {
 
-  NEW: [],
-  ASSIGNED: [],
-  CONTACTED: [],
-  FIELD_REQUESTED: [],
-  VISIT_REQUESTED: [],
-  VISIT_ASSIGNED: [],
-  VISIT_COMPLETED: [],
-  SOLD: [],
-  DROPPED: []
+      NEW: [],
+      ASSIGNED: [],
+      CONTACTED: [],
+      FIELD_REQUESTED: [],
+      VISIT_REQUESTED: [],
+      VISIT_ASSIGNED: [],
+      VISIT_COMPLETED: [],
+      SOLD: [],
+      DROPPED: []
 
-};
+    };
 
     for (const lead of leadsRes.rows) {
       if (pipeline[lead.status]) {

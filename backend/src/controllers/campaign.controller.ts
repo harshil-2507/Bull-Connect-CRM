@@ -29,7 +29,7 @@ export const createCampaign = async (req: Request, res: Response) => {
 
     res.status(201).json(campaign);
 
-  } catch (err:any) {
+  } catch (err: any) {
 
     res.status(400).json({ error: err.message });
 
@@ -58,7 +58,7 @@ export const getAllCampaigns = async (req: Request, res: Response) => {
 
     res.status(200).json(result);
 
-  } catch (err:any) {
+  } catch (err: any) {
 
     res.status(400).json({ error: err.message });
 
@@ -74,7 +74,7 @@ export const getCampaignById = async (req: Request, res: Response) => {
 
     res.status(200).json(campaign);
 
-  } catch (err:any) {
+  } catch (err: any) {
 
     res.status(404).json({ error: err.message });
 
@@ -122,7 +122,7 @@ export const updateCampaignStatus = async (req: Request, res: Response) => {
 
     res.status(200).json(campaign);
 
-  } catch (err:any) {
+  } catch (err: any) {
 
     res.status(400).json({ error: err.message });
 
@@ -144,7 +144,7 @@ export const getCampaignLeads = async (req: Request, res: Response) => {
 
     res.status(200).json(result);
 
-  } catch (err:any) {
+  } catch (err: any) {
 
     res.status(404).json({ error: err.message });
 
@@ -160,7 +160,7 @@ export const getAllCampaignStats = async (_req: Request, res: Response) => {
 
     res.status(200).json(stats);
 
-  } catch (err:any) {
+  } catch (err: any) {
 
     res.status(400).json({ error: err.message });
 
@@ -176,7 +176,7 @@ export const getCampaignStatsById = async (req: Request, res: Response) => {
 
     res.status(200).json(stats);
 
-  } catch (err:any) {
+  } catch (err: any) {
 
     res.status(404).json({ error: err.message });
 
@@ -192,7 +192,7 @@ export const getCampaignPipeline = async (req: Request, res: Response) => {
 
     res.status(200).json(result);
 
-  } catch (err:any) {
+  } catch (err: any) {
 
     res.status(404).json({ error: err.message });
 
@@ -224,7 +224,7 @@ export const uploadCampaignCsv = async (req: Request, res: Response) => {
       durationMs: Math.round(end - start)
     });
 
-  } catch (err:any) {
+  } catch (err: any) {
 
     res.status(400).json({ error: err.message });
 
@@ -252,7 +252,7 @@ export const bulkAssignCampaignLeads = async (req: Request, res: Response) => {
 
     res.status(200).json(result);
 
-  } catch (err:any) {
+  } catch (err: any) {
 
     res.status(400).json({ error: err.message });
 

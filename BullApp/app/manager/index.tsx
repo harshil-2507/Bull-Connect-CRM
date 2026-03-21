@@ -4,10 +4,12 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import { apiRequest } from "../utils/api";
+import NewLeadForm from "../components/NewLeadForm";
 
 type LeadStatus =
   | "NEW"
@@ -34,6 +36,7 @@ export default function Home() {
   const [campaigns, setCampaigns] = useState<number | null>(null);
   const [telecallers, setTelecallers] = useState<number | null>(null);
   const [leadsCount, setLeadsCount] = useState<number | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   const [leadStats, setLeadStats] = useState<LeadStats>({
     NEW: 0,
@@ -84,33 +87,33 @@ export default function Home() {
   };
 
   const fetchLeadStats = async () => {
-  try {
-    const res = await apiRequest("/leads?page=1&limit=100");
-    const data: LeadResponse = await res.json();
+    try {
+      const res = await apiRequest("/leads?page=1&limit=100");
+      const data: LeadResponse = await res.json();
 
-    const stats: LeadStats = {
-      NEW: 0,
-      ASSIGNED: 0,
-      CONTACTED: 0,
-      VISIT_REQUESTED: 0,
-      VISIT_ASSIGNED: 0,
-      VISIT_COMPLETED: 0,
-      SOLD: 0,
-      DROPPED: 0,
-    };
+      const stats: LeadStats = {
+        NEW: 0,
+        ASSIGNED: 0,
+        CONTACTED: 0,
+        VISIT_REQUESTED: 0,
+        VISIT_ASSIGNED: 0,
+        VISIT_COMPLETED: 0,
+        SOLD: 0,
+        DROPPED: 0,
+      };
 
-    data.leads?.forEach((l) => {
-      const status = l.status as LeadStatus;
-      if (stats[status] !== undefined) {
-        stats[status]++;
-      }
-    });
+      data.leads?.forEach((l) => {
+        const status = l.status as LeadStatus;
+        if (stats[status] !== undefined) {
+          stats[status]++;
+        }
+      });
 
-    setLeadStats(stats);
-  } catch {}
-};
+      setLeadStats(stats);
+    } catch { }
+  };
   const Skeleton = () => (
-    <View className="h-6 w-16 bg-gray-200 rounded-md" />
+    <View className="h-6 w-16 bg-gray-200 dark:bg-slate-700 rounded-md" />
   );
 
   const StatCard = ({
@@ -125,7 +128,7 @@ export default function Home() {
     color: string;
   }) => (
     <View
-      className="bg-white rounded-xl p-4 border border-gray-200"
+      className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-gray-200 dark:border-slate-700"
       style={{
         width: "48%",
         shadowColor: "#000",
@@ -135,12 +138,12 @@ export default function Home() {
       }}
     >
       <Feather name={icon} size={18} color={color} />
-      <Text className="text-gray-500 text-xs mt-2">{label}</Text>
+      <Text className="text-gray-500 dark:text-slate-400 text-xs mt-2">{label}</Text>
 
       {value === null ? (
         <Skeleton />
       ) : (
-        <Text className="text-2xl font-bold">{value}</Text>
+        <Text className="text-2xl font-bold dark:text-slate-50">{value}</Text>
       )}
     </View>
   );
@@ -148,27 +151,36 @@ export default function Home() {
   const total =
     Object.values(leadStats).reduce((sum, value) => sum + value, 0) || 1;
 
+  if (isCreating) {
+    return (
+      <SafeAreaView edges={['top']} className="flex-1 bg-gray-50 dark:bg-slate-900">
+        <NewLeadForm onBack={() => setIsCreating(false)} onSuccess={() => { setIsCreating(false); fetchLeadsCount(); fetchLeadStats(); }} />
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView className="flex-1 bg-[#f6f6f8]">
+    <SafeAreaView className="flex-1 bg-[#f6f6f8] dark:bg-slate-900">
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
 
         {/* HEADER */}
-        <View className="px-4 py-3 bg-white border-b border-gray-200">
+        <View className="px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
           <View className="flex-row items-center gap-2">
             <MaterialIcons name="dashboard" size={26} color="#245feb" />
-            <Text className="text-lg font-bold">Manager Home</Text>
+            <Text className="text-lg font-bold dark:text-slate-50">Manager Home</Text>
           </View>
         </View>
 
         {/* QUICK ACTIONS */}
         <View className="p-4">
-          <Text className="text-xs text-gray-500 mb-3 font-semibold uppercase">
+          <Text className="text-xs text-gray-500 dark:text-slate-400 mb-3 font-semibold uppercase">
             Quick Actions
           </Text>
 
           <View className="flex-row justify-between">
             <TouchableOpacity
               className="flex-1 mr-2 rounded-xl items-center py-4"
+              onPress={() => setIsCreating(true)}
               style={{
                 backgroundColor: "#245feb",
                 shadowColor: "#245feb",
@@ -181,21 +193,19 @@ export default function Home() {
               <Text className="text-white text-xs mt-2">Add Lead</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity className="flex-1 mx-1 bg-white border border-gray-200 rounded-xl items-center py-4">
-              <Feather name="users" size={20} color="#245feb" />
-              <Text className="text-xs mt-2">Assign</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity className="flex-1 ml-2 bg-white border border-gray-200 rounded-xl items-center py-4">
+            <TouchableOpacity
+              className="flex-1 ml-2 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl items-center py-4"
+              onPress={() => Alert.alert("Coming Soon", "This feature will be available later.")}
+            >
               <MaterialIcons name="campaign" size={20} color="#245feb" />
-              <Text className="text-xs mt-2">Campaign</Text>
+              <Text className="text-xs mt-2 dark:text-slate-50">Start Campaign</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* DASHBOARD */}
         <View className="px-4">
-          <Text className="text-lg font-bold mb-4">
+          <Text className="text-lg font-bold mb-4 dark:text-slate-50">
             Dashboard Overview
           </Text>
 
@@ -229,9 +239,9 @@ export default function Home() {
 
         {/* LEADS STATUS */}
         <View className="p-4">
-          <View className="bg-white rounded-xl p-5 border border-gray-200">
+          <View className="bg-white dark:bg-slate-800 rounded-xl p-5 border border-gray-200 dark:border-slate-700">
             <View className="flex-row justify-between mb-5">
-              <Text className="font-bold">Leads by Status</Text>
+              <Text className="font-bold dark:text-slate-50">Leads by Status</Text>
               <Feather name="more-vertical" color="#9ca3af" />
             </View>
 
@@ -250,13 +260,13 @@ export default function Home() {
               return (
                 <View key={i} className="mb-4">
                   <View className="flex-row justify-between">
-                    <Text className="text-xs">{item.label}</Text>
-                    <Text className="text-xs">
+                    <Text className="text-xs dark:text-slate-300">{item.label}</Text>
+                    <Text className="text-xs dark:text-slate-300">
                       {Math.round(percent)}%
                     </Text>
                   </View>
 
-                  <View className="h-2 bg-gray-200 rounded-full mt-1">
+                  <View className="h-2 bg-gray-200 dark:bg-slate-700 rounded-full mt-1">
                     <View
                       style={{
                         width: `${percent}%`,

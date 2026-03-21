@@ -61,14 +61,15 @@ export default function NewLeadForm({ onBack, onSuccess }: Props) {
 
     return (
       <View className="mb-4" key={fieldName}>
-        <Text className="text-xs font-bold text-gray-500 mb-1 uppercase tracking-wider">
+        <Text className="text-xs font-bold text-gray-500 dark:text-slate-500 mb-1 uppercase tracking-wider">
           {label} {required && <Text className="text-red-500">*</Text>}
         </Text>
         <TextInput
-          className="bg-gray-100 rounded-lg px-3 py-2 text-gray-900 border border-gray-200"
+          className="bg-gray-100 dark:bg-slate-700/50 rounded-lg px-3 py-2 text-gray-900 dark:text-slate-50 border border-gray-200 dark:border-slate-600"
           value={displayVal}
           onChangeText={(text) => setEditForm((prev: any) => ({ ...prev, [fieldName]: text }))}
           placeholder={`Enter ${label}`}
+          placeholderTextColor="#9ca3af"
           multiline={multiline}
           style={multiline ? { minHeight: 80, textAlignVertical: 'top' } : {}}
         />
@@ -77,14 +78,14 @@ export default function NewLeadForm({ onBack, onSuccess }: Props) {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View className="flex-1 bg-gray-50 dark:bg-slate-900">
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+      <View className="flex-row items-center justify-between px-4 py-3 bg-white dark:bg-slate-800 border-b border-gray-100 dark:border-slate-700">
         <View className="flex-row items-center gap-2">
           <TouchableOpacity onPress={() => onBack && onBack()} className="p-2">
-            <MaterialIcons name="arrow-back" size={24} color="#111827" />
+            <MaterialIcons name="arrow-back" size={24} color="#9ca3af" />
           </TouchableOpacity>
-          <Text className="text-xl font-bold text-gray-900">New Lead Details</Text>
+          <Text className="text-xl font-bold text-gray-900 dark:text-slate-50">New Lead Details</Text>
         </View>
         <View className="flex-row items-center gap-2">
           <TouchableOpacity onPress={handleCreateLead} disabled={saving} className="bg-blue-600 px-4 py-1.5 rounded-full">
@@ -97,10 +98,10 @@ export default function NewLeadForm({ onBack, onSuccess }: Props) {
         {/* Info Sections */}
         <View className="px-4 mt-6">
           {/* Card: Basic Info */}
-          <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
-            <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
-              <MaterialIcons name="info" size={20} color="#2563eb" />
-              <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Basic Info</Text>
+          <View className="bg-white dark:bg-slate-800 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-700">
+            <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 dark:border-slate-700/50 pb-2">
+              <MaterialIcons name="info" size={20} color="#3b82f6" />
+              <Text className="text-sm font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Basic Info</Text>
             </View>
             {renderField("Farmer Name", "farmer_name", false, true)}
             {renderField("Phone", "phone_number", false, true)}
@@ -113,10 +114,10 @@ export default function NewLeadForm({ onBack, onSuccess }: Props) {
           </View>
 
           {/* Card: Farming Details */}
-          <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
-             <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
-              <MaterialIcons name="eco" size={20} color="#16a34a" />
-              <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Farming Details</Text>
+          <View className="bg-white dark:bg-slate-800 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-700">
+             <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 dark:border-slate-700/50 pb-2">
+              <MaterialIcons name="eco" size={20} color="#22c55e" />
+              <Text className="text-sm font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Farming Details</Text>
              </View>
              {renderField("Farmer Type", "farmer_type")}
              {renderField("Total Land (Bigha)", "total_land_bigha")}
@@ -126,10 +127,10 @@ export default function NewLeadForm({ onBack, onSuccess }: Props) {
           </View>
 
           {/* Card: Castor Crop */}
-           <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
-             <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
-              <MaterialIcons name="spa" size={20} color="#b45309" />
-              <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Castor Crop Details</Text>
+           <View className="bg-white dark:bg-slate-800 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-700">
+             <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 dark:border-slate-700/50 pb-2">
+              <MaterialIcons name="spa" size={20} color="#ea580c" />
+              <Text className="text-sm font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Castor Crop Details</Text>
              </View>
              {renderField("Castor Bori", "castor_bori")}
              {renderField("Castor Expected Price", "castor_expected_price")}
@@ -139,10 +140,10 @@ export default function NewLeadForm({ onBack, onSuccess }: Props) {
           </View>
 
           {/* Card: Groundnut Crop */}
-           <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
-              <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
-              <MaterialIcons name="spa" size={20} color="#b45309" />
-               <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Groundnut Crop Details</Text>
+           <View className="bg-white dark:bg-slate-800 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-700">
+              <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 dark:border-slate-700/50 pb-2">
+              <MaterialIcons name="spa" size={20} color="#ea580c" />
+               <Text className="text-sm font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Groundnut Crop Details</Text>
              </View>
              {renderField("Groundnut Bori", "groundnut_bori")}
              {renderField("Groundnut Expected Price", "groundnut_expected_price")}
@@ -152,10 +153,10 @@ export default function NewLeadForm({ onBack, onSuccess }: Props) {
           </View>
 
           {/* Card: Additional Info */}
-           <View className="bg-white rounded-2xl p-5 mb-4 shadow-sm border border-gray-100">
-             <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 pb-2">
+           <View className="bg-white dark:bg-slate-800 rounded-2xl p-5 mb-4 shadow-sm border border-gray-100 dark:border-slate-700">
+             <View className="flex-row items-center gap-2 mb-4 border-b border-gray-50 dark:border-slate-700/50 pb-2">
                <MaterialIcons name="post-add" size={20} color="#9333ea" />
-               <Text className="text-sm font-bold text-gray-400 uppercase tracking-wider">Additional Information</Text>
+               <Text className="text-sm font-bold text-gray-400 dark:text-slate-500 uppercase tracking-wider">Additional Information</Text>
              </View>
              {renderField("Interested in Warehouse", "interested_in_warehouse")}
              {renderField("Previous Experience", "previous_experience")}

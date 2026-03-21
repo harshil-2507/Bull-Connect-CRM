@@ -45,14 +45,14 @@ type Lead = {
 };
 
 const STATUS_STYLES: Record<LeadStatus, string> = {
-  NEW: "bg-emerald-100 text-emerald-700",
-  ASSIGNED: "bg-blue-100 text-blue-700",
-  CONTACTED: "bg-yellow-100 text-yellow-700",
-  VISIT_REQUESTED: "bg-purple-100 text-purple-700",
-  VISIT_ASSIGNED: "bg-cyan-100 text-cyan-700",
-  VISIT_COMPLETED: "bg-lime-100 text-lime-700",
-  SOLD: "bg-green-100 text-green-700",
-  DROPPED: "bg-red-100 text-red-700",
+  NEW: "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400",
+  ASSIGNED: "bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-400",
+  CONTACTED: "bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-400",
+  VISIT_REQUESTED: "bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-400",
+  VISIT_ASSIGNED: "bg-cyan-100 dark:bg-cyan-900/40 text-cyan-700 dark:text-cyan-400",
+  VISIT_COMPLETED: "bg-lime-100 dark:bg-lime-900/40 text-lime-700 dark:text-lime-400",
+  SOLD: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400",
+  DROPPED: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400",
 };
 
 export default function Leads() {
@@ -163,7 +163,6 @@ export default function Leads() {
     }
   };
 
-  // Filter leads by name or phone number
   const filteredLeads = allLeads.filter((lead) => {
     const lowerSearch = search.toLowerCase();
     return (
@@ -173,23 +172,23 @@ export default function Leads() {
   });
 
   const renderItem = ({ item }: { item: Lead }) => {
-    const statusClass = STATUS_STYLES[item.status] || "bg-gray-100 text-gray-600";
+    const statusClass = STATUS_STYLES[item.status] || "bg-gray-100 dark:bg-slate-700 text-gray-600 dark:text-gray-300";
     const firstLetter = item.farmer_name?.charAt(0)?.toUpperCase() || "?";
 
     return (
-      <View className="bg-white rounded-2xl border border-gray-200 mb-4 overflow-hidden">
+      <View className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 mb-4 overflow-hidden">
         {/* Lead Top Row */}
         <View className="p-4">
           <View className="flex-row items-start justify-between">
             {/* Avatar + Name + Phone */}
             <View className="flex-row items-center gap-3 flex-1">
-              <View className="w-14 h-14 rounded-xl bg-blue-100 items-center justify-center">
-                <Text className="text-xl font-bold text-blue-600">{firstLetter}</Text>
+              <View className="w-14 h-14 rounded-xl bg-blue-100 dark:bg-blue-900/50 items-center justify-center">
+                <Text className="text-xl font-bold text-blue-600 dark:text-blue-400">{firstLetter}</Text>
               </View>
 
               <View className="flex-1">
-                <Text className="text-xl font-bold text-gray-900">{item.farmer_name}</Text>
-                <Text className="text-base text-gray-500 mt-1">+{item.phone_number}</Text>
+                <Text className="text-xl font-bold text-gray-900 dark:text-slate-50">{item.farmer_name}</Text>
+                <Text className="text-base text-gray-500 dark:text-slate-400 mt-1">+{item.phone_number}</Text>
               </View>
             </View>
 
@@ -202,19 +201,19 @@ export default function Leads() {
           {/* Village + Farmer Type */}
           <View className="flex-row justify-between mt-5">
             <View>
-              <Text className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">
+              <Text className="text-[11px] text-gray-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                 Village
               </Text>
-              <Text className="text-base font-semibold text-gray-800 mt-1">
+              <Text className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-1">
                 {item.village || "N/A"}
               </Text>
             </View>
 
             <View>
-              <Text className="text-[11px] text-gray-400 font-bold uppercase tracking-wider">
+              <Text className="text-[11px] text-gray-400 dark:text-slate-500 font-bold uppercase tracking-wider">
                 Farmer Type
               </Text>
-              <Text className="text-base font-semibold text-gray-800 mt-1">
+              <Text className="text-base font-semibold text-gray-800 dark:text-slate-100 mt-1">
                 {item.farmer_type || "N/A"}
               </Text>
             </View>
@@ -222,7 +221,7 @@ export default function Leads() {
         </View>
 
         {/* Actions */}
-        <View className="flex-row justify-end gap-4 border-t border-gray-100 bg-gray-50 px-4 py-3">
+        <View className="flex-row justify-end gap-4 border-t border-gray-100 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/80 px-4 py-3">
           <TouchableOpacity 
             className="flex-row items-center gap-1"
             onPress={() => {
@@ -231,7 +230,7 @@ export default function Leads() {
             }}
           >
             <MaterialIcons name="person-add" size={18} color="#6b7280" />
-            <Text className="text-gray-500 font-semibold">Assign</Text>
+            <Text className="text-gray-500 dark:text-slate-400 font-semibold">Assign</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -247,7 +246,7 @@ export default function Leads() {
 
   if (selectedLeadId) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-gray-50">
+      <SafeAreaView edges={['top']} className="flex-1 bg-gray-50 dark:bg-slate-900">
         <LeadProfile id={selectedLeadId} onBack={() => { setSelectedLeadId(null); fetchLeads(1, false); }} />
       </SafeAreaView>
     );
@@ -255,33 +254,34 @@ export default function Leads() {
 
   if (isCreating) {
     return (
-      <SafeAreaView edges={['top']} className="flex-1 bg-gray-50">
+      <SafeAreaView edges={['top']} className="flex-1 bg-gray-50 dark:bg-slate-900">
         <NewLeadForm onBack={() => setIsCreating(false)} onSuccess={() => { setIsCreating(false); fetchLeads(1, false); }} />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
+    <SafeAreaView className="flex-1 bg-gray-100 dark:bg-slate-900">
       {/* Header */}
-      <View className="px-5 pt-6 pb-4 bg-white border-b border-gray-200">
+      <View className="px-5 pt-6 pb-4 bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700">
         <View className="flex-row items-center gap-3">
-          <View className="w-10 h-10 rounded-full bg-blue-100 items-center justify-center">
+          <View className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/50 items-center justify-center">
             <MaterialIcons name="groups" size={24} color="#2563eb" />
           </View>
-          <Text className="text-3xl font-extrabold text-gray-900">Leads Management</Text>
+          <Text className="text-3xl font-extrabold text-gray-900 dark:text-slate-50">Leads Management</Text>
         </View>
       </View>
 
       {/* Search Bar */}
       <View className="px-5 mt-4 mb-4">
-        <View className="flex-row items-center bg-white border border-gray-200 rounded-xl px-4 h-12">
+        <View className="flex-row items-center bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl px-4 h-12">
           <MaterialIcons name="search" size={20} color="#9ca3af" />
           <TextInput
             placeholder="Search by name or phone number..."
+            placeholderTextColor="#9ca3af"
             value={search}
             onChangeText={setSearch}
-            className="ml-2 flex-1 text-base"
+            className="ml-2 flex-1 text-base text-gray-900 dark:text-slate-50"
           />
         </View>
       </View>
@@ -302,8 +302,8 @@ export default function Leads() {
               <ActivityIndicator size="large" color="#2563eb" />
             </View>
           ) : (
-            <View className="bg-white rounded-2xl p-6 items-center mt-10">
-              <Text className="text-gray-500 text-base">No leads found.</Text>
+            <View className="bg-white dark:bg-slate-800 rounded-2xl p-6 items-center mt-10">
+              <Text className="text-gray-500 dark:text-slate-400 text-base">No leads found.</Text>
             </View>
           )
         }
@@ -328,13 +328,13 @@ export default function Leads() {
 
       {/* Assign Telecaller Modal */}
       <Modal visible={showAssignModal} animationType="slide" transparent={true} onRequestClose={() => setShowAssignModal(false)}>
-        <View className="flex-1 bg-black/50 justify-end">
-          <View className="bg-white rounded-t-3xl h-2/3 shadow-xl">
+        <View className="flex-1 bg-black/50 dark:bg-black/70 justify-end">
+          <View className="bg-white dark:bg-slate-800 rounded-t-3xl h-2/3 shadow-xl">
             {/* Header */}
-            <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100">
-              <Text className="text-xl font-bold text-gray-900">Assign Telecaller</Text>
-              <TouchableOpacity onPress={() => setShowAssignModal(false)} className="p-2 bg-gray-100 rounded-full">
-                <MaterialIcons name="close" size={20} color="#374151" />
+            <View className="flex-row items-center justify-between px-6 py-5 border-b border-gray-100 dark:border-slate-700">
+              <Text className="text-xl font-bold text-gray-900 dark:text-slate-50">Assign Telecaller</Text>
+              <TouchableOpacity onPress={() => setShowAssignModal(false)} className="p-2 bg-gray-100 dark:bg-slate-700 rounded-full">
+                <MaterialIcons name="close" size={20} color="#9ca3af" />
               </TouchableOpacity>
             </View>
 
@@ -346,7 +346,7 @@ export default function Leads() {
             ) : telecallers.length === 0 ? (
               <View className="flex-1 items-center justify-center px-6">
                 <MaterialIcons name="person-off" size={48} color="#9ca3af" />
-                <Text className="text-gray-500 font-medium mt-3">No telecallers available</Text>
+                <Text className="text-gray-500 dark:text-slate-400 font-medium mt-3">No telecallers available</Text>
               </View>
             ) : (
               <FlatList
@@ -357,15 +357,15 @@ export default function Leads() {
                   <TouchableOpacity
                     onPress={() => handleAssign(item.id)}
                     disabled={assigningId !== null}
-                    className="flex-row items-center bg-gray-50 rounded-2xl p-4 mb-3 border border-gray-200"
+                    className="flex-row items-center bg-gray-50 dark:bg-slate-800/80 rounded-2xl p-4 mb-3 border border-gray-200 dark:border-slate-700"
                   >
-                    <View className="w-12 h-12 bg-blue-100 rounded-full items-center justify-center mr-4">
-                      <Text className="text-lg font-bold text-blue-600">
+                    <View className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full items-center justify-center mr-4">
+                      <Text className="text-lg font-bold text-blue-600 dark:text-blue-400">
                         {item.name ? item.name.charAt(0).toUpperCase() : 'T'}
                       </Text>
                     </View>
                     <View className="flex-1">
-                      <Text className="text-base font-bold text-gray-900">{item.name || 'Unknown'}</Text>
+                      <Text className="text-base font-bold text-gray-900 dark:text-slate-50">{item.name || 'Unknown'}</Text>
                     </View>
                     {assigningId === item.id ? (
                       <ActivityIndicator color="#2563eb" size="small" />
