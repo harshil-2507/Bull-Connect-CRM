@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/useAuth"
 import {
   useWorkQueue,
   useStats,
-  useLeaderboard,
+  // useLeaderboard,
   useCall
 } from "@/hooks/useTelecaller"
 
