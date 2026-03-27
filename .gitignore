@@ -1,11 +1,18 @@
 # Node / Backend
-node_modules
+node_modules/
 .env
 
+# Next.js
+.next/
+
+# Logs
+*.log
+
 # DB
-pgdata
+pgdata/
 
 # OS
 .DS_Store
 
+# Assets
 bull-connect-final.png

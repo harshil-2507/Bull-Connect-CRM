@@ -20,13 +20,17 @@ export default function Topbar() {
         className="
         h-16
         border-b
-        border-slate-700
-        bg-slate-900
-        text-white
+        border-slate-200
+        bg-white/80
+        backdrop-blur-md
+        text-slate-900
         flex
         items-center
         justify-between
         px-6
+        sticky
+        top-0
+        z-30
       "
       >
 
@@ -41,14 +45,14 @@ export default function Topbar() {
           className="
             flex items-center gap-3
             w-[420px]
-            border border-slate-700
+            border border-slate-200
             rounded-lg
             px-4 h-10
             text-sm
-            bg-slate-700
-            hover:bg-slate-800
+            bg-slate-50
+            hover:bg-slate-100
             transition
-            text-slate-300
+            text-slate-500
           "
         >
           <Search size={16} />

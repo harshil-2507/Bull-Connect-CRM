@@ -38,7 +38,7 @@ export function TelecallerPerformanceTable({ from, to }: Props) {
 
   if (isLoading) {
     return (
-      <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-sm">
+      <div className="p-8 rounded-2xl bg-white border border-gray-200 shadow-sm">
         Loading telecaller performance...
       </div>
     )
@@ -46,7 +46,7 @@ export function TelecallerPerformanceTable({ from, to }: Props) {
 
   if (isError) {
     return (
-      <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-sm text-red-500">
+      <div className="p-8 rounded-2xl bg-white border border-gray-200 shadow-sm text-red-500">
         Failed to load telecaller performance.
       </div>
     )
@@ -59,18 +59,18 @@ export function TelecallerPerformanceTable({ from, to }: Props) {
       transition={{ duration: 0.4 }}
       className="
         p-8 rounded-2xl shadow-sm
-        bg-white dark:bg-slate-900
-        border border-gray-200 dark:border-slate-800
+        bg-white
+        border border-gray-200
       "
     >
-      <h2 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-lg font-semibold mb-6 text-gray-900">
         Telecaller Performance
       </h2>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-200 dark:border-slate-700 text-gray-500 dark:text-slate-400">
+            <tr className="border-b border-gray-200 text-gray-500">
               <th className="py-3 text-left">Name</th>
               <th className="text-left">Assigned</th>
               <th className="text-left">Contacted</th>
@@ -86,13 +86,13 @@ export function TelecallerPerformanceTable({ from, to }: Props) {
               <tr
                 key={user.telecallerId}
                 className={`
-                  border-b border-gray-100 dark:border-slate-800
-                  hover:bg-gray-50 dark:hover:bg-slate-800/50
+                  border-b border-gray-100
+                  hover:bg-gray-50
                   transition
-                  ${index === 0 ? "bg-green-50 dark:bg-green-900/10" : ""}
+                  ${index === 0 ? "bg-green-50" : ""}
                 `}
               >
-                <td className="py-4 font-medium text-gray-900 dark:text-white">
+                <td className="py-4 font-medium text-gray-900">
                   {user.name}
                   {index === 0 && (
                     <span className="ml-2 text-xs text-green-600 font-semibold">

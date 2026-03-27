@@ -52,7 +52,9 @@ export default function LeadsPage() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading
+    isLoading,
+    isError,
+    error
   } = useInfiniteLeads()
 
   const observer = useRef<IntersectionObserver | null>(null)
@@ -79,10 +81,23 @@ export default function LeadsPage() {
 
   if(isLoading) return <LeadsSkeleton/>
 
-  let leads =
-    data?.pages?.flatMap((p:any)=>
-      Array.isArray(p) ? p : p.leads
-    ) ?? []
+  if(isError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+        <p className="text-red-600 font-semibold mb-2">Error loading leads</p>
+        <p className="text-slate-500 text-sm">{(error as any)?.message || "Something went wrong"}</p>
+        <Button className="mt-4" onClick={() => window.location.reload()}>Retry</Button>
+      </div>
+    )
+  }
+
+  let leads = 
+    data?.pages?.flatMap((p: any) => {
+      if (!p) return []
+      if (Array.isArray(p)) return p
+      if (Array.isArray(p.leads)) return p.leads
+      return []
+    }) ?? []
 
   if(search){
 

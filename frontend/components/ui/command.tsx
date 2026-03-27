@@ -23,7 +23,7 @@ function Command({
       data-slot="command"
       className={cn(
         "flex h-full w-full flex-col overflow-hidden rounded-xl",
-        "bg-white/80 dark:bg-slate-900/80",
+        "bg-white/80",
         "backdrop-blur-2xl",
         "text-popover-foreground",
         className

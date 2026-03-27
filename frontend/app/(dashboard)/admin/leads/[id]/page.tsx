@@ -31,7 +31,15 @@ export default function LeadDetailPage() {
   const params = useParams()
   const { data, isLoading } = useLead(params.id as string)
 
-  if (isLoading) return <div>Loading...</div>
+  if (isLoading) {
+    return (
+      <div className="max-w-5xl mx-auto space-y-8 animate-pulse">
+        <div className="h-8 w-64 bg-slate-200 rounded-md" />
+        <div className="h-64 bg-white border border-slate-100 rounded-xl" />
+        <div className="h-48 bg-white border border-slate-100 rounded-xl" />
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">

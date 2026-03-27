@@ -87,7 +87,20 @@ export default function ManagerDashboardPage() {
   })
 
   if (isLoading) {
-    return <div className="p-10 text-slate-600">Loading dashboard...</div>
+    return (
+      <div className="p-10 space-y-8">
+        <div className="space-y-2">
+          <div className="h-8 w-64 bg-slate-200 animate-pulse rounded-md" />
+          <div className="h-4 w-48 bg-slate-100 animate-pulse rounded-md" />
+        </div>
+        <div className="grid grid-cols-5 gap-6">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="h-32 bg-slate-100 animate-pulse rounded-xl" />
+          ))}
+        </div>
+        <div className="h-80 bg-slate-50 animate-pulse rounded-xl" />
+      </div>
+    )
   }
 
   const totalCampaigns = data?.length || 0

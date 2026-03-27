@@ -8,7 +8,7 @@ export default function AppLayout({
   children: ReactNode
 }) {
   return (
-    <div className="flex h-screen bg-gray-50 dark:bg-slate-950">
+    <div className="flex h-screen bg-gray-50">
 
       {/* Sidebar */}
       <Sidebar />

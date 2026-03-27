@@ -9,7 +9,7 @@ export function useWorkQueue() {
   return useQuery({
     queryKey: ["telecaller-queue"],
     queryFn: async () => {
-      const res = await api.get("/telecaller/queue")
+      const res = await api.get("telecaller/queue")
       return res.data
     }
   })
@@ -19,7 +19,7 @@ export function useStats() {
   return useQuery({
     queryKey: ["telecaller-stats"],
     queryFn: async () => {
-      const res = await api.get("/telecaller/stats")
+      const res = await api.get("telecaller/stats")
       return res.data
     }
   })
@@ -29,7 +29,7 @@ export function useLeaderboard() {
   return useQuery({
     queryKey: ["telecaller-leaderboard"],
     queryFn: async () => {
-      const res = await api.get("/telecaller/leaderboard")
+      const res = await api.get("telecaller/leaderboard")
       return res.data
     }
   })
@@ -40,7 +40,7 @@ export function useCall() {
 
   return useMutation({
     mutationFn: async (payload: any) => {
-      const res = await api.post("/telecaller/call", payload)
+      const res = await api.post("telecaller/call", payload)
       return res.data
     },
     onSuccess: () => {

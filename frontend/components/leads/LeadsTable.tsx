@@ -113,73 +113,81 @@ export default function LeadsTable({
 
           <TableBody>
 
-            {leads.map((lead, index) => {
+            {leads.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={10} className="h-32 text-center text-slate-500 italic">
+                  No leads found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              leads.map((lead, index) => {
 
-              const isLast = index === leads.length - 1
+                const isLast = index === leads.length - 1
 
-              return (
+                return (
 
-                <TableRow
-                  key={lead.id}
-                  ref={isLast ? lastRowRef : null}
-                  className="hover:bg-muted/50 transition"
-                >
-
-                  <TableCell>
-
-                    <input
-                      type="checkbox"
-                      checked={selected.includes(lead.id)}
-                      onChange={() => toggleSelect(lead.id)}
-                    />
-
-                  </TableCell>
-
-                  <TableCell
-                    className="cursor-pointer font-medium"
-                    onClick={() => onPreview(lead)}
+                  <TableRow
+                    key={lead.id}
+                    ref={isLast ? lastRowRef : null}
+                    className="hover:bg-muted/50 transition"
                   >
-                    {lead.farmer_name}
-                  </TableCell>
 
-                  <TableCell>
-                    {lead.phone_number}
-                  </TableCell>
+                    <TableCell>
 
-                  <TableCell>
-                    {lead.farmer_type ?? "-"}
-                  </TableCell>
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(lead.id)}
+                        onChange={() => toggleSelect(lead.id)}
+                      />
 
-                  <TableCell>
-                    {lead.village ?? "-"}
-                  </TableCell>
+                    </TableCell>
 
-                  <TableCell>
-                    {lead.bull_centre ?? "-"}
-                  </TableCell>
+                    <TableCell
+                      className="cursor-pointer font-medium"
+                      onClick={() => onPreview(lead)}
+                    >
+                      {lead.farmer_name}
+                    </TableCell>
 
-                  <TableCell>
-                    <StatusBadge status={lead.status}/>
-                  </TableCell>
+                    <TableCell>
+                      {lead.phone_number}
+                    </TableCell>
 
-                  <TableCell>
-                    {new Date(lead.created_at).toLocaleDateString()}
-                  </TableCell>
+                    <TableCell>
+                      {lead.farmer_type ?? "-"}
+                    </TableCell>
 
-                  <TableCell className="text-center">
+                    <TableCell>
+                      {lead.village ?? "-"}
+                    </TableCell>
 
-                    <LeadRowMenu
-                      leadId={lead.id}
-                      phone={lead.phone_number}
-                    />
+                    <TableCell>
+                      {lead.bull_centre ?? "-"}
+                    </TableCell>
 
-                  </TableCell>
+                    <TableCell>
+                      <StatusBadge status={lead.status}/>
+                    </TableCell>
 
-                </TableRow>
+                    <TableCell>
+                      {new Date(lead.created_at).toLocaleDateString()}
+                    </TableCell>
 
-              )
+                    <TableCell className="text-center">
 
-            })}
+                      <LeadRowMenu
+                        leadId={lead.id}
+                        phone={lead.phone_number}
+                      />
+
+                    </TableCell>
+
+                  </TableRow>
+
+                )
+
+              })
+            )}
 
           </TableBody>
 

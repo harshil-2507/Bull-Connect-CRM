@@ -7,7 +7,7 @@ import { useDashboardSummary } from "@/hooks/useDashboardSummary"
 import { Skeleton } from "@/components/ui/skeleton"
 import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel"
 import { staggerContainer, fadeUp } from "@/lib/motion"
-// import { ThemeToggle } from "@/components/layout/ThemeToggle"
+
 import { PipelineAnalytics } from "@/components/dashboard/PipelineAnalytics"
 import { TelecallerPerformanceTable } from "@/components/dashboard/TelecallerPerformanceTable"
 
@@ -74,13 +74,13 @@ from-gray-50 via-white to-gray-100
         >
             {/* Floating Background Particles */}
             <motion.div
-                className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 dark:bg-blue-400/10 rounded-full blur-3xl pointer-events-none"
+                className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"
                 animate={{ y: [0, -30, 0] }}
                 transition={{ duration: 12, repeat: Infinity }}
             />
 
             <motion.div
-                className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-500/10 dark:bg-indigo-400/10 rounded-full blur-3xl pointer-events-none"
+                className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"
                 animate={{ y: [0, 40, 0] }}
                 transition={{ duration: 15, repeat: Infinity }}
             />
@@ -90,10 +90,10 @@ from-gray-50 via-white to-gray-100
                 {/* Header */}
                 <div className="flex items-center justify-between">
 
-                    {/* <ThemeToggle /> */}
+
 
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight relative inline-block text-gray-900 dark:text-white">
+                        <h1 className="text-3xl font-bold tracking-tight relative inline-block text-gray-900">
                             Admin Dashboard
                             <motion.span
                                 layoutId="underline"
@@ -104,7 +104,7 @@ from-gray-50 via-white to-gray-100
                             />
                         </h1>
 
-                        <p className="text-sm mt-2 text-gray-500 dark:text-slate-400">
+                        <p className="text-sm mt-2 text-gray-500">
                             Performance overview & conversion analytics
                         </p>
                     </div>
@@ -113,8 +113,8 @@ from-gray-50 via-white to-gray-100
                     <div
                         className="
               flex gap-2 p-1 rounded-xl shadow-sm
-              bg-white dark:bg-slate-900
-              border border-gray-200 dark:border-slate-800
+              bg-white
+              border border-gray-200
             "
                     >
                         {timeframes.map((tf) => (
@@ -123,7 +123,7 @@ from-gray-50 via-white to-gray-100
                                 onClick={() => setActiveTimeframe(tf)}
                                 className={`px-3 py-1.5 text-sm rounded-lg transition-all ${activeTimeframe === tf
                                     ? "bg-blue-600 text-white shadow"
-                                    : "text-gray-600 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800"
+                                    : "text-gray-600 hover:bg-gray-100"
                                     }`}
                             >
                                 {tf}
@@ -145,9 +145,9 @@ from-gray-50 via-white to-gray-100
                         animate="visible"
                         variants={staggerContainer}
                         className="
-              p-6 rounded-2xl backdrop-blur shadow-sm
-              bg-white/70 dark:bg-slate-900/70
-              border border-gray-200 dark:border-slate-800
+              p-6 rounded-2xl backdrop-blur shadow-lg
+              bg-white
+              border border-gray-200
             "
                     >
                         <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6">
@@ -169,7 +169,7 @@ from-gray-50 via-white to-gray-100
                 <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-slate-700 to-transparent"
+                    className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"
                 />
                 <div className="xl:col-span-2">
                     <PipelineAnalytics />
@@ -197,20 +197,20 @@ from-gray-50 via-white to-gray-100
   transition={{ duration: 0.6 }}
   className="
     p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300
-    bg-white dark:bg-slate-900
-    border border-gray-200 dark:border-slate-800
+    bg-white
+    border border-gray-200
   "
 >
-  <h2 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">
+  <h2 className="text-lg font-semibold mb-6 text-gray-900">
     Performance Insights
   </h2>
 
   {data && (
-    <div className="space-y-6 text-sm text-gray-500 dark:text-slate-400">
+    <div className="space-y-6 text-sm text-gray-500">
 
       {/* Lead → Visit Conversion */}
       <div>
-        <p className="font-medium text-gray-900 dark:text-white">
+        <p className="font-medium text-gray-900">
           Lead → Visit Conversion
         </p>
         <p>
@@ -221,7 +221,7 @@ from-gray-50 via-white to-gray-100
 
       {/* Visit → Deal Conversion */}
       <div>
-        <p className="font-medium text-gray-900 dark:text-white">
+        <p className="font-medium text-gray-900">
           Visit → Deal Conversion
         </p>
         <p>
@@ -232,7 +232,7 @@ from-gray-50 via-white to-gray-100
 
       {/* Average Deal Value */}
       <div>
-        <p className="font-medium text-gray-900 dark:text-white">
+        <p className="font-medium text-gray-900">
           Average Deal Value
         </p>
         <p>

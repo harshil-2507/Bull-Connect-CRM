@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
 
@@ -14,12 +13,6 @@
     --border: 229 231 235;
   }
 
-  .dark {
-    --background: 15 23 42;
-    --foreground: 248 250 252;
-    --card: 17 24 39;
-    --border: 31 41 55;
-  }
 
   html {
     transition: background-color 0.3s ease, color 0.3s ease;

@@ -31,8 +31,8 @@ export function PipelineAnalytics({ from, to }: Props) {
 
   if (isLoading) {
     return (
-      <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-sm">
-        <p className="text-sm text-gray-500 dark:text-slate-400">
+      <div className="p-8 rounded-2xl bg-white border border-gray-200 shadow-sm">
+        <p className="text-sm text-gray-500">
           Loading pipeline analytics...
         </p>
       </div>
@@ -41,7 +41,7 @@ export function PipelineAnalytics({ from, to }: Props) {
 
   if (isError) {
     return (
-      <div className="p-8 rounded-2xl bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 shadow-sm">
+      <div className="p-8 rounded-2xl bg-white border border-gray-200 shadow-sm">
         <p className="text-sm text-red-500">
           Failed to load pipeline analytics.
         </p>
@@ -58,11 +58,11 @@ export function PipelineAnalytics({ from, to }: Props) {
       transition={{ duration: 0.5 }}
       className="
         p-8 rounded-2xl shadow-sm
-        bg-white dark:bg-slate-900
-        border border-gray-200 dark:border-slate-800
+        bg-white
+        border border-gray-200
       "
     >
-      <h2 className="text-lg font-semibold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-lg font-semibold mb-6 text-gray-900">
         Pipeline Distribution
       </h2>
 
@@ -103,14 +103,14 @@ export function PipelineAnalytics({ from, to }: Props) {
             key={index}
             className="
               p-4 rounded-xl
-              bg-gray-50 dark:bg-slate-800
-              border border-gray-200 dark:border-slate-700
+              bg-gray-50
+              border border-gray-200
             "
           >
-            <p className="text-xs text-gray-500 dark:text-slate-400">
+            <p className="text-xs text-gray-500">
               {item.status.replaceAll("_", " ")}
             </p>
-            <p className="text-lg font-semibold text-gray-900 dark:text-white">
+            <p className="text-lg font-semibold text-gray-900">
               {item.count}
             </p>
           </div>
