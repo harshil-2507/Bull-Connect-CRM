@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
+import { api } from "@/lib/api"
 
 export function useInfiniteLeads() {
 
@@ -10,23 +11,8 @@ export function useInfiniteLeads() {
 
     queryFn: async ({ pageParam = 1 }) => {
 
-      const token = localStorage.getItem("token")
-
-      const res = await fetch(
-        `http://localhost:3000/leads?page=${pageParam}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-          }
-        }
-      )
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch leads")
-      }
-
-      return res.json()
+      const res = await api.get(`/leads?page=${pageParam}`)
+      return res.data
 
     },
 
