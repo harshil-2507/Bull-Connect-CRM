@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { pool } from '../config/db';
-import { recordCallLog } from '../services/callLog.service';
+import { recordCallOnly } from '../services/callLog.service';
 
 async function main() {
   const leadId = crypto.randomUUID();
@@ -13,7 +13,7 @@ async function main() {
   );
 
   try {
-    const res = await recordCallLog({
+    const res = await recordCallOnly({
       leadId,
       userId,
       disposition: 'INTERESTED' as any,
@@ -21,7 +21,7 @@ async function main() {
       acreage: 2,
     } as any);
 
-    console.log('recordCallLog result:', res);
+    console.log('recordCallOnly result:', res);
 
     const leadRow = await pool.query(
       'SELECT id, status, attempt_count FROM leads WHERE id = $1',
