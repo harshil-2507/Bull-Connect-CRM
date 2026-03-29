@@ -104,16 +104,31 @@ export class AssignmentRepository {
    * Get all tele assignments
    */
   async getAllTeleAssignments() {
-    const res = await pool.query(`
-      SELECT 
-        a.*,
-        u.name as telecaller_name
-      FROM assignments a
-      JOIN users u ON u.id = a.user_id
-      ORDER BY a.assigned_at DESC
-    `);
-    return res.rows;
-  }
+  const res = await pool.query(`
+    SELECT 
+      a.id,
+      a.lead_id,
+      a.assigned_at,
+      a.user_id,
+
+      l.farmer_name AS lead_name,
+      l.phone_number AS lead_phone,
+      l.status AS lead_status,
+
+      u.name AS telecaller_name
+
+    FROM assignments a
+
+    JOIN users u ON u.id = a.user_id
+    JOIN leads l ON l.id = a.lead_id
+
+    WHERE a.is_active = true
+
+    ORDER BY a.assigned_at DESC
+  `);
+
+  return res.rows;
+}
 
   /**
    * Get assignment by ID

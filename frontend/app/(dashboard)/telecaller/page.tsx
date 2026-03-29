@@ -1,5 +1,3 @@
-// frontend/app/(dashboard)/telecaller/page.tsx
-
 "use client"
 
 import { useState } from "react"
@@ -8,7 +6,6 @@ import { useAuth } from "@/hooks/useAuth"
 import {
   useWorkQueue,
   useStats,
-  // useLeaderboard,
   useCall
 } from "@/hooks/useTelecaller"
 
@@ -18,7 +15,7 @@ import CallDialog from "@/components/telecaller/CallDialog"
 
 export default function TelecallerPage() {
 
-  useAuth()
+  const { loading } = useAuth() // ✅ updated
 
   const { data: queue } = useWorkQueue()
   const { data: stats } = useStats()
@@ -27,13 +24,20 @@ export default function TelecallerPage() {
   const [selectedLead, setSelectedLead] = useState<any>(null)
   const [open, setOpen] = useState(false)
 
+  // ✅ prevent flicker + redirect loop
+  if (loading) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        Checking auth...
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
 
-      {/* Stats */}
       <StatsCards stats={stats} />
 
-      {/* Queue */}
       <div>
         <h2 className="text-lg font-semibold mb-3">
           My To-Do List ({queue?.total || 0})
@@ -48,7 +52,6 @@ export default function TelecallerPage() {
         />
       </div>
 
-      {/* Call Dialog */}
       <CallDialog
         open={open}
         setOpen={setOpen}

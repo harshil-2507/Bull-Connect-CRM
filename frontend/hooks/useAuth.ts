@@ -1,23 +1,43 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 
 export function useAuth() {
+
   const router = useRouter()
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+
     const token = localStorage.getItem("token")
-    const role = localStorage.getItem("role")
+    const userStr = localStorage.getItem("user")
 
-    if (!token) {
+    console.log("AUTH CHECK:", { token, userStr })
+
+    //  If no token OR no user → redirect
+    if (!token || !userStr) {
       router.replace("/login")
       return
     }
 
-    if (!role) {
+    try {
+      const user = JSON.parse(userStr)
+
+      if (!user.role) {
+        router.replace("/login")
+        return
+      }
+
+      //  Everything ok
+      setLoading(false)
+
+    } catch (err) {
+      console.error("Invalid user JSON")
       router.replace("/login")
-      return
     }
-  }, [router])
+
+  }, [])
+
+  return { loading }
 }
