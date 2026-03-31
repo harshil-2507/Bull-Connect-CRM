@@ -9,12 +9,12 @@ export default function StatsCards({ stats }: any) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
 
-      <Card>
+      {/* <Card>
         <CardContent className="p-4">
           <p className="text-sm text-muted-foreground">Calls Made</p>
           <h2 className="text-2xl font-bold">{stats?.calls_made || 0}</h2>
         </CardContent>
-      </Card>
+      </Card> */}
 
       <Card>
         <CardContent className="p-4">
@@ -32,7 +32,7 @@ export default function StatsCards({ stats }: any) {
 
       <Card>
         <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">Points ⭐</p>
+          <p className="text-sm text-muted-foreground">Points </p>
           <h2 className="text-2xl font-bold">{stats?.points || 0}</h2>
         </CardContent>
       </Card>

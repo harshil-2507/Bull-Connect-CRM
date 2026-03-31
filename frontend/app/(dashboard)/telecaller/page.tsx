@@ -15,7 +15,7 @@ import CallDialog from "@/components/telecaller/CallDialog"
 
 export default function TelecallerPage() {
 
-  const { loading } = useAuth() // ✅ updated
+  const { loading } = useAuth() //  updated
 
   const { data: queue } = useWorkQueue()
   const { data: stats } = useStats()
@@ -24,7 +24,7 @@ export default function TelecallerPage() {
   const [selectedLead, setSelectedLead] = useState<any>(null)
   const [open, setOpen] = useState(false)
 
-  // ✅ prevent flicker + redirect loop
+  //  prevent flicker + redirect loop
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center">

@@ -41,11 +41,19 @@ export function useCall() {
   return useMutation({
     mutationFn: async (payload: any) => {
       const res = await api.post("telecaller/call", payload)
+
+      if (res.data?.error) {
+        throw new Error(res.data.error)
+      }
+
       return res.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["telecaller-queue"] })
       queryClient.invalidateQueries({ queryKey: ["telecaller-stats"] })
+    },
+    onError: (err: any) => {
+      alert(err.message || "Something went wrong")
     }
   })
 }

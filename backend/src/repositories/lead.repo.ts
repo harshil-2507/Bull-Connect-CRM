@@ -4,7 +4,7 @@ import { LeadState } from "../models/lead.model";
 export class LeadRepository {
   async lock(tx: PoolClient, leadId: string) {
     const res = await tx.query(
-      `SELECT id, status FROM leads WHERE id = $1 FOR UPDATE`,
+      `SELECT id, status, assigned_to FROM leads WHERE id = $1 FOR UPDATE`,
       [leadId]
     );
     if (!res.rowCount) throw new Error("Lead not found");

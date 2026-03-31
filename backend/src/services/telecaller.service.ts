@@ -5,24 +5,22 @@ import { pool } from "../config/db";
 export class TelecallerService {
 
   async getWorkQueue(userId: string) {
+  const res = await pool.query(
+    `
+    SELECT l.*
+    FROM leads l
+    JOIN assignments a ON a.lead_id = l.id
+    WHERE a.user_id = $1
+      AND a.is_active = true
+      AND l.status != 'VISIT_COMPLETED'   -- ✅ FIX HERE
+    ORDER BY l.updated_at DESC
+    LIMIT 20
+    `,
+    [userId]
+  );
 
-    const res = await pool.query(
-      `
-      SELECT l.*
-      FROM leads l
-      JOIN assignments a ON a.lead_id = l.id
-      WHERE a.user_id = $1
-        AND a.is_active = true
-        AND l.status IN ('ASSIGNED', 'CONTACTED', 'INTERESTED', 'WAITING')
-      ORDER BY l.updated_at DESC
-      LIMIT 20
-      `,
-      [userId]
-    );
-
-    return res.rows || [];
-  }
-
+  return res.rows || [];
+}
   async getMyStats(userId: string) {
 
     const res = await pool.query(

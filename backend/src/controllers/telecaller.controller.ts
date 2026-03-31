@@ -13,6 +13,7 @@ const leadStateService = new LeadStateService();
  */
 export async function logCall(req: Request, res: Response) {
   try {
+
     const {
       leadId,
       disposition,
@@ -22,7 +23,7 @@ export async function logCall(req: Request, res: Response) {
       acreage,
       nextCallbackAt
     } = req.body;
-
+    console.log("REQ BODY:", req.body);
     // Step 1: log call (fixed mapping inside service)
     await recordCallOnly({
       leadId,
@@ -33,17 +34,26 @@ export async function logCall(req: Request, res: Response) {
     });
 
     // Step 2: update lead state
-    const result = await leadStateService.handleTelecallerCall({
-      leadId,
-      userId: req.user.id,
-      disposition,
-      notes,
-      cropType,
-      acreage,
-      nextCallbackAt: nextCallbackAt ? new Date(nextCallbackAt) : undefined
-    });
+    let result;
 
-    res.status(200).json({
+    try {
+      result = await leadStateService.handleTelecallerCall({
+        leadId,
+        userId: req.user.id,
+        disposition,
+        notes,
+        cropType,
+        acreage,
+        nextCallbackAt: nextCallbackAt ? new Date(nextCallbackAt) : undefined
+      });
+    } catch (err) {
+      console.error("STATE ERROR:", err);
+      throw err; //  IMPORTANT: propagate error properly
+    }
+
+
+
+    return res.status(200).json({
       message: "Call processed successfully",
       newStatus: result.status
     });

@@ -120,33 +120,41 @@ export class LeadStateService {
       return res.rows[0];
     });
   }
-  // ADD THIS INSIDE LeadStateService
+
 
   async handleTelecallerCall(input: {
     leadId: string;
     userId: string;
-    disposition: "NOT_INTERESTED" | "INTERESTED" | "FOLLOW_UP" | "CONTACTED";
+    disposition: "NOT_INTERESTED" | "INTERESTED" | "CALLBACK";
     notes?: string;
     cropType?: string;
     acreage?: number;
     nextCallbackAt?: Date;
+
   }) {
+    console.log("INTERESTED INPUT:", input);
     return withTransaction(async (tx) => {
 
+      //  Step 1: Lock lead
       const lead = await this.leadRepo.lock(tx, input.leadId);
 
+      if (!lead) {
+        throw new Error("Lead not found");
+      }
+
+      //  Step 2: VALIDATE ASSIGNMENT (FIXED )
+      //  USE leads.assigned_to (SIMPLE + CORRECT)
       if (lead.assigned_to !== input.userId) {
+        console.log("ASSIGNMENT MISMATCH:", {
+          leadAssignedTo: lead.assigned_to,
+          userId: input.userId
+        });
+
         throw new Error("Lead not assigned to you");
       }
 
-      // ================= CONTACTED =================
-      if (input.disposition === "CONTACTED") {
-        await this.leadRepo.updateState(tx, input.leadId, "CONTACTED");
-        return { status: "CONTACTED" };
-      }
-
-      // ================= FOLLOW UP =================
-      if (input.disposition === "FOLLOW_UP") {
+      // ================= CALLBACK =================
+      if (input.disposition === "CALLBACK") {
         await tx.query(
           `UPDATE leads 
          SET next_callback_at = $1,
@@ -162,6 +170,7 @@ export class LeadStateService {
 
       // ================= NOT INTERESTED =================
       if (input.disposition === "NOT_INTERESTED") {
+
         await this.leadRepo.updateState(tx, input.leadId, "CONTACTED");
 
         await this.actionRepo.drop(
@@ -171,7 +180,22 @@ export class LeadStateService {
           input.notes || "No reason"
         );
 
-        await this.leadRepo.updateState(tx, input.leadId, "DROPPED");
+        await tx.query(
+  `
+  UPDATE leads
+  SET 
+    status = 'DROPPED',
+    drop_reason = $1,
+    drop_notes = $2,
+    updated_at = NOW()
+  WHERE id = $3
+  `,
+  [
+    "NOT_INTERESTED",
+    input.notes || "No reason",
+    input.leadId
+  ]
+);
 
         return { status: "DROPPED" };
       }
@@ -180,15 +204,22 @@ export class LeadStateService {
       if (input.disposition === "INTERESTED") {
 
         if (!input.cropType || !input.acreage) {
-          throw new Error("INTERESTED requires cropType & acreage");
+          throw new Error("Please provide cropType and acreage for INTERESTED");
         }
 
-        const deal = await this.dealRepo.create(tx, {
-          leadId: input.leadId,
-          cropType: input.cropType,
-          estimatedQuantity: input.acreage,
-          createdBy: input.userId,
-        });
+        let deal;
+
+        try {
+          deal = await this.dealRepo.create(tx, {
+            leadId: input.leadId,
+            cropType: input.cropType,
+            estimatedQuantity: input.acreage,
+            createdBy: input.userId,
+          });
+        } catch (err) {
+          console.error("DEAL CREATE FAILED:", err);
+          throw new Error("Deal creation failed");
+        }
 
         await this.dealRepo.updateState(tx, deal.id, "CONTACTED");
 
@@ -201,7 +232,21 @@ export class LeadStateService {
           input.notes || null
         );
 
-        await this.leadRepo.updateState(tx, input.leadId, "VISIT_REQUESTED");
+        await tx.query(
+          `
+  UPDATE leads
+  SET 
+    crop_type = $1,
+    acreage = $2,
+    status = 'VISIT_REQUESTED'
+  WHERE id = $3
+  `,
+          [
+            input.cropType,
+            input.acreage,
+            input.leadId
+          ]
+        );
 
         return { status: "VISIT_REQUESTED" };
       }
@@ -224,7 +269,7 @@ export class LeadStateService {
 
       const lead = await this.leadRepo.lock(tx, leadId);
 
-      const validDispositions = ["INTERESTED", "NOT_INTERESTED", "FOLLOW_UP"];
+      const validDispositions = ["INTERESTED", "NOT_INTERESTED", "CALLBACK"];
       if (!validDispositions.includes(disposition)) {
         throw new Error(`Invalid disposition: ${disposition}`);
       }
@@ -254,24 +299,56 @@ export class LeadStateService {
         validateLeadTransition("CONTACTED", "VISIT_REQUESTED");
 
         await this.actionRepo.requestFieldVisit(tx, leadId, telecallerId, notes);
-        await this.leadRepo.updateState(tx, leadId, "VISIT_REQUESTED");
+        await tx.query(
+          `
+  UPDATE leads
+  SET 
+    crop_type = $1,
+    acreage = $2,
+    status = 'VISIT_REQUESTED'
+  WHERE id = $3
+  `,
+          [cropType, acreage, leadId]
+        );
       }
 
       // ================= NOT INTERESTED =================
       if (disposition === "NOT_INTERESTED") {
 
-        if (lead.status === "ASSIGNED") {
-          await this.leadRepo.updateState(tx, leadId, "CONTACTED");
-        }
+        //  validate using actual status
+        validateLeadTransition(lead.status, "DROPPED");
 
-        validateLeadTransition("CONTACTED", "DROPPED");
+        //  log action
+        await this.actionRepo.drop(
+          tx,
+          leadId,
+          telecallerId,
+          notes ?? "No reason"
+        );
 
-        await this.actionRepo.drop(tx, leadId, telecallerId, notes ?? "No reason");
-        await this.leadRepo.updateState(tx, leadId, "DROPPED");
+        //  single atomic update 
+        await tx.query(
+  `
+  UPDATE leads
+  SET 
+    status = 'DROPPED',
+    drop_reason = $1,
+    drop_notes = $2,
+    updated_at = NOW()
+  WHERE id = $3
+  `,
+  [
+    "NOT_INTERESTED",        //  ENUM VALUE
+    notes ?? "No reason",    //  TEXT FIELD
+    leadId
+  ]
+);
+
+        return { status: "DROPPED" };
       }
 
       // ================= FOLLOW UP =================
-      if (disposition === "FOLLOW_UP") {
+      if (disposition === "CALLBACK") {
         validateLeadTransition(lead.status, "CONTACTED");
         await this.leadRepo.updateState(tx, leadId, "CONTACTED");
       }
@@ -370,7 +447,7 @@ export class LeadStateService {
   }
 
   // ============================================================
-  // 📋 FIELD REQUESTS
+  //  FIELD REQUESTS
   // ============================================================
 
   async getAllFieldRequests() {

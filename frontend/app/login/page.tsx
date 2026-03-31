@@ -23,13 +23,13 @@ export default function LoginPage() {
 
       console.log("LOGIN RESPONSE:", data)
 
-      // ✅ Store token + user
+      //  Store token + user
       localStorage.setItem("token", data.token)
       localStorage.setItem("user", JSON.stringify(data.user))
 
       const role = data.user.role
 
-      // ✅ Direct routing (no timeout needed)
+      //  Direct routing (no timeout needed)
       if (role === "ADMIN") {
         router.replace("/admin/dashboard")
       }
@@ -39,7 +39,7 @@ export default function LoginPage() {
       }
 
       else if (role === "TELECALLER") {
-        router.replace("/telecaller") // ✅ FIXED
+        router.replace("/telecaller") //  FIXED
       }
 
       else if (role === "FIELD_EXEC") {

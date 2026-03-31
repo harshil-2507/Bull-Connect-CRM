@@ -44,7 +44,7 @@ export function validateLeadTransition(
   }
 
   const allowedNextStates = ALLOWED_TRANSITIONS[currentStatus];
-  
+
   if (!allowedNextStates.includes(nextStatus)) {
     throw new Error(
       `Invalid lead status transition: ${currentStatus} → ${nextStatus}. ` +
@@ -142,7 +142,10 @@ export function getStatusChangeFromDisposition(
         return 'VISIT_REQUESTED';
       }
       // Otherwise, just mark as contacted
-      return currentStatus === 'ASSIGNED' ? 'CONTACTED' : null;
+      if (currentStatus === 'ASSIGNED' || currentStatus === 'NEW') {
+        return 'CONTACTED';
+      }
+      return null;
 
     case 'NOT_INTERESTED':
     case 'INVALID_NUMBER':

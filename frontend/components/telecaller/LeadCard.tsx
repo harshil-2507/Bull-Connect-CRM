@@ -1,5 +1,3 @@
-// frontend/components/telecaller/LeadCard.tsx
-
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -16,11 +14,11 @@ export default function LeadCard({ lead, onCall }: any) {
       </div>
 
       <p className="text-sm text-muted-foreground">
-        📞 {lead.phone_number}
+        {lead.phone_number}
       </p>
 
       <p className="text-sm text-muted-foreground">
-        📍 {lead.village}, {lead.taluka}
+        {lead.village}, {lead.taluka}
       </p>
 
       {lead.latest_tag && (

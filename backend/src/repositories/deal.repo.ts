@@ -30,42 +30,50 @@ export class DealRepository {
     );
   }
 
+
   async create(
-  tx: PoolClient,
-  data: {
-    leadId: string;
-    cropType?: string;
-    estimatedQuantity?: number;
-    expectedValue?: number;
-    createdBy: string;
+    tx: PoolClient,
+    data: {
+      leadId: string;
+      cropType?: string;
+      estimatedQuantity?: number;
+      expectedValue?: number;
+      createdBy: string;
+    }
+  ) {
+    try {
+      console.log("DEAL CREATE INPUT:", data);
+
+      const res = await tx.query(
+        `
+      INSERT INTO deals (
+  lead_id,
+  crop_type,
+  estimated_quantity,
+  expected_value,
+  status,
+  created_by,
+  telecaller_id
+)
+VALUES ($1,$2,$3,$4,'NEW',$5,$5)
+      RETURNING *
+      `,
+        [
+          data.leadId,
+          data.cropType ?? null,
+          data.estimatedQuantity ?? null,
+          data.expectedValue ?? 0, // 🔥 FIX HERE
+          data.createdBy
+        ]
+      );
+
+      return res.rows[0];
+
+    } catch (err: any) {
+      console.error("DEAL CREATE ERROR:", err);
+      throw new Error(err.message || "Deal creation failed");
+    }
   }
-) {
-  const res = await tx.query(
-    `
-    INSERT INTO deals (
-      lead_id,
-      crop_type,
-      estimated_quantity,
-      expected_value,
-      status,
-      created_by,
-      assigned_to
-    )
-    VALUES ($1,$2,$3,$4,'NEW',$5,$5)
-    RETURNING *
-    `,
-    [
-      data.leadId,
-      data.cropType ?? null,
-      data.estimatedQuantity ?? null,
-      data.expectedValue ?? null,
-      data.createdBy
-    ]
-  );
-
-  return res.rows[0];
-}
-
   async findById(tx: PoolClient, dealId: string) {
     const res = await tx.query(
       `SELECT * FROM deals WHERE id = $1`,
@@ -97,7 +105,7 @@ export class DealRepository {
     await tx.query(
       `
     UPDATE deals
-    SET assigned_to = $1,
+    SET field_exec_id = $1,
         updated_at = NOW()
     WHERE id = $2
     `,
