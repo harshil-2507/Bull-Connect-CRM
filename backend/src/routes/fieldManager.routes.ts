@@ -1,29 +1,38 @@
 import { Router } from "express";
 import { roleGuard } from "../middlewares/roleGuard";
-import { 
-  assignFieldExec,
-  getAllFieldRequests,
-  getFieldRequestById,
-  getAllFieldVerifications,
-  getFieldVerificationById
+import {
+  getMapData,
+  getTalukaDetails,
+  smartAssign,
+  bulkAssign,
+  getTeamStatus,
+  getCompletedVisits,
+  reassignVisit
 } from "../controllers/fieldManager.controller";
 
 const router = Router();
 
-/**
- * FIELD MANAGER only routes
- */
 router.use(roleGuard(["FIELD_MANAGER"]));
 
-// Field Requests
-router.get("/field-requests", getAllFieldRequests);
-router.get("/field-requests/:id", getFieldRequestById);
+// MAP
+router.get("/map", getMapData);
 
-// Field Verifications
-router.get("/field-verifications", getAllFieldVerifications);
-router.get("/field-verifications/:id", getFieldVerificationById);
+// TALUKA
+router.get("/taluka/:taluka", getTalukaDetails);
 
-// Assign Field Exec
-router.post("/assign-field-exec", assignFieldExec);
+// SMART ASSIGN
+router.post("/assign/smart", smartAssign);
+
+// BULK ASSIGN
+router.post("/assign/bulk", bulkAssign);
+
+// TEAM STATUS
+router.get("/team/status", getTeamStatus);
+
+// COMPLETED VISITS
+router.get("/visits/completed", getCompletedVisits);
+
+// REASSIGN
+router.post("/reassign", reassignVisit);
 
 export default router;
