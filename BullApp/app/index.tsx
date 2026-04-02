@@ -73,7 +73,7 @@ export default function Index() {
         case "FIELD_MANAGER":
           router.replace("/groundmanager");
           break;
-        case "FIELD_EXECUTIVE":
+        case "FIELD_EXEC":
           router.replace("/groundexecutive");
           break;
         default:
