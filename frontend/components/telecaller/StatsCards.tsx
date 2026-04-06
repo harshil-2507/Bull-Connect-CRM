@@ -1,42 +1,31 @@
-// frontend/components/telecaller/StatsCards.tsx
-
 "use client"
 
-import { Card, CardContent } from "@/components/ui/card"
+import { StatsCard } from "@/components/shared/StatsCard"
+import { PhoneCall, UserCheck, Heart, Star } from "lucide-react"
 
 export default function StatsCards({ stats }: any) {
-
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-
-      {/* <Card>
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">Calls Made</p>
-          <h2 className="text-2xl font-bold">{stats?.calls_made || 0}</h2>
-        </CardContent>
-      </Card> */}
-
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">Contacted</p>
-          <h2 className="text-2xl font-bold">{stats?.contacted || 0}</h2>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">Interested</p>
-          <h2 className="text-2xl font-bold">{stats?.interested || 0}</h2>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardContent className="p-4">
-          <p className="text-sm text-muted-foreground">Points </p>
-          <h2 className="text-2xl font-bold">{stats?.points || 0}</h2>
-        </CardContent>
-      </Card>
-
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <StatsCard 
+        title="Calls Made" 
+        value={stats?.calls_made || 0} 
+        icon={PhoneCall} 
+      />
+      <StatsCard 
+        title="Contacted" 
+        value={stats?.contacted || 0} 
+        icon={UserCheck} 
+      />
+      <StatsCard 
+        title="Interested" 
+        value={stats?.interested || 0} 
+        icon={Heart} 
+      />
+      <StatsCard 
+        title="Points" 
+        value={stats?.points || 0} 
+        icon={Star} 
+      />
     </div>
   )
 }

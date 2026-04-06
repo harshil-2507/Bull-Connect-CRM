@@ -1,251 +1,170 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { useState } from "react"
-import { KpiCard } from "@/components/dashboard/kpi-card"
 import { useDashboardSummary } from "@/hooks/useDashboardSummary"
 import { Skeleton } from "@/components/ui/skeleton"
-import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel"
-import { staggerContainer, fadeUp } from "@/lib/motion"
-
+import { StatsCard } from "@/components/shared/StatsCard"
+import { 
+  Users, 
+  Target, 
+  CircleDollarSign, 
+  Activity,
+  PhoneCall,
+  LayoutDashboard
+} from "lucide-react"
 import { PipelineAnalytics } from "@/components/dashboard/PipelineAnalytics"
 import { TelecallerPerformanceTable } from "@/components/dashboard/TelecallerPerformanceTable"
+import { DashboardFunnel } from "@/components/dashboard/DashboardFunnel"
+import { cn } from "@/lib/utils"
 
-const mockTrendData = [
-    { value: 10 },
-    { value: 15 },
-    { value: 18 },
-    { value: 22 },
-    { value: 19 },
-    { value: 25 },
+const mockTrend = [
+  { value: 10 }, { value: 15 }, { value: 12 }, { value: 18 }, { value: 16 }, { value: 20 }
 ]
-
-const timeframes = ["7D", "30D", "90D", "1Y"]
 
 export default function DashboardPage() {
     const { data, isLoading } = useDashboardSummary()
     const [activeTimeframe, setActiveTimeframe] = useState("30D")
 
-    const cards = [
-        {
-            title: "Total Leads",
-            value: data?.totalLeads,
-            delta: 2.3,
-            trend: mockTrendData,
-        },
-        {
-            title: "Active Leads",
-            value: data?.activeLeads,
-            trend: mockTrendData,
-        },
-        {
-            title: "Sold Leads",
-            value: data?.soldLeads,
-            trend: mockTrendData,
-        },
-        {
-            title: "Conversion Rate",
-            value: data?.conversionRate,
-            type: "percentage" as const,
-            delta: 2.3,
-            trend: mockTrendData,
-        },
-        {
-            title: "Visit Conversion",
-            value: data?.visitConversionRate,
-            type: "percentage" as const,
-            delta: 5.8,
-            trend: mockTrendData,
-        },
-        {
-            title: "Total Revenue",
-            value: data?.totalRevenue,
-            type: "currency" as const,
-        },
-    ]
-
     return (
-        <div
-            className="
-        relative min-h-screen px-8 py-10 overflow-hidden
-        bg-gradient-to-b
-from-gray-50 via-white to-gray-100
-      "
-        >
-            {/* Floating Background Particles */}
-            <motion.div
-                className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"
-                animate={{ y: [0, -30, 0] }}
-                transition={{ duration: 12, repeat: Infinity }}
-            />
-
-            <motion.div
-                className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"
-                animate={{ y: [0, 40, 0] }}
-                transition={{ duration: 15, repeat: Infinity }}
-            />
-
-            <div className="relative space-y-12">
-
-                {/* Header */}
-                <div className="flex items-center justify-between">
-
-
-
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight relative inline-block text-gray-900">
-                            Admin Dashboard
-                            <motion.span
-                                layoutId="underline"
-                                className="absolute left-0 -bottom-1 h-[3px] bg-blue-600 rounded-full"
-                                initial={{ width: 0 }}
-                                animate={{ width: "100%" }}
-                                transition={{ duration: 0.6 }}
-                            />
-                        </h1>
-
-                        <p className="text-sm mt-2 text-gray-500">
-                            Performance overview & conversion analytics
-                        </p>
-                    </div>
-
-                    {/* Timeframe Selector */}
-                    <div
-                        className="
-              flex gap-2 p-1 rounded-xl shadow-sm
-              bg-white
-              border border-gray-200
-            "
-                    >
-                        {timeframes.map((tf) => (
-                            <button
-                                key={tf}
-                                onClick={() => setActiveTimeframe(tf)}
-                                className={`px-3 py-1.5 text-sm rounded-lg transition-all ${activeTimeframe === tf
-                                    ? "bg-blue-600 text-white shadow"
-                                    : "text-gray-600 hover:bg-gray-100"
-                                    }`}
-                            >
-                                {tf}
-                            </button>
-                        ))}
-                    </div>
+        <div className="min-h-screen bg-[#F9FAFC] px-8 py-10 space-y-10">
+            
+            {/* Header Section */}
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-4xl font-bold text-slate-900 tracking-tight">
+                        Admin Dashboard
+                    </h1>
+                    <p className="text-slate-500 mt-1 font-medium">
+                        Performance overview & conversion analytics.
+                    </p>
                 </div>
 
-                {/* KPI Section */}
-                {isLoading ? (
-                    <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6">
-                        {Array.from({ length: 6 }).map((_, i) => (
-                            <Skeleton key={i} className="h-32 w-full rounded-xl" />
-                        ))}
-                    </div>
-                ) : (
-                    <motion.div
-                        initial="hidden"
-                        animate="visible"
-                        variants={staggerContainer}
-                        className="
-              p-6 rounded-2xl backdrop-blur shadow-lg
-              bg-white
-              border border-gray-200
-            "
-                    >
-                        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6">
-                            {cards.map((card, index) => (
-                                <motion.div
-                                    key={index}
-                                    variants={fadeUp}
-                                    whileHover={{ scale: 1.03 }}
-                                    transition={{ duration: 0.3 }}
-                                >
-                                    <KpiCard {...card} />
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
-
-                {/* Divider */}
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"
-                />
-                <div className="xl:col-span-2">
-                    <PipelineAnalytics />
+                <div className="flex gap-2 bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+                    {["7D", "30D", "90D", "1Y"].map((tf) => (
+                        <button 
+                            key={tf}
+                            onClick={() => setActiveTimeframe(tf)}
+                            className={cn(
+                                "px-4 py-1.5 text-xs font-bold rounded-lg transition-all",
+                                tf === activeTimeframe ? "bg-blue-600 text-white shadow-lg shadow-blue-100" : "text-slate-400 hover:text-slate-600"
+                            )}
+                        >
+                            {tf}
+                        </button>
+                    ))}
                 </div>
+            </div>
 
-                <div className="mt-12">
-                    <TelecallerPerformanceTable />
+            {/* KPI Section */}
+            {isLoading ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <Skeleton key={i} className="h-40 w-full rounded-2xl" />
+                    ))}
                 </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-6 gap-6">
+                    <StatsCard 
+                        title="Total Leads"
+                        value={data?.totalLeads || 0}
+                        delta={{ value: "+2.3%", isPositive: true }}
+                        trendData={mockTrend}
+                    />
+                    <StatsCard 
+                        title="Active Leads"
+                        value={data?.activeLeads || 0}
+                        icon={Users}
+                    />
+                    <StatsCard 
+                        title="Sold Leads"
+                        value={data?.soldLeads || 0}
+                        icon={Target}
+                    />
+                    <StatsCard 
+                        title="Conversion Rate"
+                        value={`${(data?.conversionRate || 0).toFixed(1)}%`}
+                        delta={{ value: "+2.3%", isPositive: true }}
+                    />
+                    <StatsCard 
+                        title="Visit Conversion"
+                        value={`${(data?.visitConversionRate || 0).toFixed(1)}%`}
+                        delta={{ value: "+5.8%", isPositive: true }}
+                    />
+                    <StatsCard 
+                        title="Total Revenue"
+                        value={`₹${(data?.totalRevenue || 0).toLocaleString()}`}
+                        icon={CircleDollarSign}
+                    />
+                </div>
+            )}
 
-
-
-                {/* Funnel + hard coded Insights to align cards design */}
-
-
-                <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-
-                    <div className="xl:col-span-2">
-                        <DashboardFunnel />
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                
+                {/* Charts Section */}
+                <div className="xl:col-span-2 space-y-8">
+                    
+                    <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                       <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                         <Activity className="text-blue-600" size={20} />
+                         Pipeline Analytics
+                       </h2>
+                       <PipelineAnalytics />
                     </div>
 
-                    {/* Insights Card */}
-                    <motion.div
-  initial={{ opacity: 0, x: 40 }}
-  animate={{ opacity: 1, x: 0 }}
-  transition={{ duration: 0.6 }}
-  className="
-    p-8 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300
-    bg-white
-    border border-gray-200
-  "
->
-  <h2 className="text-lg font-semibold mb-6 text-gray-900">
-    Performance Insights
-  </h2>
-
-  {data && (
-    <div className="space-y-6 text-sm text-gray-500">
-
-      {/* Lead → Visit Conversion */}
-      <div>
-        <p className="font-medium text-gray-900">
-          Lead → Visit Conversion
-        </p>
-        <p>
-          {((data.visitCompleted / data.totalLeads) * 100).toFixed(1)}% of leads
-          progressed to farm visits.
-        </p>
-      </div>
-
-      {/* Visit → Deal Conversion */}
-      <div>
-        <p className="font-medium text-gray-900">
-          Visit → Deal Conversion
-        </p>
-        <p>
-          {((data.soldLeads / data.visitCompleted) * 100).toFixed(1)}% of visits
-          converted into closed deals.
-        </p>
-      </div>
-
-      {/* Average Deal Value */}
-      <div>
-        <p className="font-medium text-gray-900">
-          Average Deal Value
-        </p>
-        <p>
-          ₹{Math.round(data.totalRevenue / Math.max(data.soldLeads, 1)).toLocaleString()} per sale on average.
-        </p>
-      </div>
-
-    </div>
-  )}
-</motion.div>
+                    <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                       <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                         <PhoneCall className="text-blue-600" size={20} />
+                         Telecaller Performance
+                       </h2>
+                       <TelecallerPerformanceTable />
+                    </div>
 
                 </div>
 
+                {/* Right Column: Funnel & Insights */}
+                <div className="space-y-8">
+                    
+                    <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+                       <h2 className="text-xl font-bold text-slate-900 mb-6 flex items-center gap-2">
+                         <LayoutDashboard className="text-blue-600" size={20} />
+                         Lead Funnel
+                       </h2>
+                       <DashboardFunnel />
+                    </div>
+
+                    <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm relative overflow-hidden">
+                       <div className="relative z-10">
+                          <h2 className="text-xl font-bold text-slate-900 mb-6">Performance Insights</h2>
+                          {data && (
+                            <div className="space-y-6">
+                               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Lead → Visit</p>
+                                  <p className="font-bold text-slate-900">{((data.visitCompleted / data.totalLeads) * 100).toFixed(1)}% Conversion</p>
+                                  <p className="text-xs text-slate-500 mt-1">Leads progressed to farm visits.</p>
+                               </div>
+                               <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Visit → Deal</p>
+                                  <p className="font-bold text-slate-900">{((data.soldLeads / data.visitCompleted) * 100).toFixed(1)}% Conversion</p>
+                                  <p className="text-xs text-slate-500 mt-1">Visits converted into closed deals.</p>
+                               </div>
+                               <div className="p-4 bg-blue-600 rounded-2xl text-white shadow-lg shadow-blue-100">
+                                  <p className="text-[10px] font-bold uppercase tracking-widest text-blue-100 mb-1">Average Deal Value</p>
+                                  <p className="text-2xl font-bold">₹{Math.round(data.totalRevenue / Math.max(data.soldLeads, 1)).toLocaleString()}</p>
+                                  <p className="text-[10px] font-medium text-blue-100/60 mt-1">Net average per sale</p>
+                               </div>
+                            </div>
+                          )}
+                       </div>
+                       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50/50 rounded-full translate-x-16 -translate-y-16" />
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-300 py-10">
+                Bull Connect © 2026. All performance data processed with precision.
             </div>
         </div>
     )

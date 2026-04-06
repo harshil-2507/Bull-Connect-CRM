@@ -1,70 +1,42 @@
 "use client"
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useCampaigns } from "@/hooks/useCampaigns"
+import { StatsCard } from "@/components/shared/StatsCard"
+import { Megaphone, CheckCircle, FileText, PauseCircle } from "lucide-react"
 
 export default function CampaignStats() {
+    const { data, isLoading } = useCampaigns()
 
-  const { data, isLoading } = useCampaigns()
+    if (isLoading) return null
 
-  if (isLoading) return null
+    const campaigns = data || []
+    const total = campaigns.length
+    const active = campaigns.filter((c:any) => c.status === "ACTIVE").length
+    const draft = campaigns.filter((c:any) => c.status === "DRAFT").length
+    const paused = campaigns.filter((c:any) => c.status === "PAUSED").length
 
-  const campaigns = data || []
-
-  const total = campaigns.length
-  const active = campaigns.filter((c:any) => c.status === "ACTIVE").length
-  const draft = campaigns.filter((c:any) => c.status === "DRAFT").length
-  const paused = campaigns.filter((c:any) => c.status === "PAUSED").length
-
-  return (
-
-    <div className="grid grid-cols-4 gap-4">
-
-      <Card className="bg-white">
-        <CardHeader>
-          <CardTitle className="text-black">
-            Total Campaigns
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-2xl font-bold text-black">
-          {total}
-        </CardContent>
-      </Card>
-
-      <Card className="bg-white">
-        <CardHeader>
-          <CardTitle className="text-black">
-            Active
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-2xl font-bold text-green-600">
-          {active}
-        </CardContent>
-      </Card>
-
-      <Card className="bg-white">
-        <CardHeader>
-          <CardTitle className="text-black">
-            Draft
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-2xl font-bold text-gray-700">
-          {draft}
-        </CardContent>
-      </Card>
-
-      <Card className="bg-white">
-        <CardHeader>
-          <CardTitle className="text-black">
-            Paused
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="text-2xl font-bold text-orange-600">
-          {paused}
-        </CardContent>
-      </Card>
-
-    </div>
-
-  )
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <StatsCard 
+                title="Total Campaigns" 
+                value={total} 
+                icon={Megaphone} 
+            />
+            <StatsCard 
+                title="Active" 
+                value={active} 
+                icon={CheckCircle} 
+            />
+            <StatsCard 
+                title="Draft" 
+                value={draft} 
+                icon={FileText} 
+            />
+            <StatsCard 
+                title="Paused" 
+                value={paused} 
+                icon={PauseCircle} 
+            />
+        </div>
+    )
 }

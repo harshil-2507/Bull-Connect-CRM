@@ -10,19 +10,22 @@ import {
   Users,
   PhoneCall,
   Megaphone,
-  Database
+  Database,
+  LogOut,
+  Plus
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 
 const navigationByRole: any = {
 
   ADMIN: [
     {
-      title: "Management",
+      title: "Main Menu",
       items: [
         { label: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-        { label: "Users", href: "/admin/users", icon: Users },
         { label: "Campaigns", href: "/admin/campaigns", icon: Megaphone },
-        { label: "Leads", href: "/admin/leads", icon: Database }
+        { label: "Leads", href: "/admin/leads", icon: Database },
+        { label: "Users", href: "/admin/users", icon: Users },
       ]
     }
   ],
@@ -79,31 +82,26 @@ export default function Sidebar() {
 
   return (
 
-    <aside className="w-64 bg-[#0f172a] text-white flex flex-col h-full border-r border-slate-800">
+    <aside className="w-64 bg-white flex flex-col h-full border-r border-slate-200">
 
       {/* Logo */}
 
-      <div className="h-16 flex items-center px-6 border-b border-white/5 font-semibold text-lg text-blue-400">
-        Bull Connect
-      </div>
-
-      {/* Role */}
-
-      <div className="text-[10px] uppercase tracking-wider text-slate-500 px-6 py-3 border-b border-white/5 bg-black/20">
-        {role} PANEL
+      <div className="h-20 flex flex-col justify-center px-6 border-b border-slate-100">
+        <div className="text-blue-600 font-bold text-lg leading-tight">
+          Bull Connect
+        </div>
+        <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+          OPERATIONAL SUITE
+        </div>
       </div>
 
       {/* Navigation */}
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-8">
+      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-8">
 
         {sections.map((section: any) => (
 
           <div key={section.title}>
-
-            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 px-3 mb-4">
-              {section.title}
-            </p>
 
             <div className="space-y-1">
 
@@ -118,16 +116,20 @@ export default function Sidebar() {
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all group",
+                      "flex items-center gap-3 px-3 py-2.5 rounded-lg text-[14px] font-medium transition-all group relative",
                       active
-                        ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
-                        : "text-slate-400 hover:bg-white/5 hover:text-white"
+                        ? "text-blue-600 bg-blue-50/50"
+                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-900"
                     )}
                   >
 
-                    <Icon size={18} className={cn(
+                    {active && (
+                      <div className="absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-blue-600 rounded-l-full" />
+                    )}
+
+                    <Icon size={20} className={cn(
                       "transition-colors",
-                      active ? "text-white" : "text-slate-500 group-hover:text-slate-300"
+                      active ? "text-blue-600" : "text-slate-400 group-hover:text-slate-600"
                     )} />
 
                     {item.label}
@@ -143,6 +145,33 @@ export default function Sidebar() {
           </div>
 
         ))}
+
+      </div>
+
+      {/* Bottom Actions */}
+
+      <div className="p-4 border-t border-slate-100 space-y-4">
+
+        <Button
+          className="w-full justify-start gap-3 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow-lg shadow-blue-200"
+          onClick={() => router.push("/admin/leads/new")}
+        >
+          <div className="bg-white/20 p-1 rounded-md">
+            <Plus size={16} />
+          </div>
+          Create New Lead
+        </Button>
+
+        <button 
+          onClick={() => {
+            localStorage.clear()
+            window.location.href = "/login"
+          }}
+          className="flex items-center gap-3 px-3 py-2 text-slate-500 hover:text-slate-900 transition-colors w-full text-sm font-medium"
+        >
+          <LogOut size={18} />
+          Log Out
+        </button>
 
       </div>
 

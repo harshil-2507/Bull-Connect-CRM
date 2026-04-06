@@ -1,29 +1,22 @@
 "use client"
 
 import { useState } from "react"
-
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
-
+import { StatusBadge } from "@/components/shared/StatusBadge"
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-
-import { MoreVertical } from "lucide-react"
-
+import { MoreVertical, Edit3, Lock, UserX, UserCheck, Trash2 } from "lucide-react"
 import { useDeleteUser } from "@/hooks/useDeleteUser"
 import { useDeactivateUser } from "@/hooks/useUpdateUserStatus"
 import { useResetPassword } from "@/hooks/useResetPassword"
-
-// import { api } from "@/lib/api"
 import { useQueryClient } from "@tanstack/react-query"
-
 import { toast } from "sonner"
-
 import EditUserDialog from "./EditUserDialog"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 type User = {
     id: string
@@ -35,286 +28,150 @@ type User = {
 }
 
 export default function UsersTable({ users }: { users: User[] }) {
-
     const deleteUser = useDeleteUser()
     const deactivateUser = useDeactivateUser()
     const resetPassword = useResetPassword()
-
     const queryClient = useQueryClient()
 
     const [selectedUser, setSelectedUser] = useState<User | null>(null)
     const [editOpen, setEditOpen] = useState(false)
 
     function getInitials(name: string) {
-        return name
-            .split(" ")
-            .map((n) => n[0])
-            .join("")
-            .slice(0, 2)
+        return name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
     }
 
-    function roleColor(role: string) {
-
-        switch (role) {
-
-            case "TELECALLER":
-                return "bg-purple-100 text-purple-700"
-
-            case "FIELD_MANAGER":
-                return "bg-green-100 text-green-700"
-
-            case "FIELD_EXEC":
-                return "bg-orange-100 text-orange-700"
-
-            case "MANAGER":
-                return "bg-blue-100 text-blue-700"
-
-            case "ADMIN":
-                return "bg-red-100 text-red-700"
-
-            default:
-                return ""
-
-        }
-
-    }
-
-    /* ACTIVATE USER */
     async function handleActivate(user: User) {
-
         deactivateUser.mutate(
-            {
-                id: user.id,
-                is_active: true
-            },
+            { id: user.id, is_active: true },
             {
                 onSuccess: () => toast.success(`${user.name} activated`),
                 onError: () => toast.error("Failed to activate user")
             }
         )
-
     }
 
-    /* DEACTIVATE USER */
     function handleDeactivate(user: User) {
-
         deactivateUser.mutate(
+            { id: user.id, is_active: false },
             {
-                id: user.id,
-                is_active: false
-            },
-            {
-                onSuccess: () => {
-                    toast.success(`${user.name} deactivated`)
-                },
-                onError: () => {
-                    toast.error("Failed to deactivate user")
-                }
+                onSuccess: () => toast.success(`${user.name} deactivated`),
+                onError: () => toast.error("Failed to deactivate user")
             }
         )
-
     }
 
-    /* DELETE USER */
     function handleDelete(user: User) {
-
         if (!confirm(`Delete ${user.name}?`)) return
-
         deleteUser.mutate(user.id, {
-
             onSuccess: () => {
                 queryClient.invalidateQueries({ queryKey: ["users"] })
                 toast.success(`${user.name} deleted`)
             },
-
             onError: () => toast.error("Delete failed")
-
         })
-
     }
 
-    /* RESET PASSWORD */
     function handleResetPassword(user: User) {
-
         const newPassword = prompt("Enter new password")
-
         if (!newPassword) return
-
         resetPassword.mutate(
-            {
-                id: user.id,
-                newPassword,
-            },
+            { id: user.id, newPassword },
             {
                 onSuccess: () => toast.success("Password reset successfully"),
                 onError: () => toast.error("Password reset failed")
             }
         )
-
     }
 
-    /* OPEN EDIT DIALOG */
     function handleEdit(user: User) {
         setSelectedUser(user)
         setEditOpen(true)
     }
 
     return (
-
         <>
-
-            <div className="border rounded-xl bg-card">
-
-                <table className="w-full text-sm">
-
-                    <thead className="bg-muted">
-
-                        <tr className="text-left">
-
-                            <th className="p-3">User</th>
-                            <th className="p-3">Username</th>
-                            <th className="p-3">Phone</th>
-                            <th className="p-3">Role</th>
-                            <th className="p-3">Status</th>
-                            <th className="p-3 w-[60px]"></th>
-
-                        </tr>
-
-                    </thead>
-
-                    <tbody>
-
-                        {users?.map((user) => (
-
-                            <tr
-                                key={user.id}
-                                className="border-t hover:bg-muted/40 transition"
-                            >
-
-                                <td className="p-3 flex items-center gap-3">
-
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarFallback>
-                                            {getInitials(user.name)}
-                                        </AvatarFallback>
-                                    </Avatar>
-
-                                    <div className="font-medium">
-                                        {user.name}
-                                    </div>
-
-                                </td>
-
-                                <td className="p-3 text-muted-foreground">
-                                    {user.username}
-                                </td>
-
-                                <td className="p-3">
-                                    {user.phone}
-                                </td>
-
-                                <td className="p-3">
-
-                                    <span
-                                        className={`px-2 py-1 rounded-md text-xs font-medium ${roleColor(user.role)}`}
-                                    >
-                                        {user.role}
-                                    </span>
-
-                                </td>
-
-                                <td className="p-3">
-
-                                    {user.is_active ? (
-
-                                        <Badge
-                                            variant="outline"
-                                            className="text-green-600 border-green-300"
-                                        >
-                                            Active
-                                        </Badge>
-
-                                    ) : (
-
-                                        <Badge
-                                            variant="outline"
-                                            className="text-red-600 border-red-300"
-                                        >
-                                            Inactive
-                                        </Badge>
-
-                                    )}
-
-                                </td>
-
-                                <td className="p-3">
-
-                                    <DropdownMenu>
-
-                                        <DropdownMenuTrigger asChild>
-                                            <button className="p-1 rounded hover:bg-muted">
-                                                <MoreVertical size={16} />
-                                            </button>
-                                        </DropdownMenuTrigger>
-
-                                        <DropdownMenuContent
-                                            align="end"
-                                            className="bg-white/90 backdrop-blur-sm border shadow-lg"
-                                        >
-
-                                            <DropdownMenuItem
-                                                onClick={() => handleEdit(user)}
-                                            >
-                                                Edit User
-                                            </DropdownMenuItem>
-
-                                            {user.is_active ? (
-
-                                                <DropdownMenuItem
-                                                    onClick={() => handleDeactivate(user)}
-                                                    className="cursor-pointer text-orange-600"
-                                                >
-                                                    Deactivate
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                <Table>
+                    <TableHeader className="bg-slate-50/50">
+                        <TableRow className="hover:bg-transparent border-slate-100">
+                            <TableHead className="text-[11px] font-bold uppercase tracking-wider text-slate-400 py-6 px-8">User Details</TableHead>
+                            <TableHead className="text-[11px] font-bold uppercase tracking-wider text-slate-400 py-6 px-8">Username</TableHead>
+                            <TableHead className="text-[11px] font-bold uppercase tracking-wider text-slate-400 py-6 px-8">Phone</TableHead>
+                            <TableHead className="text-[11px] font-bold uppercase tracking-wider text-slate-400 py-6 px-8">Role</TableHead>
+                            <TableHead className="text-[11px] font-bold uppercase tracking-wider text-slate-400 py-6 px-8">Status</TableHead>
+                            <TableHead className="text-[11px] font-bold uppercase tracking-wider text-slate-400 py-6 px-8 text-right">Actions</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {users.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={6} className="h-32 text-center text-slate-400 italic">No users found.</TableCell>
+                            </TableRow>
+                        ) : (
+                            users.map((user) => (
+                                <TableRow key={user.id} className="hover:bg-slate-50/50 border-slate-50 transition-colors">
+                                    <TableCell className="py-6 px-8">
+                                        <div className="flex items-center gap-4">
+                                            <Avatar className="h-10 w-10 border-2 border-slate-100 shadow-sm">
+                                                <AvatarFallback className="bg-slate-900 text-white font-bold text-[10px]">{getInitials(user.name)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col">
+                                                <span className="font-bold text-slate-900">{user.name}</span>
+                                                <span className="text-[11px] font-medium text-slate-400">{user.username}@harvest.io</span>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="py-6 px-8 text-sm font-medium text-slate-600">{user.username}</TableCell>
+                                    <TableCell className="py-6 px-8 text-sm font-medium text-slate-600">{user.phone}</TableCell>
+                                    <TableCell className="py-6 px-8">
+                                        <StatusBadge status={user.role} className="rounded-lg px-3 py-1" />
+                                    </TableCell>
+                                    <TableCell className="py-6 px-8">
+                                        {user.is_active ? (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700 border border-green-100">Active</span>
+                                        ) : (
+                                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700 border border-red-100">Inactive</span>
+                                        )}
+                                    </TableCell>
+                                    <TableCell className="py-6 px-8 text-right">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <button className="text-slate-300 hover:text-slate-600 transition-colors">
+                                                    <MoreVertical size={20} />
+                                                </button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-56 mt-2 rounded-2xl shadow-xl border border-slate-100 bg-white z-[100]">
+                                                <DropdownMenuItem onClick={() => handleEdit(user)} className="gap-3 py-3 rounded-xl cursor-pointer">
+                                                    <Edit3 size={16} className="text-slate-400" />
+                                                    <span className="font-medium">Edit User</span>
                                                 </DropdownMenuItem>
-
-                                            ) : (
-
-                                                <DropdownMenuItem
-                                                    onClick={() => handleActivate(user)}
-                                                    className="cursor-pointer text-green-600"
-                                                >
-                                                    Activate
+                                                {user.is_active ? (
+                                                    <DropdownMenuItem onClick={() => handleDeactivate(user)} className="gap-3 py-3 rounded-xl cursor-pointer text-orange-600 hover:bg-orange-50">
+                                                        <UserX size={16} />
+                                                        <span className="font-medium">Deactivate</span>
+                                                    </DropdownMenuItem>
+                                                ) : (
+                                                    <DropdownMenuItem onClick={() => handleActivate(user)} className="gap-3 py-3 rounded-xl cursor-pointer text-green-600 hover:bg-green-50">
+                                                        <UserCheck size={16} />
+                                                        <span className="font-medium">Activate</span>
+                                                    </DropdownMenuItem>
+                                                )}
+                                                <DropdownMenuItem onClick={() => handleResetPassword(user)} className="gap-3 py-3 rounded-xl cursor-pointer">
+                                                    <Lock size={16} className="text-slate-400" />
+                                                    <span className="font-medium">Reset Password</span>
                                                 </DropdownMenuItem>
-
-                                            )}
-
-                                            <DropdownMenuItem
-                                                onClick={() => handleResetPassword(user)}
-                                            >
-                                                Reset Password
-                                            </DropdownMenuItem>
-
-                                            <DropdownMenuItem
-                                                className="text-red-600"
-                                                onClick={() => handleDelete(user)}
-                                            >
-                                                Delete
-                                            </DropdownMenuItem>
-
-                                        </DropdownMenuContent>
-
-                                    </DropdownMenu>
-
-                                </td>
-
-                            </tr>
-
-                        ))}
-
-                    </tbody>
-
-                </table>
-
+                                                <DropdownMenuItem onClick={() => handleDelete(user)} className="gap-3 py-3 rounded-xl cursor-pointer text-red-600 hover:bg-red-50">
+                                                    <Trash2 size={16} />
+                                                    <span className="font-medium">Delete</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
             </div>
 
             <EditUserDialog
@@ -322,8 +179,6 @@ export default function UsersTable({ users }: { users: User[] }) {
                 open={editOpen}
                 setOpen={setEditOpen}
             />
-
         </>
-
     )
 }
